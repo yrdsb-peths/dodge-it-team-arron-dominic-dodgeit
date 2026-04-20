@@ -1,17 +1,22 @@
 import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
 
-/**
- * Write a description of class HeroMaybe here.
- * 
- * @author (your name) 
- * @version (a version number or a date)
- */
+
 public class HeroMaybe extends Actor
 {
-    /**
-     * Act - do whatever the HeroMaybe wants to do. This method is called whenever
-     * the 'Act' or 'Run' button gets pressed in the environment.
-     */
+    private int health = 3;
+    private int speed = 2;
+    
+    private GreenfootImage[] walkFrames;
+    
+    public HeroMaybe()
+    {
+        walkFrames = new GreenfootImage[8];
+        for (int i = 0; i < 8; i++)
+        {
+            walkFrames[i] = new GreenfootImage("Sneaky" + i + ".png");
+        }
+    }
+    
     public void act()
     {
         // Add your action code here.
