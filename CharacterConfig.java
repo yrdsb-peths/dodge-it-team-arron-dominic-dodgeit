@@ -18,6 +18,7 @@ public enum CharacterConfig {
         //Ability to stop time is built in
     ),
     
+    //Dio 2 is just a tester to test character selection menu
     Dio2(
         "Dio Brando",
         "Dio", // Folder name

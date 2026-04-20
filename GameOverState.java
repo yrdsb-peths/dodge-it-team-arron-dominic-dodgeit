@@ -28,7 +28,7 @@ public class GameOverState implements GameState {
 
     public void update(MyWorld world) {
         if ("enter".equals(Greenfoot.getKey())) {
-            world.getGSM().changeState(new PlayingState());
+            world.getGSM().changeState(new MenuState());
         }
     }
 
