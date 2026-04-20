@@ -1,7 +1,9 @@
 import greenfoot.*;
 
 public class GameConfig {
-    // 1. GLOBAL SCALING: This scales every image. By default, it is 1. To make things larger and occupy more screen, it is currently 1.5 
+    //Character active is at the very bottom
+    
+    // 0. GLOBAL SCALING: This scales every image. By default, it is 1. To make things larger and occupy more screen, it is currently 1.5 
     public static final float SCALE = 1.5f; 
     
     // 2. WORLD SETTINGS
@@ -42,6 +44,7 @@ public class GameConfig {
     //Ability: Made In Heaven Settings
     public static final int MIH_TICK_SPEED = 48; 
     public static final int NORMAL_TICK_SPEED = 50; 
+    public static final int MIH_COOLDOWN = 3;// (3 seconds)
     
     //Abiliyt: World Punch Setting
     public static final double WORLD_PUNCH_DURATION = 3.5; //in seconds
@@ -72,4 +75,7 @@ public class GameConfig {
     public static int s(int pixels) {
         return Math.round(pixels * SCALE);
     }
+    
+    //Character Active- later will implement character choosing menu
+    public static final CharacterConfig ACTIVE_CHARACTER = CharacterConfig.DIO;
 }

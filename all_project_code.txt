@@ -26,7 +26,7 @@ public class MyWorld extends World {
         //UI on top, then Dio, then after images, then the roadrollers
         setPaintOrder(Banner.class, UIText.class,UI_AbilityIcon.class, UI_RewindBar.class, FX_RewindOverlay.class, 
                       Exclaimation.class, PathWarning.class, 
-                      TheWorldStand.class, Dio.class, FX_Afterimage.class, Obstacles.class, ScrollingRoad.class);
+                      TheWorldStand.class, GenericPlayer.class, FX_Afterimage.class, Obstacles.class, ScrollingRoad.class);
                       
         //Start the game in the playing state
         //Remember, pushState adds the state on top of the stack,and enters that state
@@ -214,6 +214,57 @@ public class UI_RewindBar extends Actor {
 
 
 ==================================================
+FILE: ./CharacterConfig.java
+==================================================
+
+import greenfoot.*;
+import java.util.List;
+import java.util.ArrayList;
+
+public enum CharacterConfig {
+    
+    DIO(
+        "Dio", 
+        new String[]{"Idle", "Wry", "Dash", "Lose", "WalkLeft", "WalkRight", "Intro", "Scratch", "Roll", "High", "Teleport"},
+        "Dash", 
+        GameConfig.DIO_MOVE_SPEED,
+        0.8 * GameConfig.SCALE, // Base Scale
+        "dio_bgm",
+        "dioLostVoices",
+        BossConfig.DIO,
+        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} 
+    );
+    
+    // To make a character, just add a comma after DIO's block
+    // and write KIRA("Kira", new String[]{"Walk", "Die"...}, ...);
+
+    public final String folderName;
+    public final String[] animNames;
+    public final String defaultAnim;
+    public final int moveSpeed;
+    public final double scale;
+    public final String bgmKey;
+    public final String deathSoundKey;
+    public final BossConfig bossConfig;
+    public final String[] abilityClassNames;
+
+    private CharacterConfig(String folderName, String[] animNames, String defaultAnim, 
+                           int moveSpeed, double scale, String bgmKey, 
+                           String deathSoundKey, BossConfig bossConfig, String[] abilities) {
+        this.folderName = folderName;
+        this.animNames = animNames;
+        this.defaultAnim = defaultAnim;
+        this.moveSpeed = moveSpeed;
+        this.scale = scale;
+        this.bgmKey = bgmKey;
+        this.deathSoundKey = deathSoundKey;
+        this.bossConfig = bossConfig;
+        this.abilityClassNames = abilities;
+    }
+}
+
+
+==================================================
 FILE: ./Obstacles.java
 ==================================================
 
@@ -287,15 +338,15 @@ public class TheWorldStand extends Actor implements Time_Snapshottable {
         setImage(punchAnim.getCurrentFrame());
 
         // Follow Dio
-        List<Dio> dios = world.getObjects(Dio.class);
-        if (!dios.isEmpty()) {
-            Dio dio = dios.get(0);
+        List<GenericPlayer> players = world.getObjects(GenericPlayer.class);
+        if (!players.isEmpty()) {
+            GenericPlayer player = players.get(0);
             // If Dio is dead, the Stand should probably stop following or vanish
-            if (dio.isDead()) {
+            if (player.isDead()) {
                 world.removeObject(this);
                 return;
             }
-            setLocation(dio.getX() + GameConfig.s(80), dio.getY());
+            setLocation(player.getX() + GameConfig.s(80), player.getY());
         }
 
         // Destroy obstacles
@@ -532,12 +583,12 @@ FILE: ./UI_AbilityIcon.java
 
 import greenfoot.*;
 
-public class UI_AbilityIcon extends Actor {
-    private Dio dio;
+public class UI_AbilityIcon extends Actor {    
+    private Player player;
     private int size;
     
-    public UI_AbilityIcon(Dio dio) {
-        this.dio = dio;
+    public UI_AbilityIcon(Player player) {
+        this.player = player;
         this.size = GameConfig.s(55); // Scales with GameConfig
         updateImage();
     }
@@ -553,14 +604,12 @@ public class UI_AbilityIcon extends Actor {
         int radiusSq = cx * cy;
         
         // If Dio is dead, the UI grays out and turns red.
-        if (dio.isDead()) {
+        if (player.isDead()) {
             img.setColor(new Color(255, 0, 0, 150));
             img.fillOval(0, 0, size, size);
             setImage(img);
             return;
         }
-
-        Ability_StandPunch ability = dio.getStandPunchAbility();
 
         // Draw Base Background
         img.setColor(new Color(30, 30, 30, 220));
@@ -573,17 +622,23 @@ public class UI_AbilityIcon extends Actor {
 
         double percent = 0;
         Color sweepColor = null;
+        
+        Ability ability = null;
+        if (player instanceof GenericPlayer) {
+            ability = ((GenericPlayer)player).getPrimaryAbility();
+        }
+
+        if (ability == null) return;
+
 
         // Check Timers
         if (ability.isActive()) {
-            // Punching right now! (Orange sweep draining)
-            percent = ability.getDurFrames() / (GameConfig.WORLD_PUNCH_DURATION * 60.0);
-            sweepColor = new Color(255, 140, 0, 180); // Orange
+            percent = ability.getActivePercent();
+            sweepColor = new Color(255, 140, 0, 180);
         } 
-        else if (ability.isCoolActive()) {
-            // On Cooldown! (Blue sweep filling up)
-            percent = ability.getCoolFrames() / (GameConfig.WORLD_PUNCH_COOLDOWN * 60.0);
-            sweepColor = new Color(0, 150, 255, 180); // Blue
+        else if (ability.isCooldownActive()) {
+            percent = ability.getCooldownPercent();
+            sweepColor = new Color(0, 150, 255, 180);
         }
 
         // Fills the circle slice (LoL Cooldown Style)
@@ -721,6 +776,188 @@ public class Train extends Obstacles implements Time_Snapshottable {
 
 
 ==================================================
+FILE: ./GenericPlayer.java
+==================================================
+
+import greenfoot.*;
+import java.util.*;
+
+public class GenericPlayer extends Player implements Time_Snapshottable {
+    private CharacterConfig config;
+    private HashMap<String, Animator> animations = new HashMap<>();
+    private Animator currentAnimator;
+    private String currentAnimName = "";
+    private List<Ability> abilities = new ArrayList<>();
+    
+    private GameTimer deathTimer = new GameTimer(4.0, false);
+    private GameTimer iFrameTimer = new GameTimer(0.5, false);
+    private int dieX, dieY;
+
+    public GenericPlayer(CharacterConfig config) {
+        this.config = config;
+        
+        // 1. Load Animations from Config
+        for (String name : config.animNames) {
+            animations.put(name, new Animator(config.folderName, name, config.scale));
+        }
+        setAnimation(config.defaultAnim);
+
+        // 2. Load Abilities via Reflection (Very scalable!)
+        for (String className : config.abilityClassNames) {
+            try {
+                abilities.add((Ability) Class.forName(className).getDeclaredConstructor().newInstance());
+            } catch (Exception e) { System.out.println("Failed to load ability: " + className); }
+        }
+    }
+
+    public void setAnimation(String name) {
+        if (isDead && !name.equals("Lose")) return;
+        if (!currentAnimName.equals(name) && animations.containsKey(name)) {
+            currentAnimName = name;
+            currentAnimator = animations.get(name);
+            currentAnimator.reset();
+        }
+    }
+
+    protected void movementLogic() {
+        iFrameTimer.update((MyWorld)getWorld());
+
+        // Update and Trigger Abilities
+        for (Ability a : abilities) {
+            a.update(this, (MyWorld)getWorld());
+            if (Greenfoot.isKeyDown(a.getKeybind())) {
+                a.activate(this, (MyWorld)getWorld());
+            }
+        }
+
+        if (isDead) {
+            deathTimer.update((MyWorld)getWorld());
+            if (!deathTimer.isExpired()) shake();
+            else if (!((MyWorld)getWorld()).isRewinding()) {
+                ((MyWorld)getWorld()).getGSM().changeState(new GameOverState());
+            }
+        } else {
+            handleStandardMovement();
+        }
+    }
+
+    private void handleStandardMovement() {
+        int speed = config.moveSpeed;
+        // Check for speed modifiers from abilities (like MIH)
+        for(Ability a : abilities) if(a instanceof Ability_MadeInHeaven && a.isActive()) speed *= 2;
+
+        int nextX = getX(), nextY = getY();
+        if (Greenfoot.isKeyDown("up")) nextY -= speed;
+        if (Greenfoot.isKeyDown("down")) nextY += speed;
+        
+        int halfWidth = getImage().getWidth() / 2;
+        int halfHeight = getImage().getHeight() / 2;
+        
+        nextX = Math.max(halfWidth, Math.min(getWorld().getWidth() - halfWidth, nextX));
+        nextY = Math.max(halfHeight, Math.min(getWorld().getHeight() - halfHeight, nextY));
+    
+        setLocation(nextX, nextY);
+    }
+
+    public void die() {
+        if (iFrameTimer.isActive() || isDead) return;
+        for (Ability a : abilities) if (a.isActive() && a instanceof Ability_StandPunch) return; // Invincible during punch
+        
+        isDead = true;
+        setAnimation("Lose");
+        AudioManager.playPool(config.deathSoundKey);
+        dieX = getX(); dieY = getY();
+        deathTimer.start();
+    }
+
+    protected void animationLogic() {
+        if (getWorld() == null) return;
+        setImage(currentAnimator.getCurrentFrame());
+
+        if (iFrameTimer.isActive() && !iFrameTimer.isExpired()) {
+            if (iFrameTimer.getRemainingFrames() % 4 < 2) {
+                getImage().setTransparency(60); 
+            } else {
+                getImage().setTransparency(255); 
+            }
+        } else {
+            getImage().setTransparency(255);
+        }
+    }
+
+    // --- Time Machine Implementation ---
+    private static class PlayerMemento {
+        boolean isDead;
+        String anim;
+        int deathFrames;
+        int iFrameFrames;
+        List<Object> abilityStates = new ArrayList<>();
+    }
+
+    public Time_ActorMemento captureState() {
+        PlayerMemento m = new PlayerMemento();
+        m.isDead = isDead; 
+        m.anim = currentAnimName; 
+        m.deathFrames = deathTimer.getRemainingFrames();
+        m.iFrameFrames = iFrameTimer.getRemainingFrames();
+        for (Ability a : abilities) m.abilityStates.add(a.captureState());
+        return new Time_ActorMemento(this, getX(), getY(), m);
+    }
+
+    public void restoreState(Time_ActorMemento m) {
+        PlayerMemento data = (PlayerMemento) m.customData;
+        this.isDead = data.isDead;
+        setAnimation(data.anim);
+        deathTimer.setRemainingFrames(data.deathFrames);
+        iFrameTimer.setRemainingFrames(data.iFrameFrames);
+        if (data.iFrameFrames > 0) iFrameTimer.start(); else iFrameTimer.stop();
+        
+        for (int i = 0; i < abilities.size(); i++) {
+            abilities.get(i).restoreState(data.abilityStates.get(i));
+        }
+    }
+        
+    //Get ability of the character
+    public Ability getPrimaryAbility() {
+        if (!abilities.isEmpty()) return abilities.get(0);
+        return null;
+    }
+
+    // Hitbox Helper
+    public boolean checkCustomHitbox(Actor attacker, double padding) {
+        double dist = Math.hypot(getX() - attacker.getX(), getY() - attacker.getY());
+        return dist < (getImage().getWidth() * 0.5 * padding);
+    }
+
+    private void shake() {
+        setLocation(dieX + Greenfoot.getRandomNumber(5) - 2, dieY + Greenfoot.getRandomNumber(5) - 2);
+    }
+    
+    public void startIFrame(double sec) { iFrameTimer.setDuration(sec); iFrameTimer.start(); }
+    
+    public void setAnimation(String name, int speed) {
+        if (isDead && !name.equals("Lose")) return;
+        if (animations.containsKey(name)) {
+            animations.get(name).setSpeed(speed); 
+            setAnimation(name);                   
+        }
+    }
+    
+    //should be speicific to dio
+    protected void onPauseUpdate(MyWorld world) {
+        if (!bannerSpawned && config.bossConfig != null) {
+            world.addObject(new Banner(config.bossConfig), GameConfig.s(1120), GameConfig.s(200));
+            bannerSpawned = true;
+            setAnimation("Wry"); // Or whichever intro animation fits
+        }
+        movementLogic(); 
+        animationLogic();
+    }
+    
+}
+
+
+==================================================
 FILE: ./Time_FrameSnapshot.java
 ==================================================
 
@@ -756,8 +993,11 @@ FILE: ./GameConfig.java
 import greenfoot.*;
 
 public class GameConfig {
-    // 1. GLOBAL SCALING: This scales every image. By default, it is 1. To make things larger and occupy more screen, it is currently 1.5 
+    // 0. GLOBAL SCALING: This scales every image. By default, it is 1. To make things larger and occupy more screen, it is currently 1.5 
     public static final float SCALE = 1.5f; 
+    
+    //1. Character Active- later will implement character choosing menu
+    public static final CharacterConfig ACTIVE_CHARACTER = CharacterConfig.DIO;
     
     // 2. WORLD SETTINGS
     public static final int WORLD_WIDTH = s(600);//World widht is 600 pixels
@@ -797,6 +1037,7 @@ public class GameConfig {
     //Ability: Made In Heaven Settings
     public static final int MIH_TICK_SPEED = 48; 
     public static final int NORMAL_TICK_SPEED = 50; 
+    public static final int MIH_COOLDOWN = 3;// (3 seconds)
     
     //Abiliyt: World Punch Setting
     public static final double WORLD_PUNCH_DURATION = 3.5; //in seconds
@@ -831,368 +1072,41 @@ public class GameConfig {
 
 
 ==================================================
+FILE: ./Ability.java
+==================================================
+
+import greenfoot.*;
+
+public interface Ability {
+    // Core logic
+    void activate(Player p, MyWorld world);
+    void update(Player p, MyWorld world);
+    void cancel();
+    boolean isActive();
+    
+    // Binding and UI
+    String getKeybind();
+    boolean isCooldownActive();
+    double getActivePercent();   // Returns 0.0 to 1.0 for the orange drain bar
+    double getCooldownPercent(); // Returns 0.0 to 1.0 for the blue fill bar
+    
+    // Time Machine hooks!
+    Object captureState();
+    void restoreState(Object state);
+}
+
+
+==================================================
 FILE: ./Dio.java
 ==================================================
 
-import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
-import java.util.HashMap; // Hash map for animation with its animator...
-/*
- *   Dio is the player. Although this is a class, this will only be one player 
- *   (only one object) so static methods are used for convenience. 
- *   (a pro programmar would probably spit at me for that statement but wtv)
- */
-public class Dio extends Player implements Time_Snapshottable
-{
-    //A hashmap(dictionary) of animations with key: name and value: the corresponding animator
-    private HashMap<String, Animator> animations = new HashMap<>();
-    //The current animationor and action name it takes in
-    private Animator currentAnimator;
-    private String currentAnimName = "";
-    
-    
-    //A 2 second timer before removing object from gae after dying
-    private GameTimer deathTimer = new GameTimer(4.0, false);
-    //Play some animation for 3 seconds only
-    private GameTimer highTimer = new GameTimer(3.0, false);
-    //A timer that allows Dio to play some temporary animation.
-    //Such as death anim, or high animiation
-    private GameTimer activeTimer = null;
-    private String defaultAnim = "Dash";
-    
-    private final int moveSpeed = GameConfig.DIO_MOVE_SPEED;// 5 pixels per frame
-    
-    //Storing death location
-    private int dieX, dieY;
-    
-    //Ability
-    private Ability_MadeInHeaven mihAbility = new Ability_MadeInHeaven();//Speeds up
-    private Ability_StandPunch standPunchAbility = new Ability_StandPunch();//Summons stand to punch for you
-    
-    //I-Frame
-    private GameTimer iFrameTimer = new GameTimer(0.5, false);
-    /*
-     * Contructus a DIO by setting up animations.
-     * Currently default animation is Dash as a placeholder
-     */
-    public Dio(){
-        //All the names of the animations: action name, folder name, file prefix are the same.
-        String[] animNames = {"Idle", "Wry", "Dash", "High", "Intro","Scratch", "Roll","Lose", "WalkLeft", "WalkRight","Teleport"};
-        for (String name : animNames) {
-            // Parameters: Folder name
-            animations.put(name, new Animator("Dio", name, GameConfig.DIO_BASE_SCALE));
-        }
-        //Some animations use custom speeds: e.g. scratch is faster
-        animations.put("Scratch", new Animator("Dio","Scratch",3, GameConfig.DIO_BASE_SCALE));
+import greenfoot.*;
 
-        // 2. Set the starting animation
-        setAnimation("Dash");
-    }
-    
-    /*
-     * Sets animatoin based on the name input.
-     */
-    public void setAnimation(String name){
-        //PREVENT CALLING AFTER DEATH
-        if (isDead && !name.equals("Lose")) return;
-        //Prevents repetitive calling
-        if (!currentAnimName.equals(name) && animations.containsKey(name)) {
-            currentAnimName = name;
-            currentAnimator = animations.get(name);
-            currentAnimator.reset();
-        }
-    }
-    
-    /*
-     * Overloaded version that accepts a speed
-     */
-    public void setAnimation(String name, int speed) {
-        if (getWorld() == null) return; 
-        if (isDead && !name.equals("Lose")) return;
-        if (animations.containsKey(name)) {
-            animations.get(name).setSpeed(speed); // Update the speed
-            setAnimation(name);                   // Call the original logic to switch
-        }
-    }
-    
-    public void playTimedAnimation(String name, GameTimer timer){
-        setAnimation(name);
-        this.activeTimer = timer;
-        this.activeTimer.reset();
-        this.activeTimer.start();
-    }
-    
-    /*
-     * Sets actor image as the correct frame. 
-     */
-    protected void animationLogic(){
-        if (getWorld() == null) return; 
-        setImage(currentAnimator.getCurrentFrame());
-        
-        //******Made In Heaven Ability Animation
-        mihAbility.update(this, (MyWorld)getWorld());
-        //*******Stand Punch Ability Animation
-        standPunchAbility.update(this, (MyWorld)getWorld());
-        
-        //Check if we are in a timed, temporary sequence
-        if(!isDead &&activeTimer != null){
-            activeTimer.update((MyWorld)getWorld());
-            if(activeTimer.isExpired()){
-                activeTimer = null;
-                setAnimation(defaultAnim);
-            }
-        }
-        
-        //"Blink" if we are in i-frame
-         if (iFrameTimer.isActive() && !iFrameTimer.isExpired()) {
-            if (iFrameTimer.getRemainingFrames() % 4 < 2) {
-                getImage().setTransparency(60); // Dim
-            } else {
-                getImage().setTransparency(255); // Normal
-            }
-        } else {
-            getImage().setTransparency(255); // Ensure reset to normal
-        }
-    }
-    /*
-     * Current, trashy movement logic that should be worked on
-     */
-    protected void movementLogic(){
-        if (getWorld() == null) return; 
-        //Update I-frame timer
-        iFrameTimer.update((MyWorld)getWorld());
-        
-        //TRY TO TRIGGER ABILITY(m for MIH, e for StandPunch)
-        if (Greenfoot.isKeyDown(GameConfig.MIH_BUTTON)) {
-            mihAbility.activate(); 
-        }
-        if (Greenfoot.isKeyDown(GameConfig.STAND_PUNCH_BUTTON)) {
-            standPunchAbility.activate(this, (MyWorld)getWorld());
-        }
-
-        if (isDead) {
-            MyWorld world = (MyWorld) getWorld();
-            
-            // 1. You MUST update the timer every frame so it counts!
-            deathTimer.update(world); 
-            
-            if (!deathTimer.isExpired()) {
-                shake();
-            }
-            // 2. Check if the time is up
-            if (deathTimer.isExpired()&& !world.isRewinding()) {
-                world.getGSM().changeState(new GameOverState());
-            }
-        } 
-            
-        else {
-            if(Greenfoot.mouseClicked(null)){
-                playRandomAnimation();
-            }
-            
-            // 1. Calculate how fast we are moving
-            int currentSpeed = (int)(moveSpeed * mihAbility.getSpeedMultiplier());
-            
-            // 2. Start with the current position
-            int nextX = getX();
-            int nextY = getY();
-            
-            // 3. Update the intended position based on keys
-            if (Greenfoot.isKeyDown("up")){
-                nextY -= currentSpeed;
-            }
-            if (Greenfoot.isKeyDown("down")){
-                nextY += currentSpeed;
-            }
-            
-            // 4. Calculate the "No-Submerge" limits
-            int halfWidth = getImage().getWidth() / 2;
-            int halfHeight = getImage().getHeight() / 2;
-            int worldWidth = getWorld().getWidth();
-            int worldHeight = getWorld().getHeight();
-
-            // 5. THE LIMITER (Clamping)
-            // If the next position would put the edge off-screen, 
-            // set the position to the exact edge instead.
-            if (nextX < halfWidth) nextX = halfWidth;
-            if (nextX > worldWidth - halfWidth) nextX = worldWidth - halfWidth;
-            
-            if (nextY < halfHeight) nextY = halfHeight;
-            if (nextY > worldHeight - halfHeight) nextY = worldHeight - halfHeight;
-
-            // 6. Final Move (Only happens once, perfectly smooth)
-            setLocation(nextX, nextY);
-        }
-    }
-    //Die method is public because anyone can tell player to die
-    public void die(){
-        //Do not die if invincible
-        if (iFrameTimer.isActive() && !iFrameTimer.isExpired()) return;
-        //Do not die im stand punching
-        if (standPunchAbility.isActive()) return; 
-        //Do not die while rewinding
-        MyWorld world = (MyWorld) getWorld();
-        if (isDead|| world.isRewinding()) return;
-        
-        standPunchAbility.cancel(); 
-        
-        isDead = true;
-        AudioManager.play("car_crash");
-        //SadFace sadFace = new SadFace();
-        //getWorld().addObject(sadFace,world.getWidth()/2, world.getHeight()/2);
-        setAnimation("Lose");
-        AudioManager.playPool("dioLostVoices");
-        //Set death location
-        dieX = getX();
-        dieY = getY();
-        //Start counting down
-        //This buys time for voice and animation
-        //After timer, the state changes and world resets
-        deathTimer.start();
-    }
-    
-    /*
-     * A funny method that... calls a random animation (obviously)
-     * However, it is buggy so im not using it. 
-     */
-     private void playRandomAnimation(){
-        Object[] keys = animations.keySet().toArray();
-        int randomIndex = Greenfoot.getRandomNumber(keys.length);
-        String randomAnimName = (String) keys[randomIndex];
-        setAnimation(randomAnimName);
-    }
-    
-    /*
-     * Dio's method overrides the method in player:
-     * normally player can't do anything
-     * but dio can move normally and display a cool banner
-     * bannerSpawned makes sure banner only gets played once, 
-     * and it gets set back to true in player update method.
-     */
-    protected void onPauseUpdate(MyWorld world) {
-        if (!bannerSpawned) {
-            world.addObject(new Banner(BossConfig.DIO), GameConfig.s(1120), GameConfig.s(200));
-            bannerSpawned = true;
-            playTimedAnimation("Wry", highTimer);
-        }
-        movementLogic(); // Dio moves during pause!
-        animationLogic();
-    }
-    
-    /*
-     * When playtesting I think Dio's hitbox is too big, so I decided to decrease it here.
-     * 
-     * Padding = 1 => fll image is hitbox
-     * Padding = 0.5 => half image is hitbox
-     */
-
-    public boolean checkCustomHitbox(Actor attacker, double padding) {
-        double distance = Math.hypot(getX() - attacker.getX(), getY() - attacker.getY());
-        
-        
-        double baseWidth = getImage().getWidth();
-        double baseHeight = getImage().getHeight();
-        double hitboxRadius = ((baseWidth + baseHeight) / 4.0 * padding);
-        
-        return distance < hitboxRadius;
-    }
-    
-    private void shake (){
-        if (!deathTimer.isExpired()) {
-            int shakeX = Greenfoot.getRandomNumber(7) - 3; 
-            int shakeY = Greenfoot.getRandomNumber(7) - 3;
-                
-            // 2. ALWAYS add to the baseX/baseY, NOT the current getX()
-            setLocation(dieX + shakeX, dieY + shakeY);
-        } 
-        else {
-            // 3. Return to the exact center when finished
-            setLocation(dieX, dieY);
-        }
-    }
-
-    
-    //***********************************************************
-    //=========Tme Machine Stuff For Time Rewinding==============
-        private static class DioData {
-        boolean isDead;
-        String animName;
-        int deathTimerRemaining;
-        boolean deathTimerActive;
-        int mihFramesRemaining;
-        boolean mihActive;
-        int spDurFrames, spCoolFrames;
-        boolean spDurActive, spCoolActive;
-        
-        DioData(boolean isDead, String animName, int deathTimerRemaining, boolean active, 
-                int mihFrames, boolean mihActive, 
-                int spDurFrames, int spCoolFrames, boolean spDurActive, boolean spCoolActive) {
-            this.isDead = isDead;
-            this.animName = animName;
-            this.deathTimerRemaining = deathTimerRemaining;
-            this.deathTimerActive = active;
-            //MIH data
-            this.mihFramesRemaining = mihFrames;
-            this.mihActive = mihActive;
-            //Stand punch data 
-            this.spDurFrames = spDurFrames;
-            this.spCoolFrames = spCoolFrames;
-            this.spDurActive = spDurActive;
-            this.spCoolActive = spCoolActive;
-            
-        }
-    }
-    
-    public Time_ActorMemento captureState() {
-        return new Time_ActorMemento(this, getX(), getY(),
-            new DioData(isDead, currentAnimName,
-                        deathTimer.getRemainingFrames(),
-                        deathTimer.isActive(), mihAbility.getRemainingFrames(),// Ask the ability for frames
-                        mihAbility.isActive(),
-                        standPunchAbility.getDurFrames(), standPunchAbility.getCoolFrames(),
-                        standPunchAbility.isDurActive(), standPunchAbility.isCoolActive()));       // Ask if it's currently running));
-                        
-    }
-    
-    public void restoreState(Time_ActorMemento m) {
-        DioData d = (DioData) m.customData;
-        
-        // Check if we're being revived
-        if (this.isDead && !d.isDead) {
-            // Remove the sad face that appeared on death
-            if (getWorld() != null) {
-                getWorld().removeObjects(getWorld().getObjects(SadFace.class));
-            }
-        }
-        
-        this.isDead = d.isDead;
-        // Don't forcibly switch to death anim if alive
-        if (!isDead) setAnimation(d.animName);
-        deathTimer.setRemainingFrames(d.deathTimerRemaining);
-        if (d.deathTimerActive) deathTimer.start(); else deathTimer.stop();
-        
-        
-        // --- RESTORE MADE IN HEAVEN STATE ---
-        mihAbility.setRemainingFrames(d.mihFramesRemaining);
-        if (d.mihActive) mihAbility.startTimer(); else mihAbility.stopTimer();
-        // --- RESTORE THE WORLD STATE ---
-        standPunchAbility.setDurFrames(d.spDurFrames);
-        standPunchAbility.setCoolFrames(d.spCoolFrames);
-        if (d.spDurActive) standPunchAbility.startDur(); else standPunchAbility.stopDur();
-        if (d.spCoolActive) standPunchAbility.startCool(); else standPunchAbility.stopCool();
-        // NOTE: TheWorldStand restores itself — it stays alive as long as the ability is active
-    }
-    
-    public void startIFrame(double seconds) {
-        iFrameTimer.setDuration(seconds);
-        iFrameTimer.reset();
-        iFrameTimer.start();
-    }
-    
-    public Ability_StandPunch getStandPunchAbility() {
-        return standPunchAbility;
+public class Dio extends GenericPlayer {
+    public Dio() {
+        super(CharacterConfig.DIO);
     }
 }
-
 
 
 ==================================================
@@ -1625,6 +1539,7 @@ public class GameTimer {
     public int getRemainingFrames() { return remainingFrames; }
     public void setRemainingFrames(int frames) { this.remainingFrames = frames; }
     public boolean isActive() { return active; }
+    public int getTotalFrames() { return totalFrames; }
 }
 
 
@@ -1738,6 +1653,11 @@ public abstract class Player extends Actor
     protected abstract void animationLogic();
     //This is for hitbox controlling
     public abstract boolean checkCustomHitbox(Actor attacker, double padding);
+    //Animation methods are required (ONE FOR NAME ONLY OTHER FOR SPEED SETTING TOO)
+    public abstract void setAnimation(String name);
+    public abstract void setAnimation(String name, int speed);
+    //I-frames method are required
+    public abstract void startIFrame(double seconds);
     //Keep track of banner (for dio only)
     protected boolean bannerSpawned = false; 
     /**
@@ -2266,7 +2186,8 @@ public class PlayingState implements GameState {
         GameRNG.randomize();//Sets a random seed for the game: its consistent
         
         ScoreManager.reset();//Resets score.
-        AudioManager.playLoop("dio_bgm");//Use Audio MGR to call the background music
+        //AudioManager.playLoop("dio_bgm");//Use Audio MGR to call the background music
+        AudioManager.playLoop(GameConfig.ACTIVE_CHARACTER.bgmKey);
         FX_RewindOverlay.preLoad(); // Draws the rewind screens into memory early!
         Greenfoot.setSpeed(50); //Set Game Tick to Normal
         
@@ -2288,12 +2209,16 @@ public class PlayingState implements GameState {
         rewindBar = new UI_RewindBar(rewindManager);
         world.addObject(rewindBar, world.getWidth() - GameConfig.s(100), GameConfig.s(20));
         
-        // Save the Dio object so we can give it to the UI 
-        Dio dio = new Dio();
-        world.addObject(dio, GameConfig.s(80), GameConfig.s(80));
+        // Spawn the dynamically configured player
+        GenericPlayer player;
+        if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) {
+            player = new Dio(); // Fallback to wrapper for hardcoded checks
+        } else {
+            player = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
+        }
+        world.addObject(player, GameConfig.s(80), GameConfig.s(80));
         
-        // Spawn the Ability Icon in the bottom right corner
-        UI_AbilityIcon abilityIcon = new UI_AbilityIcon(dio);
+        UI_AbilityIcon abilityIcon = new UI_AbilityIcon(player);
         world.addObject(abilityIcon, world.getWidth() - GameConfig.s(45), world.getHeight() - GameConfig.s(45));
     }
     
@@ -2335,9 +2260,9 @@ public class PlayingState implements GameState {
                 Greenfoot.setSpeed(50); 
                 AudioManager.setAllSoundsPaused(false);//Reusme normal game music
                 //Give i-frame to dio
-                List<Dio> dios = world.getObjects(Dio.class);
-                if (!dios.isEmpty()) {
-                    dios.get(0).startIFrame(1.0); // 1 second of safety after rewind
+                List<GenericPlayer> players = world.getObjects(GenericPlayer.class);
+                if (!players.isEmpty()) {
+                    players.get(0).startIFrame(1.0); 
                 }
             }
         } else {
@@ -2375,7 +2300,8 @@ public class PlayingState implements GameState {
         //Clean up as we end playing state. 
         //Note: normally we don't "end" the playing state, we simply put a new state on top of it
         //So exit is only called when the entire playing state is over (aka game is lost)
-        AudioManager.stop("dio_bgm");
+        //AudioManager.stop("dio_bgm");
+        AudioManager.stop(GameConfig.ACTIVE_CHARACTER.bgmKey);
         world.removeObjects(world.getObjects(null));
         Greenfoot.setSpeed(50);
     }
@@ -2536,6 +2462,8 @@ public class Animator
     public void setSpeed(int speed) {
     this.speed = speed;
     }
+    //needed by GenericPlayer's animation loader
+    public boolean hasFrames() { return frames != null && frames.length > 0; }
 }
 
 
@@ -2674,7 +2602,7 @@ FILE: ./Ability_MadeInHeaven.java
 
 import greenfoot.*;
 
-public class Ability_MadeInHeaven {
+public class Ability_MadeInHeaven implements Ability{
     private GameTimer durationTimer = new GameTimer(4.8, false); // Lasts 6.5 seconds to match the sound effect
     private int afterimageCounter = 0;
     private final double speedMultiplier = 2; // How much faster?
@@ -2682,10 +2610,11 @@ public class Ability_MadeInHeaven {
     
     private final int ACCELERATED_TICK_SPEED = GameConfig.MIH_TICK_SPEED;//Everything moves slow as you speed up
     private final int NORMAL_TICK_SPEED = GameConfig.NORMAL_TICK_SPEED;
+    
+    private GameTimer cooldownTimer = new GameTimer(GameConfig.MIH_COOLDOWN, false);
 
-    public void activate() {
-        if (durationTimer.isExpired() || !durationTimer.isActive()) {
-            
+    public void activate(Player p, MyWorld world) {
+        if (durationTimer.isExpired() || !durationTimer.isActive()&& !cooldownTimer.isActive()) {
             durationTimer.reset();
             durationTimer.start();
             Greenfoot.setSpeed(ACCELERATED_TICK_SPEED);
@@ -2694,10 +2623,15 @@ public class Ability_MadeInHeaven {
     }
 
     public void update(Player p, MyWorld world) {
+        //Countdown cooldown
+        if (cooldownTimer.isActive()) {
+            cooldownTimer.update(world);
+        }
+        
         if (!durationTimer.isActive()) return;
         
         durationTimer.update(world);
-
+    
         // Spawn afterimage every frame
         afterimageCounter++;
         if (afterimageCounter % 1 == 0) {
@@ -2707,6 +2641,9 @@ public class Ability_MadeInHeaven {
         if (durationTimer.isExpired()) {
             durationTimer.stop();
             Greenfoot.setSpeed(NORMAL_TICK_SPEED);
+            
+            cooldownTimer.reset();
+            cooldownTimer.start();
         }
     }
 
@@ -2714,6 +2651,26 @@ public class Ability_MadeInHeaven {
         return durationTimer.isActive() && !durationTimer.isExpired() ? speedMultiplier : 1.0;
     }
     
+    
+    //Override ability methods
+    
+    public void cancel() { 
+        durationTimer.stop(); 
+        Greenfoot.setSpeed(GameConfig.NORMAL_TICK_SPEED);
+    }
+    
+    public boolean isCooldownActive() { return cooldownTimer.isActive(); } 
+    
+    public double getActivePercent() { 
+        return durationTimer.isActive() ? (1.0 - durationTimer.getPercentComplete()) : 0.0; 
+    }
+    
+    
+    public double getCooldownPercent() { 
+        return cooldownTimer.isActive() ? cooldownTimer.getPercentComplete() : 0.0; 
+    }
+    
+    public String getKeybind() { return GameConfig.MIH_BUTTON; }
     // For the Time Machine snapshots
     // These allow the Time Machine to save and load the ability's progress
     public int getRemainingFrames() { return durationTimer.getRemainingFrames(); }
@@ -2722,6 +2679,22 @@ public class Ability_MadeInHeaven {
     public boolean isActive() { return durationTimer.isActive(); }
     public void startTimer() { durationTimer.start(); }
     public void stopTimer() { durationTimer.stop(); }
+    
+    
+    public Object captureState() {
+        return new int[]{
+            durationTimer.getRemainingFrames(), cooldownTimer.getRemainingFrames(),
+            durationTimer.isActive() ? 1 : 0, cooldownTimer.isActive() ? 1 : 0
+        };
+    }
+
+    public void restoreState(Object state) {
+        int[] data = (int[]) state;
+        durationTimer.setRemainingFrames(data[0]);
+        cooldownTimer.setRemainingFrames(data[1]);
+        if (data[2] == 1) durationTimer.start(); else durationTimer.stop();
+        if (data[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
+    }
 }
 
 
@@ -2928,56 +2901,76 @@ FILE: ./Ability_StandPunch.java
 
 import greenfoot.*;
 
-public class Ability_StandPunch {
+public class Ability_StandPunch implements Ability {
     private GameTimer durationTimer = new GameTimer(GameConfig.WORLD_PUNCH_DURATION, false);
     private GameTimer cooldownTimer = new GameTimer(GameConfig.WORLD_PUNCH_COOLDOWN, false);
     public int standAnimSpeed = 2;
     
-    public void activate(Dio dio, MyWorld world) {
+    public void activate(Player p, MyWorld world) {
         if (!durationTimer.isActive() && !cooldownTimer.isActive()) {
             durationTimer.reset();
             durationTimer.start();
             
-            dio.setAnimation("Idle");
-            world.addObject(new TheWorldStand(this), dio.getX(), dio.getY());
+            p.setAnimation("Idle");
+            world.addObject(new TheWorldStand(this), p.getX(), p.getY());
             
             AudioManager.play("muda_barrage");
         }
     }
 
-    public void update(Dio dio, MyWorld world) {
+    public void update(Player p, MyWorld world) {
         if (cooldownTimer.isActive()) cooldownTimer.update(world);
         if (!durationTimer.isActive()) return;
         
         durationTimer.update(world);
 
         // If the ability expires OR the player died, stop the ability
-        if (durationTimer.isExpired() || dio.isDead()) {
-            stopAbility(dio);
+        if (durationTimer.isExpired() || p.isDead()) {
+            stopAbility(p);
         }
     }
     
     // New helper to handle clean shut-down
-    private void stopAbility(Dio dio) {
+    private void stopAbility(Player p) {
         durationTimer.stop();
-        if (!dio.isDead()) {
+        if (!p.isDead()) {
             cooldownTimer.reset();
             cooldownTimer.start();
-            dio.setAnimation("Dash");
+            p.setAnimation("Dash");//
         }
     }
-
+    
     // This is called by Dio.die() to make sure the Stand disappears immediately
     public void cancel() {
         durationTimer.stop();
         // TheWorldStand looks at isActive(), so it will remove itself next frame
     }
-
-    public boolean isActive() { 
-        return durationTimer.isActive() && !durationTimer.isExpired(); 
+    //Overrding ability
+    public boolean isActive() { return durationTimer.isActive() && !durationTimer.isExpired(); }
+    public boolean isCooldownActive() { return cooldownTimer.isActive(); }
+    public double getActivePercent() { 
+        return durationTimer.isActive() ? (1.0 - durationTimer.getPercentComplete()) : 0.0; 
+    }
+    public double getCooldownPercent() { 
+        return cooldownTimer.isActive() ? cooldownTimer.getPercentComplete() : 0.0; 
     }
     
-    // ... (Keep your existing Time Machine getters/setters below) ...
+    public String getKeybind() { return GameConfig.STAND_PUNCH_BUTTON; }
+    // --- Time Machine ---
+    public Object captureState() {
+        return new int[]{durationTimer.getRemainingFrames(), cooldownTimer.getRemainingFrames(), 
+                         durationTimer.isActive() ? 1 : 0, cooldownTimer.isActive() ? 1 : 0};
+    }
+
+    public void restoreState(Object state) {
+        int[] data = (int[]) state;
+        durationTimer.setRemainingFrames(data[0]);
+        cooldownTimer.setRemainingFrames(data[1]);
+        if (data[2] == 1) durationTimer.start(); else durationTimer.stop();
+        if (data[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
+    }
+    
+    //Time machine getters setters
     public int getDurFrames() { return durationTimer.getRemainingFrames(); }
     public void setDurFrames(int f) { durationTimer.setRemainingFrames(f); }
     public boolean isDurActive() { return durationTimer.isActive(); }

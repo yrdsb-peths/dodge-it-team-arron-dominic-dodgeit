@@ -19,6 +19,11 @@ public abstract class Player extends Actor
     protected abstract void animationLogic();
     //This is for hitbox controlling
     public abstract boolean checkCustomHitbox(Actor attacker, double padding);
+    //Animation methods are required (ONE FOR NAME ONLY OTHER FOR SPEED SETTING TOO)
+    public abstract void setAnimation(String name);
+    public abstract void setAnimation(String name, int speed);
+    //I-frames method are required
+    public abstract void startIFrame(double seconds);
     //Keep track of banner (for dio only)
     protected boolean bannerSpawned = false; 
     /**

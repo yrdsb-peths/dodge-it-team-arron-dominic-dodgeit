@@ -16,7 +16,8 @@ public class PlayingState implements GameState {
         GameRNG.randomize();//Sets a random seed for the game: its consistent
         
         ScoreManager.reset();//Resets score.
-        AudioManager.playLoop("dio_bgm");//Use Audio MGR to call the background music
+        //AudioManager.playLoop("dio_bgm");//Use Audio MGR to call the background music
+        AudioManager.playLoop(GameConfig.ACTIVE_CHARACTER.bgmKey);
         FX_RewindOverlay.preLoad(); // Draws the rewind screens into memory early!
         Greenfoot.setSpeed(50); //Set Game Tick to Normal
         
@@ -38,12 +39,16 @@ public class PlayingState implements GameState {
         rewindBar = new UI_RewindBar(rewindManager);
         world.addObject(rewindBar, world.getWidth() - GameConfig.s(100), GameConfig.s(20));
         
-        // Save the Dio object so we can give it to the UI 
-        Dio dio = new Dio();
-        world.addObject(dio, GameConfig.s(80), GameConfig.s(80));
+        // Spawn the dynamically configured player
+        GenericPlayer player;
+        if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) {
+            player = new Dio(); // Fallback to wrapper for hardcoded checks
+        } else {
+            player = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
+        }
+        world.addObject(player, GameConfig.s(80), GameConfig.s(80));
         
-        // Spawn the Ability Icon in the bottom right corner
-        UI_AbilityIcon abilityIcon = new UI_AbilityIcon(dio);
+        UI_AbilityIcon abilityIcon = new UI_AbilityIcon(player);
         world.addObject(abilityIcon, world.getWidth() - GameConfig.s(45), world.getHeight() - GameConfig.s(45));
     }
     
@@ -56,16 +61,7 @@ public class PlayingState implements GameState {
         if (GameConfig.TIME_STOP_BUTTON.equals(key)) {
             world.getGSM().pushState(new PausedState());
         }
-        
-        // Trigger rewind on R press
-        if (GameConfig.REWIND_TIME_BUTTON.equals(key) && rewindManager.canRewind()) {
-            AudioManager.setAllSoundsPaused(true);
-            AudioManager.playPool("rewind");
-            rewindManager.startRewind();
-            rewindOverlay = new FX_RewindOverlay();
-            world.addObject(rewindOverlay, world.getWidth()/2, world.getHeight()/2);
-        }
-        
+
         //
         /* Each frame: either rewind or record
          * Think of the following code like a DVD player. 
@@ -85,9 +81,9 @@ public class PlayingState implements GameState {
                 Greenfoot.setSpeed(50); 
                 AudioManager.setAllSoundsPaused(false);//Reusme normal game music
                 //Give i-frame to dio
-                List<Dio> dios = world.getObjects(Dio.class);
-                if (!dios.isEmpty()) {
-                    dios.get(0).startIFrame(1.0); // 1 second of safety after rewind
+                List<GenericPlayer> players = world.getObjects(GenericPlayer.class);
+                if (!players.isEmpty()) {
+                    players.get(0).startIFrame(1.0); 
                 }
             }
         } else {
@@ -125,9 +121,21 @@ public class PlayingState implements GameState {
         //Clean up as we end playing state. 
         //Note: normally we don't "end" the playing state, we simply put a new state on top of it
         //So exit is only called when the entire playing state is over (aka game is lost)
-        AudioManager.stop("dio_bgm");
+        //AudioManager.stop("dio_bgm");
+        AudioManager.stop(GameConfig.ACTIVE_CHARACTER.bgmKey);
         world.removeObjects(world.getObjects(null));
         Greenfoot.setSpeed(50);
+    }
+    
+    //Rewind time trigger
+    public void triggerRewind(MyWorld world) {
+        if (rewindManager.canRewind()) {
+            AudioManager.setAllSoundsPaused(true);
+            AudioManager.playPool("rewind");
+            rewindManager.startRewind();
+            rewindOverlay = new FX_RewindOverlay();
+            world.addObject(rewindOverlay, world.getWidth()/2, world.getHeight()/2);
+        }
     }
     
     //Getter methods 

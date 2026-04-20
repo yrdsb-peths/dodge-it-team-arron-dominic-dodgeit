@@ -1,11 +1,11 @@
 import greenfoot.*;
 
-public class UI_AbilityIcon extends Actor {
-    private Dio dio;
+public class UI_AbilityIcon extends Actor {    
+    private Player player;
     private int size;
     
-    public UI_AbilityIcon(Dio dio) {
-        this.dio = dio;
+    public UI_AbilityIcon(Player player) {
+        this.player = player;
         this.size = GameConfig.s(55); // Scales with GameConfig
         updateImage();
     }
@@ -21,14 +21,12 @@ public class UI_AbilityIcon extends Actor {
         int radiusSq = cx * cy;
         
         // If Dio is dead, the UI grays out and turns red.
-        if (dio.isDead()) {
+        if (player.isDead()) {
             img.setColor(new Color(255, 0, 0, 150));
             img.fillOval(0, 0, size, size);
             setImage(img);
             return;
         }
-
-        Ability_StandPunch ability = dio.getStandPunchAbility();
 
         // Draw Base Background
         img.setColor(new Color(30, 30, 30, 220));
@@ -41,17 +39,23 @@ public class UI_AbilityIcon extends Actor {
 
         double percent = 0;
         Color sweepColor = null;
+        
+        Ability ability = null;
+        if (player instanceof GenericPlayer) {
+            ability = ((GenericPlayer)player).getPrimaryAbility();
+        }
+
+        if (ability == null) return;
+
 
         // Check Timers
         if (ability.isActive()) {
-            // Punching right now! (Orange sweep draining)
-            percent = ability.getDurFrames() / (GameConfig.WORLD_PUNCH_DURATION * 60.0);
-            sweepColor = new Color(255, 140, 0, 180); // Orange
+            percent = ability.getActivePercent();
+            sweepColor = new Color(255, 140, 0, 180);
         } 
-        else if (ability.isCoolActive()) {
-            // On Cooldown! (Blue sweep filling up)
-            percent = ability.getCoolFrames() / (GameConfig.WORLD_PUNCH_COOLDOWN * 60.0);
-            sweepColor = new Color(0, 150, 255, 180); // Blue
+        else if (ability.isCooldownActive()) {
+            percent = ability.getCooldownPercent();
+            sweepColor = new Color(0, 150, 255, 180);
         }
 
         // Fills the circle slice (LoL Cooldown Style)

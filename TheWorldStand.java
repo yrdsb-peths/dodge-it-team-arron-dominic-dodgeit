@@ -30,15 +30,15 @@ public class TheWorldStand extends Actor implements Time_Snapshottable {
         setImage(punchAnim.getCurrentFrame());
 
         // Follow Dio
-        List<Dio> dios = world.getObjects(Dio.class);
-        if (!dios.isEmpty()) {
-            Dio dio = dios.get(0);
+        List<GenericPlayer> players = world.getObjects(GenericPlayer.class);
+        if (!players.isEmpty()) {
+            GenericPlayer player = players.get(0);
             // If Dio is dead, the Stand should probably stop following or vanish
-            if (dio.isDead()) {
+            if (player.isDead()) {
                 world.removeObject(this);
                 return;
             }
-            setLocation(dio.getX() + GameConfig.s(80), dio.getY());
+            setLocation(player.getX() + GameConfig.s(80), player.getY());
         }
 
         // Destroy obstacles

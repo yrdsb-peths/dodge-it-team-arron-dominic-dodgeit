@@ -5,15 +5,15 @@ import java.util.ArrayList;
 public enum CharacterConfig {
     
     DIO(
-        "Dio", 
-        new String[]{"Idle", "Wry", "Dash", "Lose", "WalkLeft", "WalkRight", "Intro", "Scratch", "Roll", "High", "Teleport"},
-        "Dash", 
-        GameConfig.DIO_MOVE_SPEED,
-        0.8 * GameConfig.SCALE, // Base Scale
-        "dio_bgm",
-        "dioLostVoices",
-        BossConfig.DIO,
-        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} 
+        "Dio", // Folder name
+        new String[]{"Idle", "Wry", "Dash", "Lose"}, // Folder names for animations
+        "Dash", // Default animation
+        GameConfig.DIO_MOVE_SPEED, // Speed
+        0.8 * GameConfig.SCALE, // Scale
+        "dio_bgm", // Music
+        "dioLostVoices", // Death sound
+        BossConfig.DIO, // Boss banner (null if none)
+        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} // Abilities!
     );
     
     // To make a character, just add a comma after DIO's block
