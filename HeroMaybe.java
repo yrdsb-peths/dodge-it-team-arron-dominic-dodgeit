@@ -19,7 +19,8 @@ public class HeroMaybe extends Actor
         walkFrames = new GreenfootImage[8];
         for (int i = 0; i < 8; i++)
         {
-            walkFrames[i] = new GreenfootImage("Sneaky" + i + ".png");
+            walkFrames[i] = new GreenfootImage("sneaky" + i + ".png");
+            walkFrames[i].scale(60, 80);
         }
         
         //Mirror the same for left-facing
