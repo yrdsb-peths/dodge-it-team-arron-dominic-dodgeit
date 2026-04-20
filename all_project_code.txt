@@ -1,0 +1,2992 @@
+
+==================================================
+FILE: ./MyWorld.java
+==================================================
+
+import greenfoot.*;
+
+public class MyWorld extends World {
+    private GameStateManager gsm;
+    
+    public PlayingState playingState; 
+    //Game state manager is a class we defined to manage game states
+    //Game states are stored as classes, with the "blueprint" (interface) GameState, 
+    //which requires:
+    //an enter method, an update method, and an exit method
+    
+    public MyWorld() {
+        //Initiate a world (arguments: width, height, idk, bound)
+        //False means things are not limited by the boundary and can go through it
+        //This is helpful as we do not want a limiting boundar
+        super(GameConfig.WORLD_WIDTH,GameConfig.WORLD_HEIGHT, 1,false);
+        //Initiate a game state manager, pasing this world (MyWorld) as the argument
+        gsm = new GameStateManager(this);//gsm stands for game state manager.
+        
+        //Set the order of rendeirng:
+        //UI on top, then Dio, then after images, then the roadrollers
+        setPaintOrder(Banner.class, UIText.class,UI_AbilityIcon.class, UI_RewindBar.class, FX_RewindOverlay.class, 
+                      Exclaimation.class, PathWarning.class, 
+                      TheWorldStand.class, Dio.class, FX_Afterimage.class, Obstacles.class, ScrollingRoad.class);
+                      
+        //Start the game in the playing state
+        //Remember, pushState adds the state on top of the stack,and enters that state
+        
+        playingState = new PlayingState();
+        gsm.pushState(new MenuState());
+        //Initilaise the audio manager to load sounds into RAM
+        AudioManager.init();
+        
+        
+    }
+    
+    /*
+     * Main function running the game.
+     * We "replaced" the "act" method of greenfoot with our own update method to handle 
+     * different game states and pausing. 
+     * 
+     * So actors do not get their movement logic called 60 times a second as in act,
+     * but get controlled by our own update method, depending on the game state.
+     */
+    public void act(){
+        //All logic is delegated to the state machine,
+        //which delegates the taskto the specific state classes
+        gsm.update();
+    }
+    
+    /*
+     * Getter method to get the game state manager.
+     */
+    public GameStateManager getGSM(){
+        return gsm;
+    }
+    
+    public boolean isRewinding() {
+        GameState s = gsm.peekState();
+        if (s instanceof PlayingState) {
+            return ((PlayingState) s).isRewinding();
+        }
+        return false;
+    }
+    
+}
+
+
+
+==================================================
+FILE: ./SadFace.java
+==================================================
+
+import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
+
+/**
+ * Write a description of class SadFace here.
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+public class SadFace extends Actor
+{
+    /**
+     * Act - do whatever the SadFace wants to do. This method is called whenever
+     * the 'Act' or 'Run' button gets pressed in the environment.
+     */
+    public void act()
+    {
+        // Add your action code here.
+    }
+}
+
+
+
+==================================================
+FILE: ./GameOverState.java
+==================================================
+
+import greenfoot.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class GameOverState implements GameState {
+    private List<Actor> uiElements = new ArrayList<>();
+
+    public void enter(MyWorld world) {
+        AudioManager.playLoop("lost_bgm"); 
+        
+        ScoreManager.updateHighScore();
+        int finalScore = ScoreManager.getScore();
+        int bestScore = ScoreManager.getHighScore();
+        
+        // Create UI Elements with scaled font sizes
+        UIText title = new UIText("RETIRED", GameConfig.s(80), Color.RED);
+        UIText scoreTxt = new UIText("Final Score: " + finalScore, GameConfig.s(30), Color.RED);
+        UIText bestTxt = new UIText("Best Survival: " + bestScore, GameConfig.s(30), Color.RED);
+        UIText restartPrompt = new UIText("Press ENTER to Restart", GameConfig.s(25), Color.BLACK);
+
+        // Position them using scaled Y-coordinates
+        int midX = world.getWidth() / 2;
+        addUI(world, title, midX, GameConfig.s(150));
+        addUI(world, scoreTxt, midX, GameConfig.s(200));
+        addUI(world, bestTxt, midX, GameConfig.s(250));
+        addUI(world, restartPrompt, midX, GameConfig.s(300));
+    }
+
+    public void update(MyWorld world) {
+        if ("enter".equals(Greenfoot.getKey())) {
+            world.getGSM().changeState(new PlayingState());
+        }
+    }
+
+    public void exit(MyWorld world) {
+        AudioManager.stop("lost_bgm"); 
+        world.removeObjects(uiElements);
+    }
+
+    private void addUI(MyWorld world, Actor a, int x, int y) {
+        world.addObject(a, x, y);
+        uiElements.add(a);
+    }
+}
+
+
+==================================================
+FILE: ./UI_RewindBar.java
+==================================================
+
+import greenfoot.*;
+
+public class UI_RewindBar extends Actor {
+    private Time_RewindManager rewindManager;
+    private static final int BAR_W = 150;
+    private static final int BAR_H = 12;
+
+    public UI_RewindBar(Time_RewindManager rewindManager) {
+        this.rewindManager = rewindManager;
+        redraw();
+    }
+
+    public void act() {
+        redraw();
+    }
+
+    private void redraw() {
+        int w = GameConfig.s(BAR_W);
+        int h = GameConfig.s(BAR_H);
+        int padding = GameConfig.s(2);
+        
+        GreenfootImage img = new GreenfootImage(w + padding*2, h + GameConfig.s(18));
+        
+        // Label
+        GreenfootImage label = new GreenfootImage("TIME", GameConfig.s(10), Color.WHITE, new Color(0,0,0,0));
+        img.drawImage(label, 0, 0);
+        
+        int barTop = GameConfig.s(14);
+        
+        // Background track
+        img.setColor(new Color(0, 0, 0, 160));
+        img.fillRect(0, barTop, w + padding*2, h + padding*2);
+        
+        // Fill amount
+        double fill = (double) rewindManager.getHistorySize() / Time_RewindManager.MAX_HISTORY;
+        boolean canRewind = rewindManager.canRewind();
+        boolean isRewinding = rewindManager.isRewinding();
+        
+        Color fillColor;
+        if (isRewinding) {
+            fillColor = new Color(100, 200, 255); // bright blue while rewinding
+        } else if (canRewind) {
+            fillColor = new Color(160, 100, 255); // purple when ready
+        } else {
+            fillColor = new Color(80, 80, 80);    // gray when not enough
+        }
+        
+        img.setColor(fillColor);
+        img.fillRect(padding, barTop + padding, (int)(fill * w), h);
+        
+        // Cost marker — shows where "5 seconds" is
+        double costFrac = (double) Time_RewindManager.REWIND_COST_FRAMES / Time_RewindManager.MAX_HISTORY;
+        int markerX = (int)(costFrac * w) + padding;
+        img.setColor(new Color(255, 255, 255, 180));
+        img.fillRect(markerX, barTop, GameConfig.s(2), h + padding*2);
+        
+        setImage(img);
+    }
+}
+
+
+==================================================
+FILE: ./Obstacles.java
+==================================================
+
+import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
+
+/**
+ * Write a description of class Obstacles here.
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+public abstract class Obstacles extends Actor
+{
+    protected int speed;
+    
+    /**
+     * Act - do whatever the Obstacles wants to do. This method is called whenever
+     * the 'Act' or 'Run' button gets pressed in the environment.
+     */
+    public void act()
+    {
+        MyWorld world = (MyWorld) getWorld();
+        if(world == null || !world.getGSM().isState(PlayingState.class))return;
+        
+        movementLogic();
+        collisionLogic();
+        checkRemove();
+        
+    }
+    
+    protected abstract void movementLogic();
+    protected abstract void collisionLogic();
+    protected abstract void checkRemove();
+}
+
+
+
+==================================================
+FILE: ./TheWorldStand.java
+==================================================
+
+
+import greenfoot.*;
+import java.util.List;
+
+public class TheWorldStand extends Actor implements Time_Snapshottable {
+    private Animator punchAnim;
+    private Ability_StandPunch ability;
+
+    public TheWorldStand(Ability_StandPunch ability) {
+        punchAnim = new Animator("Dio", "WorldPunch", ability.standAnimSpeed, GameConfig.DIO_BASE_SCALE);
+        this.ability = ability;
+        AudioManager.play("summon_stand");
+    }
+
+    public void act() {
+        MyWorld world = (MyWorld) getWorld();
+        if (world == null) return;
+
+        // --- FIX: Check for removal FIRST ---
+        // If the ability is no longer active, remove the Stand immediately.
+        // This must happen even if the game is paused or rewinding!
+        if (!ability.isActive()) {
+            world.removeObject(this);
+            return;
+        }
+
+        // Now do the safety checks for movement/animation
+        if (!world.getGSM().isState(PlayingState.class) || world.isRewinding()) return;
+
+        setImage(punchAnim.getCurrentFrame());
+
+        // Follow Dio
+        List<Dio> dios = world.getObjects(Dio.class);
+        if (!dios.isEmpty()) {
+            Dio dio = dios.get(0);
+            // If Dio is dead, the Stand should probably stop following or vanish
+            if (dio.isDead()) {
+                world.removeObject(this);
+                return;
+            }
+            setLocation(dio.getX() + GameConfig.s(80), dio.getY());
+        }
+
+        // Destroy obstacles
+        List<Obstacles> hitObstacles = getIntersectingObjects(Obstacles.class);
+        for (Obstacles obs : hitObstacles) {
+            //world.addObject(new Exclaimation(), obs.getX(), obs.getY());
+            world.removeObject(obs);
+            ScoreManager.addScore(2);
+        }
+    }
+
+    public Time_ActorMemento captureState() {
+        return new Time_ActorMemento(this, getX(), getY(), null);
+    }
+
+    public void restoreState(Time_ActorMemento m) { }
+}
+
+
+==================================================
+FILE: ./Roadroller.java
+==================================================
+
+import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
+
+/**
+ * Write a description of class Roadroller here.
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+
+public class Roadroller extends Obstacles implements Time_Snapshottable
+{
+    private int scoreToAdd = 1;
+    /**
+     * Act - do whatever the Roadroller wants to do. This method is called whenever
+     * the 'Act' or 'Run' button gets pressed in the environment.
+     */
+    private boolean faceLeft = false;
+    private boolean resized = false;
+    
+    
+    private static int globalSpeed = GameConfig.ROADROLLER_SPEED;
+    private static final int MAX_SPEED = GameConfig.ROADROLLER_MAX_SPEED; // Safety cap
+    
+    //Can customise roadroller so that it doesnt give any score
+    public Roadroller(int speed) {
+        this(speed,1); // Calls the original Roadroller() constructor first
+    }
+    
+     public Roadroller(int speed, int scoreToAdd) {
+        this(); // Calls the default constructor to setup the image
+        this.speed = speed; // Assign the speed from SpawnManager!
+        this.scoreToAdd = scoreToAdd;
+    }
+    
+    public Roadroller(){
+        GreenfootImage img = new GreenfootImage("obstacles/road_roller.png");
+        setImage(img);
+        //Resizing and orienting the image
+        getImage().mirrorHorizontally();
+        getImage().scale(GameConfig.ROADROLLER_WIDTH, GameConfig.ROADROLLER_WIDTH);
+        //Moves at 6 pixels per frame
+        speed = GameConfig.ROADROLLER_SPEED;
+    }
+    
+    public void movementLogic(){
+        //Negative speed means moving from right to left
+        move(-speed);
+    }
+    
+    public void collisionLogic(){
+    
+        //I'm really afraid of that null pointer error so this is a safety check.
+        //Also dont scream when im rewinding
+        MyWorld world = (MyWorld) getWorld();
+        if (getWorld() == null|| world.isRewinding()) return; 
+
+        // Get the player directly (no need to use isTouching first, this is faster)
+        Player player = (Player) getOneIntersectingObject(Player.class);
+        if (player != null && !player.isDead()) {
+            if (player.checkCustomHitbox(this, 0.8)) {
+                player.die();
+            }
+        }
+    }   
+    
+    public void checkRemove(){
+        //Check remove is checked separately and lastly
+        //because this avoids calling world after removing itself from world
+        //which results in null pointer error (yikes!)
+        if (getX() <= 0) {
+            //When it reaches the end, AND if player is alive, add score. 
+            java.util.List<Player> players = getWorld().getObjects(Player.class);
+            if (!players.isEmpty()) {
+                Player player = players.get(0);
+                if (!player.isDead()) {
+                    ScoreManager.addScore(scoreToAdd);
+                }
+            }
+            
+            getWorld().removeObject(this);
+            
+        }
+        return;
+    }
+    
+    // Time machine stuff for time rewinding.
+
+    //These are the custom data stored for roadrollers
+    private static class RoadrollerData {
+        int speed, scoreToAdd;
+        RoadrollerData(int speed, int scoreToAdd) {
+            this.speed = speed;
+            this.scoreToAdd = scoreToAdd;
+        }
+    }
+    
+    //Captures the current state ands sends them back as a momento
+    public Time_ActorMemento captureState() {
+        return new Time_ActorMemento(this, getX(), getY(), 
+            new RoadrollerData(speed, scoreToAdd));
+    }
+    
+    //Restores state according to the momento
+    public void restoreState(Time_ActorMemento m) {
+        RoadrollerData d = (RoadrollerData) m.customData;
+        this.speed = d.speed;
+        this.scoreToAdd = d.scoreToAdd;
+    }
+}
+
+
+
+==================================================
+FILE: ./GameRNG.java
+==================================================
+
+public class GameRNG {
+    private static long currentSeed;
+
+    // Call this once when the game starts
+    public static void randomize() {
+        currentSeed = System.currentTimeMillis();
+    }
+
+    // Get the current state of the math (to save in snapshots)
+    public static long getState() {
+        return currentSeed;
+    }
+
+    // Restore the math (when rewinding)
+    public static void restoreState(long oldSeed) {
+        currentSeed = oldSeed;
+    }
+
+    // USE THIS INSTEAD OF Greenfoot.getRandomNumber()
+    public static int getRandomNumber(int max) {
+        if (max <= 0) return 0;
+        // The magic math that generates a random sequence
+        currentSeed = (currentSeed * 1103515245L + 12345L);
+        return (int)(Math.abs(currentSeed / 65536) % max);
+    }
+}
+
+
+==================================================
+FILE: ./MenuState.java
+==================================================
+
+import greenfoot.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MenuState implements GameState {
+    private List<Actor> uiElements = new ArrayList<>();
+
+    public void enter(MyWorld world) {
+        int middle = world.getWidth() / 2;
+        
+        // 1. Header
+        addUI(world, new UIText("DIO-DGE IT", GameConfig.s(55), Color.YELLOW), middle, GameConfig.s(60));
+        addUI(world, new UIText("The World is your playground.", GameConfig.s(18), Color.WHITE), middle, GameConfig.s(95));
+
+        // 2. Control Layout (Left Aligned for readability)
+        int leftAlign = middle - GameConfig.s(120);
+        int rowStart = GameConfig.s(150);
+        int spacing = GameConfig.s(35);
+
+        addUI(world, new UIText("ARROWS : Move Dio", GameConfig.s(22), Color.WHITE), leftAlign, rowStart);
+        
+        // Explain 'W' - Time Stop
+        addUI(world, new UIText("W : THE WORLD (Stop Time)", GameConfig.s(22), new Color(200, 255, 0)), leftAlign, rowStart + spacing);
+        
+        // Explain 'R' - Mandom (Rewind)
+        addUI(world, new UIText("R : MANDOM (Rewind 2s)", GameConfig.s(22), new Color(100, 200, 255)), leftAlign, rowStart + spacing * 2);
+        
+        // Explain 'S' - Made in Heaven (Speed)
+        addUI(world, new UIText("S : MADE IN HEAVEN (Speed)", GameConfig.s(22), new Color(255, 100, 255)), leftAlign, rowStart + spacing * 3);
+        
+        addUI(world, new UIText("E : Summon Stand (Fights for You)", GameConfig.s(22), new Color(255, 100, 255)), leftAlign, rowStart + spacing * 4);
+
+        // 3. Hint/Objective
+        addUI(world, new UIText("Dodge the Road Rollers and Ambulances!", GameConfig.s(18), Color.ORANGE), middle, GameConfig.s(330));
+
+        // 4. Start Prompt (Flashing Cyan)
+        addUI(world, new UIText("[ Press ENTER to Begin ]", GameConfig.s(24), Color.CYAN), middle, GameConfig.s(375));
+    }
+
+    public void update(MyWorld world) {
+        if ("enter".equals(Greenfoot.getKey())) {
+            world.getGSM().changeState(world.playingState);
+        }
+    }
+
+    public void exit(MyWorld world) {
+        world.removeObjects(uiElements);
+        uiElements.clear();
+    }
+
+    private void addUI(MyWorld world, Actor a, int x, int y) {
+        // We adjust x slightly for the left-aligned text so the center of the block is aligned
+        int drawX = (a instanceof UIText && x < world.getWidth()/2) ? x + GameConfig.s(120) : x;
+        world.addObject(a, drawX, y);
+        uiElements.add(a);
+    }
+}
+
+
+==================================================
+FILE: ./UI_AbilityIcon.java
+==================================================
+
+import greenfoot.*;
+
+public class UI_AbilityIcon extends Actor {
+    private Dio dio;
+    private int size;
+    
+    public UI_AbilityIcon(Dio dio) {
+        this.dio = dio;
+        this.size = GameConfig.s(55); // Scales with GameConfig
+        updateImage();
+    }
+    
+    public void act() {
+        updateImage();
+    }
+    
+    private void updateImage() {
+        GreenfootImage img = new GreenfootImage(size, size);
+        int cx = size / 2;
+        int cy = size / 2;
+        int radiusSq = cx * cy;
+        
+        // If Dio is dead, the UI grays out and turns red.
+        if (dio.isDead()) {
+            img.setColor(new Color(255, 0, 0, 150));
+            img.fillOval(0, 0, size, size);
+            setImage(img);
+            return;
+        }
+
+        Ability_StandPunch ability = dio.getStandPunchAbility();
+
+        // Draw Base Background
+        img.setColor(new Color(30, 30, 30, 220));
+        img.fillOval(0, 0, size, size);
+        
+        // Draw the Letter "E"
+        img.setColor(Color.WHITE);
+        img.setFont(new Font("Arial", true, false, GameConfig.s(22)));
+        img.drawString("E", cx - GameConfig.s(7), cy + GameConfig.s(8));
+
+        double percent = 0;
+        Color sweepColor = null;
+
+        // Check Timers
+        if (ability.isActive()) {
+            // Punching right now! (Orange sweep draining)
+            percent = ability.getDurFrames() / (GameConfig.WORLD_PUNCH_DURATION * 60.0);
+            sweepColor = new Color(255, 140, 0, 180); // Orange
+        } 
+        else if (ability.isCoolActive()) {
+            // On Cooldown! (Blue sweep filling up)
+            percent = ability.getCoolFrames() / (GameConfig.WORLD_PUNCH_COOLDOWN * 60.0);
+            sweepColor = new Color(0, 150, 255, 180); // Blue
+        }
+
+        // Fills the circle slice (LoL Cooldown Style)
+        if (sweepColor != null) {
+            for (int x = 0; x < size; x++) {
+                for (int y = 0; y < size; y++) {
+                    int dx = x - cx;
+                    int dy = y - cy;
+                    if (dx * dx + dy * dy <= radiusSq) {
+                        double angle = Math.toDegrees(Math.atan2(dx, -dy)); // 0 degrees is Top
+                        if (angle < 0) angle += 360;
+                        if (angle <= percent * 360) {
+                            img.setColorAt(x, y, sweepColor);
+                        }
+                    }
+                }
+            }
+        } else {
+            // Ready to be used! Draw a green border.
+            img.setColor(new Color(0, 255, 0));
+            img.drawOval(0, 0, size - 1, size - 1);
+            img.drawOval(1, 1, size - 3, size - 3);
+        }
+        
+        setImage(img);
+    }
+}
+
+
+==================================================
+FILE: ./Train.java
+==================================================
+
+import greenfoot.*;
+
+public class Train extends Obstacles implements Time_Snapshottable {
+    private int state = 0; // 0: Waiting/Shaking, 1: Rushing
+    private int waitTimer = 65; // Slightly longer than the PathWarning
+    private int speed;
+    
+    public Train(int speed) {
+        
+        GreenfootImage img = new GreenfootImage("obstacles/ambulence.png");
+        setImage(img);
+        getImage().scale(GameConfig.TRAIN_WIDTH, GameConfig.TRAIN_WIDTH);
+        this.speed = speed;
+        /*
+        // DRAW THE CAR (No assets needed!)
+        GreenfootImage img = new GreenfootImage(120, 40);
+        
+        // The "Body" - a dark sleek rectangle
+        img.setColor(new Color(30, 30, 30));
+        img.fill();
+        
+        // Add "Headlight" glows for a cool effect
+        img.setColor(Color.YELLOW);
+        img.fillRect(0, 5, 10, 10);
+        img.fillRect(0, 25, 10, 10);
+        
+        // Add a "Trail" or "Wind" lines
+        img.setColor(new Color(255, 255, 255, 100));
+        img.drawLine(120, 10, 80, 10);
+        img.drawLine(120, 30, 80, 30);
+        
+        setImage(img);
+        */
+    }
+
+    protected void movementLogic() {
+        if (state == 0) {
+            // STATE 0: The "Revving" engine feel
+            waitTimer--;
+            // Shaking vertically to show it's about to zoom
+            setLocation(getX(), getY());
+            
+            if (waitTimer <= 0) {
+                state = 1;
+                // AudioManager.play("car_zoom"); 
+            }
+        } else {
+            // STATE 1: THE RUSH
+            move(-speed);
+        }
+    }
+
+    protected void collisionLogic() {
+        if (state == 0) return; // Can't hit player while waiting
+        
+        Player p = (Player) getOneIntersectingObject(Player.class);
+        if (p != null && !p.isDead()) {
+            // At 25 speed, the collision needs to be tight
+            if (p.checkCustomHitbox(this, 1)) {
+                AudioManager.play("car_crash");
+                p.die();
+            }
+        }
+    }
+
+    protected void checkRemove() {
+        if (getX() < -100) {
+            ScoreManager.addScore(5); // Big points for dodging the fast one
+            getWorld().removeObject(this);
+        }
+    }
+    
+    
+    //Time Machine stuff for time rewinding
+    
+    //Stored custom data for train
+    private static class TrainData {
+        int speed, state, waitTimer;
+        TrainData(int speed, int state, int waitTimer) {
+            this.speed = speed;
+            this.state = state;
+            this.waitTimer = waitTimer;
+        }
+    }
+    
+    //Captures current state and stores it as a momento
+    public Time_ActorMemento captureState() {
+        return new Time_ActorMemento(this, getX(), getY(),
+                                     new TrainData(speed, state, waitTimer));
+    }
+    
+    //Restores previous state according to the momento
+    public void restoreState(Time_ActorMemento m) {
+        TrainData d = (TrainData) m.customData;
+        this.speed = d.speed;
+        this.state = d.state;
+        this.waitTimer = d.waitTimer;
+    }
+    
+
+}
+
+
+==================================================
+FILE: ./Time_FrameSnapshot.java
+==================================================
+
+import java.util.List;
+import java.util.ArrayList;
+
+public class Time_FrameSnapshot {
+    public final List<Time_ActorMemento> actorStates;
+    public final int score;
+    public int roadrollerRate;
+    public int trainRate;
+    public final int spawnTimer;
+    public final int difficultyTimer;
+    public final long rngState;//Stores the RNG
+    
+    public Time_FrameSnapshot(List<Time_ActorMemento> actorStates, int score, 
+                          int spawnTimer, int difficultyTimer,int rRate, int tRate, long rngState) {
+        this.actorStates = actorStates;
+        this.score = score;
+        this.spawnTimer = spawnTimer;
+        this.difficultyTimer = difficultyTimer;
+        this.roadrollerRate = rRate;
+        this.trainRate = tRate;
+        this.rngState = rngState;
+    }
+}
+
+
+==================================================
+FILE: ./GameConfig.java
+==================================================
+
+import greenfoot.*;
+
+public class GameConfig {
+    // 1. GLOBAL SCALING: This scales every image. By default, it is 1. To make things larger and occupy more screen, it is currently 1.5 
+    public static final float SCALE = 1.5f; 
+    
+    // 2. WORLD SETTINGS
+    public static final int WORLD_WIDTH = s(600);//World widht is 600 pixels
+    public static final int WORLD_HEIGHT = s(400);// World height is 400 pixels
+    public static final int LANE_HEIGHT = s(80); // Lanes are 80px apart
+    
+    // 3. PLAYER SETTINGS (DIO)
+    public static final int DIO_MOVE_SPEED = s(5);//Dio moves 5 pixels per frame
+    public static final double DIO_BASE_SCALE = 0.8 * SCALE; //Dio should be 0.8 its image size
+
+    // 4. ENEMY SETTINGS
+    //a. Obstacle Size
+    public static final int ROADROLLER_WIDTH = s(80);//Roadroller is 80 pixels wide
+    
+    public static final int TRAIN_WIDTH = s(130);
+        // Train is 130 pixels wide. (Its an Ambulance, but its called a train because it works likes a train and looks like an ambulance).
+        //If you dont know why an ambulance is this powerful, you probably have to ask Kira Yoshkage, i think he knows the answer.
+    
+    //b. Difficulty settings
+    public static final int LEVEL_UP_TIME = 200;//Game gets more difficulty per 200 frame
+    public static final int ROADROLLER_RATE = 30;// number of frames for a car, decreass with difficulty;
+    public static final int ROADROLLER_MIN_RATE= 17;
+    public static final int ROADROLLER_SPEED = s(6);//Roadroller moves 6 frames per second
+    public static final int ROADROLLER_MAX_SPEED = s(10);
+    
+    public static final int TRAIN_RATE = 200;// number of frames for a car, decreass with difficulty;
+    public static final int TRAIN_MIN_RATE = 36;
+    public static final int TRAIN_SPEED = s(25);//Train moves at 25 pixesl per frame by default
+    public static final int TRAIN_MAX_SPEED = s(130);//Train can move at 60 pixels per frame at its peak
+      
+    
+    // Rewind Time Settings
+    
+    public static final int MAX_REWIND_TIME = 360; //6 seconds
+    public static final int REWIND_TIME = 120; // 2 seconds
+    
+    //Ability: Made In Heaven Settings
+    public static final int MIH_TICK_SPEED = 48; 
+    public static final int NORMAL_TICK_SPEED = 50; 
+    
+    //Abiliyt: World Punch Setting
+    public static final double WORLD_PUNCH_DURATION = 3.5; //in seconds
+    public static final double WORLD_PUNCH_COOLDOWN = 5.0; //in seconds
+    
+    //Volume Setting
+    public static final int MASTER_VOLUME = 50;
+    
+    //Buttons
+    
+    public static final String TIME_STOP_BUTTON = "w";//Handled in PlayingState
+    public static final String REWIND_TIME_BUTTON = "r";//Hanlded in PlayingState
+    public static final String MIH_BUTTON = "s";//Handled in Dio
+    public static final String STAND_PUNCH_BUTTON = "e";//Hanlded in Dio
+    
+    // Road & Lanes
+    public static final int ROAD_SCROLL_SPEED = s(5);//The background "roads" moves at 5 pixels per second
+    public static final int ROAD_MAX_SPEED = s(5);
+    // We calculate lanes based on the scaled world height
+    public static final int[] LANES = { s(40), s(120), s(200), s(280), s(360) };//These are the locations of the "lanes"
+    
+        
+    // UI (Font Size)
+    public static final int FONT_SIZE_LARGE = s(80);
+    public static final int FONT_SIZE_SMALL = s(30);
+    
+    // THE HELPER: Scales any pixel value based on the global SCALE
+    public static int s(int pixels) {
+        return Math.round(pixels * SCALE);
+    }
+}
+
+
+==================================================
+FILE: ./Dio.java
+==================================================
+
+import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
+import java.util.HashMap; // Hash map for animation with its animator...
+/*
+ *   Dio is the player. Although this is a class, this will only be one player 
+ *   (only one object) so static methods are used for convenience. 
+ *   (a pro programmar would probably spit at me for that statement but wtv)
+ */
+public class Dio extends Player implements Time_Snapshottable
+{
+    //A hashmap(dictionary) of animations with key: name and value: the corresponding animator
+    private HashMap<String, Animator> animations = new HashMap<>();
+    //The current animationor and action name it takes in
+    private Animator currentAnimator;
+    private String currentAnimName = "";
+    
+    
+    //A 2 second timer before removing object from gae after dying
+    private GameTimer deathTimer = new GameTimer(4.0, false);
+    //Play some animation for 3 seconds only
+    private GameTimer highTimer = new GameTimer(3.0, false);
+    //A timer that allows Dio to play some temporary animation.
+    //Such as death anim, or high animiation
+    private GameTimer activeTimer = null;
+    private String defaultAnim = "Dash";
+    
+    private final int moveSpeed = GameConfig.DIO_MOVE_SPEED;// 5 pixels per frame
+    
+    //Storing death location
+    private int dieX, dieY;
+    
+    //Ability
+    private Ability_MadeInHeaven mihAbility = new Ability_MadeInHeaven();//Speeds up
+    private Ability_StandPunch standPunchAbility = new Ability_StandPunch();//Summons stand to punch for you
+    
+    //I-Frame
+    private GameTimer iFrameTimer = new GameTimer(0.5, false);
+    /*
+     * Contructus a DIO by setting up animations.
+     * Currently default animation is Dash as a placeholder
+     */
+    public Dio(){
+        //All the names of the animations: action name, folder name, file prefix are the same.
+        String[] animNames = {"Idle", "Wry", "Dash", "High", "Intro","Scratch", "Roll","Lose", "WalkLeft", "WalkRight","Teleport"};
+        for (String name : animNames) {
+            // Parameters: Folder name
+            animations.put(name, new Animator("Dio", name, GameConfig.DIO_BASE_SCALE));
+        }
+        //Some animations use custom speeds: e.g. scratch is faster
+        animations.put("Scratch", new Animator("Dio","Scratch",3, GameConfig.DIO_BASE_SCALE));
+
+        // 2. Set the starting animation
+        setAnimation("Dash");
+    }
+    
+    /*
+     * Sets animatoin based on the name input.
+     */
+    public void setAnimation(String name){
+        //PREVENT CALLING AFTER DEATH
+        if (isDead && !name.equals("Lose")) return;
+        //Prevents repetitive calling
+        if (!currentAnimName.equals(name) && animations.containsKey(name)) {
+            currentAnimName = name;
+            currentAnimator = animations.get(name);
+            currentAnimator.reset();
+        }
+    }
+    
+    /*
+     * Overloaded version that accepts a speed
+     */
+    public void setAnimation(String name, int speed) {
+        if (getWorld() == null) return; 
+        if (isDead && !name.equals("Lose")) return;
+        if (animations.containsKey(name)) {
+            animations.get(name).setSpeed(speed); // Update the speed
+            setAnimation(name);                   // Call the original logic to switch
+        }
+    }
+    
+    public void playTimedAnimation(String name, GameTimer timer){
+        setAnimation(name);
+        this.activeTimer = timer;
+        this.activeTimer.reset();
+        this.activeTimer.start();
+    }
+    
+    /*
+     * Sets actor image as the correct frame. 
+     */
+    protected void animationLogic(){
+        if (getWorld() == null) return; 
+        setImage(currentAnimator.getCurrentFrame());
+        
+        //******Made In Heaven Ability Animation
+        mihAbility.update(this, (MyWorld)getWorld());
+        //*******Stand Punch Ability Animation
+        standPunchAbility.update(this, (MyWorld)getWorld());
+        
+        //Check if we are in a timed, temporary sequence
+        if(!isDead &&activeTimer != null){
+            activeTimer.update((MyWorld)getWorld());
+            if(activeTimer.isExpired()){
+                activeTimer = null;
+                setAnimation(defaultAnim);
+            }
+        }
+        
+        //"Blink" if we are in i-frame
+         if (iFrameTimer.isActive() && !iFrameTimer.isExpired()) {
+            if (iFrameTimer.getRemainingFrames() % 4 < 2) {
+                getImage().setTransparency(60); // Dim
+            } else {
+                getImage().setTransparency(255); // Normal
+            }
+        } else {
+            getImage().setTransparency(255); // Ensure reset to normal
+        }
+    }
+    /*
+     * Current, trashy movement logic that should be worked on
+     */
+    protected void movementLogic(){
+        if (getWorld() == null) return; 
+        //Update I-frame timer
+        iFrameTimer.update((MyWorld)getWorld());
+        
+        //TRY TO TRIGGER ABILITY(m for MIH, e for StandPunch)
+        if (Greenfoot.isKeyDown(GameConfig.MIH_BUTTON)) {
+            mihAbility.activate(); 
+        }
+        if (Greenfoot.isKeyDown(GameConfig.STAND_PUNCH_BUTTON)) {
+            standPunchAbility.activate(this, (MyWorld)getWorld());
+        }
+
+        if (isDead) {
+            MyWorld world = (MyWorld) getWorld();
+            
+            // 1. You MUST update the timer every frame so it counts!
+            deathTimer.update(world); 
+            
+            if (!deathTimer.isExpired()) {
+                shake();
+            }
+            // 2. Check if the time is up
+            if (deathTimer.isExpired()&& !world.isRewinding()) {
+                world.getGSM().changeState(new GameOverState());
+            }
+        } 
+            
+        else {
+            if(Greenfoot.mouseClicked(null)){
+                playRandomAnimation();
+            }
+            
+            // 1. Calculate how fast we are moving
+            int currentSpeed = (int)(moveSpeed * mihAbility.getSpeedMultiplier());
+            
+            // 2. Start with the current position
+            int nextX = getX();
+            int nextY = getY();
+            
+            // 3. Update the intended position based on keys
+            if (Greenfoot.isKeyDown("up")){
+                nextY -= currentSpeed;
+            }
+            if (Greenfoot.isKeyDown("down")){
+                nextY += currentSpeed;
+            }
+            
+            // 4. Calculate the "No-Submerge" limits
+            int halfWidth = getImage().getWidth() / 2;
+            int halfHeight = getImage().getHeight() / 2;
+            int worldWidth = getWorld().getWidth();
+            int worldHeight = getWorld().getHeight();
+
+            // 5. THE LIMITER (Clamping)
+            // If the next position would put the edge off-screen, 
+            // set the position to the exact edge instead.
+            if (nextX < halfWidth) nextX = halfWidth;
+            if (nextX > worldWidth - halfWidth) nextX = worldWidth - halfWidth;
+            
+            if (nextY < halfHeight) nextY = halfHeight;
+            if (nextY > worldHeight - halfHeight) nextY = worldHeight - halfHeight;
+
+            // 6. Final Move (Only happens once, perfectly smooth)
+            setLocation(nextX, nextY);
+        }
+    }
+    //Die method is public because anyone can tell player to die
+    public void die(){
+        //Do not die if invincible
+        if (iFrameTimer.isActive() && !iFrameTimer.isExpired()) return;
+        //Do not die im stand punching
+        if (standPunchAbility.isActive()) return; 
+        //Do not die while rewinding
+        MyWorld world = (MyWorld) getWorld();
+        if (isDead|| world.isRewinding()) return;
+        
+        standPunchAbility.cancel(); 
+        
+        isDead = true;
+        AudioManager.play("car_crash");
+        //SadFace sadFace = new SadFace();
+        //getWorld().addObject(sadFace,world.getWidth()/2, world.getHeight()/2);
+        setAnimation("Lose");
+        AudioManager.playPool("dioLostVoices");
+        //Set death location
+        dieX = getX();
+        dieY = getY();
+        //Start counting down
+        //This buys time for voice and animation
+        //After timer, the state changes and world resets
+        deathTimer.start();
+    }
+    
+    /*
+     * A funny method that... calls a random animation (obviously)
+     * However, it is buggy so im not using it. 
+     */
+     private void playRandomAnimation(){
+        Object[] keys = animations.keySet().toArray();
+        int randomIndex = Greenfoot.getRandomNumber(keys.length);
+        String randomAnimName = (String) keys[randomIndex];
+        setAnimation(randomAnimName);
+    }
+    
+    /*
+     * Dio's method overrides the method in player:
+     * normally player can't do anything
+     * but dio can move normally and display a cool banner
+     * bannerSpawned makes sure banner only gets played once, 
+     * and it gets set back to true in player update method.
+     */
+    protected void onPauseUpdate(MyWorld world) {
+        if (!bannerSpawned) {
+            world.addObject(new Banner(BossConfig.DIO), GameConfig.s(1120), GameConfig.s(200));
+            bannerSpawned = true;
+            playTimedAnimation("Wry", highTimer);
+        }
+        movementLogic(); // Dio moves during pause!
+        animationLogic();
+    }
+    
+    /*
+     * When playtesting I think Dio's hitbox is too big, so I decided to decrease it here.
+     * 
+     * Padding = 1 => fll image is hitbox
+     * Padding = 0.5 => half image is hitbox
+     */
+
+    public boolean checkCustomHitbox(Actor attacker, double padding) {
+        double distance = Math.hypot(getX() - attacker.getX(), getY() - attacker.getY());
+        
+        
+        double baseWidth = getImage().getWidth();
+        double baseHeight = getImage().getHeight();
+        double hitboxRadius = ((baseWidth + baseHeight) / 4.0 * padding);
+        
+        return distance < hitboxRadius;
+    }
+    
+    private void shake (){
+        if (!deathTimer.isExpired()) {
+            int shakeX = Greenfoot.getRandomNumber(7) - 3; 
+            int shakeY = Greenfoot.getRandomNumber(7) - 3;
+                
+            // 2. ALWAYS add to the baseX/baseY, NOT the current getX()
+            setLocation(dieX + shakeX, dieY + shakeY);
+        } 
+        else {
+            // 3. Return to the exact center when finished
+            setLocation(dieX, dieY);
+        }
+    }
+
+    
+    //***********************************************************
+    //=========Tme Machine Stuff For Time Rewinding==============
+        private static class DioData {
+        boolean isDead;
+        String animName;
+        int deathTimerRemaining;
+        boolean deathTimerActive;
+        int mihFramesRemaining;
+        boolean mihActive;
+        int spDurFrames, spCoolFrames;
+        boolean spDurActive, spCoolActive;
+        
+        DioData(boolean isDead, String animName, int deathTimerRemaining, boolean active, 
+                int mihFrames, boolean mihActive, 
+                int spDurFrames, int spCoolFrames, boolean spDurActive, boolean spCoolActive) {
+            this.isDead = isDead;
+            this.animName = animName;
+            this.deathTimerRemaining = deathTimerRemaining;
+            this.deathTimerActive = active;
+            //MIH data
+            this.mihFramesRemaining = mihFrames;
+            this.mihActive = mihActive;
+            //Stand punch data 
+            this.spDurFrames = spDurFrames;
+            this.spCoolFrames = spCoolFrames;
+            this.spDurActive = spDurActive;
+            this.spCoolActive = spCoolActive;
+            
+        }
+    }
+    
+    public Time_ActorMemento captureState() {
+        return new Time_ActorMemento(this, getX(), getY(),
+            new DioData(isDead, currentAnimName,
+                        deathTimer.getRemainingFrames(),
+                        deathTimer.isActive(), mihAbility.getRemainingFrames(),// Ask the ability for frames
+                        mihAbility.isActive(),
+                        standPunchAbility.getDurFrames(), standPunchAbility.getCoolFrames(),
+                        standPunchAbility.isDurActive(), standPunchAbility.isCoolActive()));       // Ask if it's currently running));
+                        
+    }
+    
+    public void restoreState(Time_ActorMemento m) {
+        DioData d = (DioData) m.customData;
+        
+        // Check if we're being revived
+        if (this.isDead && !d.isDead) {
+            // Remove the sad face that appeared on death
+            if (getWorld() != null) {
+                getWorld().removeObjects(getWorld().getObjects(SadFace.class));
+            }
+        }
+        
+        this.isDead = d.isDead;
+        // Don't forcibly switch to death anim if alive
+        if (!isDead) setAnimation(d.animName);
+        deathTimer.setRemainingFrames(d.deathTimerRemaining);
+        if (d.deathTimerActive) deathTimer.start(); else deathTimer.stop();
+        
+        
+        // --- RESTORE MADE IN HEAVEN STATE ---
+        mihAbility.setRemainingFrames(d.mihFramesRemaining);
+        if (d.mihActive) mihAbility.startTimer(); else mihAbility.stopTimer();
+        // --- RESTORE THE WORLD STATE ---
+        standPunchAbility.setDurFrames(d.spDurFrames);
+        standPunchAbility.setCoolFrames(d.spCoolFrames);
+        if (d.spDurActive) standPunchAbility.startDur(); else standPunchAbility.stopDur();
+        if (d.spCoolActive) standPunchAbility.startCool(); else standPunchAbility.stopCool();
+        // NOTE: TheWorldStand restores itself — it stays alive as long as the ability is active
+    }
+    
+    public void startIFrame(double seconds) {
+        iFrameTimer.setDuration(seconds);
+        iFrameTimer.reset();
+        iFrameTimer.start();
+    }
+    
+    public Ability_StandPunch getStandPunchAbility() {
+        return standPunchAbility;
+    }
+}
+
+
+
+==================================================
+FILE: ./ScoreManager.java
+==================================================
+
+import greenfoot.*;
+
+
+public class ScoreManager {
+    private static int score = 0;
+    private static int highScore = 0;
+
+    public static void addScore(int amount) {
+        score += amount;
+    }
+
+    public static int getScore() {
+        return score;
+    }
+
+    public static void reset() {
+        if (score > highScore) highScore = score;
+        score = 0;
+    }
+
+    public static int getHighScore() {
+        return highScore;
+    }
+    
+    public static void updateHighScore() {
+        if (score > highScore) {
+            highScore = score;
+        }
+    }
+    
+    public static void setScore(int s) { score = s; }
+
+}
+
+
+==================================================
+FILE: ./Exclaimation.java
+==================================================
+
+import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
+
+/**
+ * Write a description of class Exclaimation here.
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+public class Exclaimation extends Actor implements Time_Snapshottable {
+    private GameTimer lifeTimer = new GameTimer(1.0, false);
+    private Animator exclaimAnim;
+    
+    public Exclaimation(){
+        exclaimAnim = new Animator("symbols", "exclaimation", 0.1 * GameConfig.SCALE);
+        lifeTimer.start();
+    }
+    public void act()
+    {
+        // Add your action code here.
+        setImage(exclaimAnim.getCurrentFrame());
+        lifeTimer.update((MyWorld) getWorld());
+        if(lifeTimer.isExpired()){
+            getWorld().removeObject(this);
+        }
+    }
+    
+    // --- TIME MACHINE ADDITIONS ---
+    public Time_ActorMemento captureState() {
+        // Save the remaining frames of the timer
+        return new Time_ActorMemento(this, getX(), getY(), lifeTimer.getRemainingFrames());
+    }
+
+    public void restoreState(Time_ActorMemento m) {
+        // Restore the timer so it doesn't vanish or reset
+        int remaining = (int)m.customData;
+        lifeTimer.setRemainingFrames(remaining);
+    }
+}
+
+
+
+==================================================
+FILE: ./PathWarning.java
+==================================================
+
+import greenfoot.*;
+
+public class PathWarning extends Actor implements Time_Snapshottable {
+    private int timer = 60; // How long the warning stays (1 second)
+
+    public PathWarning(int width, int height) {
+        GreenfootImage img = new GreenfootImage(width, height);
+        img.setColor(new Color(255, 0, 0, 100)); // Semi-transparent red
+        img.fill();
+        setImage(img);
+    }
+
+    public void act() {
+        // Standard GSM check so it freezes during Time Stop
+        MyWorld world = (MyWorld) getWorld();
+        if (world == null || !world.getGSM().isState(PlayingState.class)) return;
+
+        timer--;
+        
+        // Flashing effect: gets more intense as time runs out
+        if (timer % 10 < 5) {
+            getImage().setTransparency(40);
+        } else {
+            getImage().setTransparency(140);
+        }
+
+        if (timer <= 0) {
+            world.removeObject(this);
+        }
+    }
+    
+    // --- TIME MACHINE ADDITIONS ---
+    public Time_ActorMemento captureState() {
+        return new Time_ActorMemento(this, getX(), getY(), timer);
+    }
+
+    public void restoreState(Time_ActorMemento m) {
+        this.timer = (int)m.customData;
+    }
+}
+
+
+==================================================
+FILE: ./Time_ActorMemento.java
+==================================================
+
+import greenfoot.*;
+
+public class Time_ActorMemento {
+    public final Actor actor;    // reference to the actual object
+    public final int x, y;
+    public final Object customData; // actor-specific extras (speed, isDead, etc.)
+    
+    public Time_ActorMemento(Actor actor, int x, int y, Object customData) {
+        this.actor = actor;
+        this.x = x;
+        this.y = y;
+        this.customData = customData;
+    }
+}
+
+
+==================================================
+FILE: ./UIText.java
+==================================================
+
+import greenfoot.*;
+
+public class UIText extends Actor {
+    private String text;
+    private int fontSize;
+    private Color color;
+
+    public UIText(String text, int fontSize, Color color) {
+        this.text = text;
+        this.fontSize = fontSize;
+        this.color = color;
+        updateImage();
+    }
+
+    public void setText(String newText) {
+        if (!newText.equals(this.text)) {
+            this.text = newText;
+            updateImage();
+        }
+    }
+
+    private void updateImage() {
+        // Professional tip: Use a transparent background for UI
+        GreenfootImage img = new GreenfootImage(text, fontSize, color, new Color(0,0,0,0));
+        setImage(img);
+    }
+}
+
+
+==================================================
+FILE: ./Time_RewindManager.java
+==================================================
+
+import java.util.List;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import greenfoot.*;
+
+public class Time_RewindManager {
+    
+    // Public so UI_RewindBar can read them
+    public static final int MAX_HISTORY = GameConfig.MAX_REWIND_TIME;       // 15 seconds at 60fps (360)
+    public static final int REWIND_COST_FRAMES = GameConfig.REWIND_TIME; // 2 seconds per use
+    private static final int REWIND_SPEED = 3;        // frames popped per tick (4x speed)
+    
+    private ArrayDeque<Time_FrameSnapshot> history = new ArrayDeque<>();
+    private boolean isRewinding = false;
+    private int framesRewound = 0;
+    
+    public void record(MyWorld world, SpawnManager spawnManager) {
+        if (isRewinding) return;
+        
+        List<Time_ActorMemento> mementos = new ArrayList<>();
+        for (Actor a : world.getObjects(Actor.class)) {
+            if (a instanceof Time_Snapshottable) {
+                mementos.add(((Time_Snapshottable) a).captureState());
+            }
+        }
+        
+        history.push(new Time_FrameSnapshot(
+            mementos,
+            ScoreManager.getScore(),
+            spawnManager.getSpawnTimer(),
+            spawnManager.getDifficultyTimer(),
+            spawnManager.getRoadrollerRate(),
+            spawnManager.getTrainRate(),
+            GameRNG.getState() //RNG state
+        ));
+        
+        if (history.size() > MAX_HISTORY) history.pollLast();
+    }
+    
+    // Returns true if a rewind can be started
+    public boolean canRewind() {
+        return !isRewinding && history.size() >= REWIND_COST_FRAMES;
+    }
+    
+    // Call once to kick off a rewind
+    public void startRewind() {
+        if (!canRewind()) return;
+        isRewinding = true;
+        framesRewound = 0;
+    }
+    
+    // Call every frame while rewinding. Returns true while still going.
+    public boolean rewindStep(MyWorld world, SpawnManager spawnManager) {
+        if (!isRewinding) return false;
+        
+        for (int i = 0; i < REWIND_SPEED; i++) {
+            if (framesRewound >= REWIND_COST_FRAMES || history.isEmpty()) {
+                stopRewinding();
+                return false;
+            }
+            rewindOneFrame(world, spawnManager);
+            framesRewound++;
+        }
+        return true;
+    }
+    
+    public void rewindOneFrame(MyWorld world, SpawnManager spawnManager) {
+        if (history.isEmpty()) { stopRewinding(); return; }
+        restoreSnapshot(history.pop(), world, spawnManager);
+    }
+    
+    private void restoreSnapshot(Time_FrameSnapshot snap, MyWorld world,
+                                  SpawnManager spawnManager) {
+        // 1. Restore global state
+        ScoreManager.setScore(snap.score);
+        spawnManager.restoreState(snap.spawnTimer, snap.roadrollerRate, snap.trainRate);
+        GameRNG.restoreState(snap.rngState);//Restores the RNG
+        
+        // 2. Which actors should exist?
+        List<Actor> shouldExist = new ArrayList<>();
+        for (Time_ActorMemento m : snap.actorStates) shouldExist.add(m.actor);
+        
+        // 3. Remove actors spawned after this snapshot
+        for (Actor a : world.getObjects(Actor.class)) {
+            if (a instanceof Time_Snapshottable && !shouldExist.contains(a)) {
+                world.removeObject(a);
+            }
+        }
+        
+        // 4. Re-add actors that existed then but are gone now
+        List<Actor> currentActors = world.getObjects(null);
+        for (Time_ActorMemento m : snap.actorStates) {
+            if (!currentActors.contains(m.actor)) {
+                world.addObject(m.actor, m.x, m.y);
+            }
+        }
+        
+        // 5. Restore each actor's state
+        for (Time_ActorMemento m : snap.actorStates) {
+            m.actor.setLocation(m.x, m.y);
+            ((Time_Snapshottable) m.actor).restoreState(m);
+        }
+    }
+    
+    public void stopRewinding() { isRewinding = false; }
+    public boolean isRewinding() { return isRewinding; }
+    public boolean hasHistory() { return !history.isEmpty(); }
+    public void clearHistory() { history.clear(); }
+    public int getHistorySize() { return history.size(); }
+}
+
+
+==================================================
+FILE: ./GameTimer.java
+==================================================
+
+import greenfoot.*;
+
+public class GameTimer {
+    private int totalFrames;
+    private int remainingFrames;
+    private boolean active;
+    private boolean loop;
+
+    /**
+     * @param seconds How many real-world seconds the timer should run for.
+     * @param loop Whether the timer should be looped. True for looped , false for one time uses.
+     */
+    public GameTimer(double seconds, boolean loop) {
+        // Greenfoot's default speed is approx 60 acts per second
+        this.totalFrames = (int)(seconds * 60);
+        this.remainingFrames = totalFrames;
+        this.loop = loop;
+        this.active = false;
+    }
+    /*
+     * Sample on how to use timer for an ability with a cooldown of 5 seconds:
+     * 
+     * --------
+     * private GameTimer abilityTimer = new GameTimer(5.0, false);
+     * 
+     * if (Greenfoot.isKeyDown("space") && ability.isExpired()) {
+            some_ability_with_cooldown();
+            abilityTimer.reset(); // Refill the cooldown
+            abilityTimer.start(); // Start the countdown
+        }   
+        -------
+        
+        Sample on how to use timer for spawning regularly:
+        
+        --------
+        private GameTimer spawnTimer = new GameTimer(1.5, true); 
+
+        public void update(MyWorld world) {
+        // Start it once
+        spawnTimer.start(); 
+        
+        // This only ticks if the game is NOT paused
+        spawnTimer.update(world); 
+
+        if (spawnTimer.isExpired()) {
+            world.addObject(new Roadroller(), 800, 300);
+            // NOTE: No need to call reset() because loop is true! 
+            // It refills itself automatically.
+        }
+        }
+        --------
+     */
+
+    public void start() {
+        this.active = true;
+    }
+
+    public void stop() {
+        this.active = false;
+    }
+
+    public void reset() {
+        this.remainingFrames = totalFrames;
+    }
+
+    /**
+     * This is the engine of the timer. 
+     * It should be called in the act() method of the Actor or the update() of a State.
+     */
+    public void update(MyWorld world) {
+        // THE ROBUST PART: Only tick down if the game isn't paused
+        // and (optionally) if time isn't stopped by DIO.
+        if (active && world.getGSM().isState(PlayingState.class)) {
+            if (remainingFrames > 0) {
+                remainingFrames--;
+            } else if (loop) {
+                reset();
+            } else {
+                active = false;
+            }
+        }
+    }
+
+    /*
+     * Returns if time is up
+     */
+    public boolean isExpired() {
+        return remainingFrames <= 0;
+    }
+    
+    /*
+     * Returns time remaing in seconds
+     */
+    public double getSecondsRemaining() {
+        return remainingFrames / 60.0;
+    }
+    
+    /*
+     * Returns percentage of time passed.
+     * 
+     * Sample of using percent complete:
+     *  Inside HUD class
+        double progress = abilityTimer.getPercentComplete(); 
+        // Width of bar gets smaller as timer counts down
+        int barWidth = (int)(100 * (1.0 - progress)); 
+        img.fillRect(10, 10, barWidth, 10);
+     */
+    public double getPercentComplete() {
+        return (double)(totalFrames - remainingFrames) / totalFrames;
+    }
+    
+    /*
+     * Resets the duration of the timer
+     */
+    public void setDuration(double seconds) {
+        this.totalFrames = (int)(seconds * 60);
+        reset();
+    }
+    
+    //Count time even if game is paused.
+    public void forceTick() {
+    if (remainingFrames > 0) remainingFrames--;
+    }
+    
+    public int getRemainingFrames() { return remainingFrames; }
+    public void setRemainingFrames(int frames) { this.remainingFrames = frames; }
+    public boolean isActive() { return active; }
+}
+
+
+==================================================
+FILE: ./ScrollingRoad.java
+==================================================
+
+import greenfoot.*;
+
+
+public class ScrollingRoad extends Actor implements Time_Snapshottable {
+    private static int speed = GameConfig.ROAD_SCROLL_SPEED;//Moves 5 pixels per frame
+    private static int maxSpeed = GameConfig.ROAD_MAX_SPEED;
+    private int width = GameConfig.WORLD_WIDTH;
+    // THE LANE MAP: Other classes (like SpawnManager) can use this!
+    // For a 400px height with 5 lanes, centers are: 40, 120, 200, 280, 360
+
+    public ScrollingRoad() {
+        speed = GameConfig.ROAD_SCROLL_SPEED;
+        drawPlaceholderRoad();
+    }
+
+    private void drawPlaceholderRoad() {
+        GreenfootImage img = new GreenfootImage(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
+        
+        // 1. Draw Asphalt
+        img.setColor(new Color(50, 50, 50));
+        img.fill();
+        
+        // 2. Draw Lane Lines
+        img.setColor(Color.YELLOW);
+        for (int i = 1; i < GameConfig.LANES.length; i++) {
+            //Lane locations are stored in game config
+            int lineY = (GameConfig.LANES[i] + GameConfig.LANES[i-1]) / 2;
+            // Draw dashed lines(they are scaled by game config too)
+            for (int x = 0; x < width; x += GameConfig.s(40)) {
+                img.fillRect(x, lineY - 2, GameConfig.s(20), GameConfig.s(4));
+            }
+        }
+        setImage(img);
+    }
+
+    public void act() {
+        // Self-management: Only move if the game is actually "playing"
+        MyWorld world = (MyWorld) getWorld();
+        // ONLY scroll forward if we are in PlayingState AND NOT rewinding
+        if (world.getGSM().isState(PlayingState.class) && !world.isRewinding()) {
+            scroll();
+        }
+    }
+
+    private void scroll() {
+        setLocation(getX() - speed, getY());
+        
+        // If we moved off screen, teleport to the back of the "twin"
+        if (getX() <= -width / 2) {
+            setLocation(getX() + width * 2, getY());
+        }
+    }
+    
+    public static void increaseSpeed(int amount){
+        if (speed < maxSpeed)speed+=amount;
+    }
+    // --- TIME MACHINE ---
+    public Time_ActorMemento captureState() {
+        // We just save position. No custom data needed (null).
+        return new Time_ActorMemento(this, getX(), getY(), null);
+    }
+
+    public void restoreState(Time_ActorMemento m) {
+        // Manager handles position automatically. Nothing else to restore!
+    }
+}
+
+
+==================================================
+FILE: ./Time_Snapshottable.java
+==================================================
+
+public interface Time_Snapshottable {
+    // "Take a photo of yourself"
+    Time_ActorMemento captureState();
+    
+    // "Restore yourself from this old photo"
+    void restoreState(Time_ActorMemento memento);
+}
+
+
+==================================================
+FILE: ./Player.java
+==================================================
+
+import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
+
+/**
+ * Write a description of class Player here.
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+public abstract class Player extends Actor
+{
+    protected boolean isDead = false;
+    //Every player class must have die, movement and animation  logic.
+    //Currently we only have DIO, but new playable characters can be added!
+    
+    //Die method is public because anyone can tell player to die
+    public abstract void die();
+    //Other methods are protected, meaning subclasses can access it but not the rest of the world
+    protected abstract void movementLogic();
+    protected abstract void animationLogic();
+    //This is for hitbox controlling
+    public abstract boolean checkCustomHitbox(Actor attacker, double padding);
+    //Keep track of banner (for dio only)
+    protected boolean bannerSpawned = false; 
+    /**
+     * Act - do whatever the Player wants to do. This method is called whenever
+     * the 'Act' or 'Run' button gets pressed in the environment.
+     */
+    public void act()
+    {
+        MyWorld world = (MyWorld) getWorld();
+        if(world == null) return;
+        
+        //Only update normally if game is in playing state
+        if(!world.getGSM().isState(PlayingState.class)){
+            //If it is in paused state, we can carry out some special things
+            //But normally nothing happens: nobody can move.
+            if(world.getGSM().isState(PausedState.class)){
+            onPauseUpdate(world);
+            }
+            return;
+        }
+        //This banner is for DIO only. I need to tell him he can play banenr again.
+        bannerSpawned = false; 
+        movementLogic();    
+        animationLogic();
+    }
+    
+    public boolean isDead() {
+        return isDead;
+    }
+    
+    //Normally, players do nothing while being paused
+    //This method can be overwritten to do something werid during pause state.
+    protected void onPauseUpdate(MyWorld world) {}
+    
+}
+
+
+
+==================================================
+FILE: ./GameStateManager.java
+==================================================
+
+
+import greenfoot.*;
+import java.util.Stack;
+/**
+ * Write a description of class GameStateManager here.
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+public class GameStateManager  
+{
+    private Stack<GameState> stateStack;
+    /*
+     * A Stack is a collection that follows the Last-In, First-Out (LIFO) principle. 
+     * Imagine a physical stack of plates: 
+     * you can only add a new plate to the top, 
+     * and you must remove the top plate before you can reach the ones underneath.
+     * 
+     * For our game state, we must deal with one state before dealing with the one behind it:
+     * for example, exit pause game before exiting time-stop ability 
+     * 
+     * Common methods of stack are:
+     * push => adds a new "plate" on top of the stack
+     * pop => takes away the top plate, and remove it. 
+     * peek => looks at the top plate, but does not remove it
+     */
+    
+    private MyWorld world;
+    
+    public GameStateManager(MyWorld world){
+        //Creates a stack of states for the world
+        this.stateStack = new Stack<>();
+        this.world = world;
+    }
+    
+    /*
+     * Puts a "plate"(state) on top and enter it
+     */
+    public void pushState(GameState state){
+        stateStack.push(state);
+        state.enter(world);
+    }
+    
+    /*
+     * Throws away the top "plate"(state) and exit it
+     */
+    public void popState(){
+        if(!stateStack.isEmpty()){
+            GameState popped = stateStack.pop();
+            popped.exit(world);
+        }
+    }
+    
+    /*
+     * Change the current state to another one by:
+     * 1. Pop the current state (and exit it)
+     * 2. push the new state  (and enter it)
+     */
+    public void changeState(GameState state){
+        if(!stateStack.isEmpty()){
+            stateStack.pop().exit(world);
+        }
+        stateStack.push(state);
+        state.enter(world);
+    }
+    
+    /*
+     * The main method that updates the game. 
+     * Only update the state on top on the stack.
+     */
+    public void update(){
+        if(!stateStack.isEmpty()){
+            stateStack.peek().update(world);
+        }
+    }
+    
+    /*
+     * Checks if the asked state is currently running.
+     * Useful for actors to check the current state.
+     * 
+     * Parameter: a class (that represents state)
+     */
+    public boolean isState(Class<?> stateClass){
+        if(stateStack.isEmpty()) return false;
+        return stateClass.isInstance(stateStack.peek());
+    }
+    
+    /*
+     * Returns the current game state (unless its null)
+     */
+    public GameState peekState() {
+        return stateStack.isEmpty() ? null : stateStack.peek();
+    }
+    
+}
+
+
+
+==================================================
+FILE: ./BossConfig.java
+==================================================
+
+import greenfoot.*;
+
+/**
+ * Write a description of class BossConfig here.
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+public enum BossConfig  
+{
+   DIO(
+        Color.BLACK, 
+        "dioBattleCry", 
+        new Banner.SpriteOverlay[] {
+            // file name, width, heigh, x offset, y offset
+            new Banner.SpriteOverlay("dio_full.png", 150, 150, -200, 0),
+            new Banner.SpriteOverlay("dio_label.png", 300, 100, 0, 0)
+        }
+    );
+    
+    public final Color bgColor;
+    public final String soundsKey;
+    public final Banner.SpriteOverlay[] overlays;
+
+    private BossConfig(Color color, String soundsKey, Banner.SpriteOverlay[] overlays) {
+        this.bgColor = color;
+        this.soundsKey = soundsKey;
+        this.overlays = overlays;
+    }
+}
+
+
+
+==================================================
+FILE: ./Banner.java
+==================================================
+
+import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * Professional Scaled Banner System.
+ * Every dimension and speed is now linked to GameConfig.SCALE.
+ */
+
+public class Banner extends Actor {
+
+    // 0: entering 1: in the middle 2: exiting 
+    private int state = 0;
+    private int timer = 0;
+    
+    private GreenfootImage baseImage;
+    
+    // Control the speed - Scaled based on global SCALE
+    private double speed = -12.0 * GameConfig.SCALE;
+    
+    private boolean playedSound = false;
+    private BossConfig config;
+    
+    public Banner(BossConfig config){
+        this.config = config;
+        
+        // Scaled base image size
+        baseImage = new GreenfootImage(GameConfig.s(810), GameConfig.s(150));
+        baseImage.setColor(config.bgColor);
+        baseImage.fill();
+        
+        for (SpriteOverlay s: config.overlays){
+            sprites.add(s);
+        }
+        
+        // Initial height (150) must be base height
+        render(150);
+    }
+    
+    public static class SpriteOverlay{
+        GreenfootImage image;
+        int offsetX;
+        int offsetY;
+        
+        public SpriteOverlay(String fileName, int w, int h, int x, int y){
+            this.image = new GreenfootImage(fileName);
+            // Scale the overlay sprites as they are loaded
+            this.image.scale(GameConfig.s(w), GameConfig.s(h));
+            // Scale the offsets
+            this.offsetX = GameConfig.s(x);
+            this.offsetY = GameConfig.s(y);
+        }
+    }
+
+    private List<SpriteOverlay> sprites = new ArrayList<>();
+    
+    private void render (int currentHeight){
+        render(currentHeight, 255);
+    }
+
+    private void render (int currentHeight, int alpha){
+        // Scale the canvas buffer
+        GreenfootImage canvas = new GreenfootImage(GameConfig.s(1000), GameConfig.s(400));
+        canvas.setColor(new Color(0,0,0,0));
+        canvas.fill();
+        
+        Color c = config.bgColor;
+        
+        // Scale background dimensions
+        int bgH = Math.max(1, GameConfig.s(currentHeight));
+        int bgW = GameConfig.s(900);
+        int bgX = (canvas.getWidth() - bgW) / 2;
+        int bgY = (canvas.getHeight() - bgH) / 2;
+        
+        canvas.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha));
+        canvas.fillRect(bgX, bgY, bgW, bgH);
+
+        // Set sprites - offsets are already scaled in the SpriteOverlay constructor
+        for (SpriteOverlay s : sprites) {
+            int drawX = canvas.getWidth()/2 - s.image.getWidth()/2 + s.offsetX;
+            int drawY = canvas.getHeight()/2 - s.image.getHeight()/2 + s.offsetY;
+            canvas.drawImage(s.image, drawX, drawY);
+        }
+
+        setImage(canvas);
+    }
+
+    public void act(){
+        if(state == 0){
+            slideIn();
+        }
+        else if(state == 1){
+            hold();
+        }
+        else if(state == 2){
+            slideOut();
+        }
+    }
+
+    private void slideIn(){
+        if (!playedSound){
+            playRandomSound();
+            playedSound = true;
+        }
+        
+        // Scaled target X coordinate (400)
+        int targetX = GameConfig.s(400);
+        int dist = targetX - getX();
+        
+        if(Math.abs(dist) <= GameConfig.s(4)){
+            setLocation(targetX, getY());
+            state = 1;
+        }
+        else{
+            int step = (int)(dist * 0.12);
+            if(step == 0){
+                step = (dist > 0) ? 1 : -1;
+            }
+            setLocation(getX() + step, getY());
+        }
+    }
+    
+    private void hold(){
+        // Acceleration scaled by global SCALE
+        speed += (0.4 * GameConfig.SCALE);
+        setLocation(getX() + ((int)speed), getY());
+        
+        // Resizing logic - targets are scaled
+        int startPoint = GameConfig.s(200);
+        int d = getX() - startPoint;
+        double ratio = d / (double)startPoint;
+        
+        // Scale the animated heights
+        int newHeight = GameConfig.s(30) + (int)(GameConfig.s(120) * ratio);
+        render(newHeight);
+
+        if(speed >= 0){
+            state = 2;
+            speed = 0;
+        }
+    }
+
+    private void slideOut(){
+        // Increasing speed scaled by global SCALE
+        speed += (1.0 * GameConfig.SCALE);
+        setLocation(getX() + (int)speed, getY());
+        
+        // Resizing logic - targets are scaled
+        int startPoint = GameConfig.s(200);
+        int d = getX() - startPoint;
+        double ratio = d / (double)startPoint;
+        
+        int newHeight = GameConfig.s(30) + (int)(GameConfig.s(120) * ratio);
+        int alpha = (int)(255 * (1.0 - ratio/4.0));
+        
+        if (alpha < 0) alpha = 0;
+        if (alpha > 255) alpha = 255;
+        
+        render(newHeight, alpha);
+        
+        // Removal check - coordinate scaled
+        if (getX() > getWorld().getWidth() + GameConfig.s(600)) {
+            getWorld().removeObject(this);
+        }   
+    }
+
+    public void playRandomSound() {
+        String soundsKey = config.soundsKey;
+        AudioManager.playPool(soundsKey);
+    }
+}
+
+
+==================================================
+FILE: ./FX_RewindOverlay.java
+==================================================
+
+import greenfoot.*;
+
+public class FX_RewindOverlay extends Actor {
+    private int frame = 0;
+    
+    // 1. MAKE THESE STATIC! (This is the magic fix)
+    // Static means they are kept in memory forever, not recreated every time you press R.
+    private static GreenfootImage screen1;
+    private static GreenfootImage screen2;
+
+    public FX_RewindOverlay() {
+        // 2. Only draw them if we haven't drawn them yet!
+        if (screen1 == null || screen2 == null) {
+            screen1 = createOverlay(false);
+            screen2 = createOverlay(true);
+        }
+        setImage(screen1);
+    }
+
+    public void act() {
+        frame++;
+        // Just swap the image, don't DRAW anything new
+        if (frame % 4 < 2) {
+            setImage(screen1);
+        } else {
+            setImage(screen2);
+        }
+    }
+
+    // Notice we made this method static too!
+    private static GreenfootImage createOverlay(boolean scanlineOffset) {
+        int w = GameConfig.WORLD_WIDTH;
+        int h = GameConfig.WORLD_HEIGHT;
+        GreenfootImage img = new GreenfootImage(w, h);
+        
+        // Blue tint
+        img.setColor(new Color(60, 100, 200, 60));
+        img.fill();
+        
+        // Scanlines
+        img.setColor(new Color(0, 0, 0, 50));
+        int startY = scanlineOffset ? GameConfig.s(2) : 0;
+        for (int y = startY; y < h; y += GameConfig.s(4)) {
+            img.fillRect(0, y, w, GameConfig.s(2));
+        }
+        return img;
+    }
+    
+    // 3. Pre-load helper so we don't even lag the VERY FIRST time you press R
+    public static void preLoad() {
+        if (screen1 == null) {
+            screen1 = createOverlay(false);
+            screen2 = createOverlay(true);
+        }
+    }
+}
+
+
+==================================================
+FILE: ./FX_Afterimage.java
+==================================================
+
+import greenfoot.*;
+
+public class FX_Afterimage extends Actor {
+    private int alpha = 150; // Start semi-transparent
+
+    public FX_Afterimage(GreenfootImage playerImg) {
+        // Create a copy so we don't ruin the original player image
+        GreenfootImage img = new GreenfootImage(playerImg);
+        
+        // --- THE NEGATIVE (负片) EFFECT ---
+        for (int x = 0; x < img.getWidth(); x++) {
+            for (int y = 0; y < img.getHeight(); y++) {
+                Color c = img.getColorAt(x, y);
+                // If it's not transparent, invert it
+                if (c.getAlpha() > 0) {
+                    img.setColorAt(x, y, new Color(255 - c.getRed(), 255 - c.getGreen(), 255 - c.getBlue(), c.getAlpha()));
+                }
+            }
+        }
+        setImage(img);
+    }
+
+    public void act() {
+        // Fade out
+        alpha -= 7;
+        if (alpha <= 0) {
+            getWorld().removeObject(this);
+        } else {
+            getImage().setTransparency(alpha);
+        }
+    }
+}
+
+
+==================================================
+FILE: ./PausedState.java
+==================================================
+
+import greenfoot.*;
+import java.util.ArrayList;
+import java.util.List;
+/**
+ * Write a description of class PausedState here.
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+public class PausedState implements GameState
+{
+    private List<Actor> uiElements = new ArrayList<>();
+    
+    public void enter(MyWorld world){
+        //The game is paused
+        //We will show something like a "GAME PAUSED" banner, but currently its empty
+        UIText title = new UIText("PAUSED", GameConfig.s(80), Color.RED);
+        addUI(world, title, world.getWidth()/2, GameConfig.s(150));
+
+    }
+    
+    public void update(MyWorld world){
+        //Handle normal game logic, like spawning obstacles, movement logics etc.
+        
+        //Sample of swithicng state: use "p" to unpause, but we can also use a button
+        
+        if("w".equals(Greenfoot.getKey())){
+            //Remove the pause state, resume to normal/whatever state previosly running.
+            world.getGSM().popState();
+            
+        }
+        
+        //Some eastereggs?
+    }
+    
+    public void exit(MyWorld world){
+        //Clean things up as we leave this state, such as removing the "GAME PAUSED" banner
+        world.removeObjects(uiElements);
+    }
+    
+    private void addUI(MyWorld world, Actor a, int x, int y) {
+        world.addObject(a, x, y);
+        uiElements.add(a);
+    }
+}
+
+
+
+==================================================
+FILE: ./PlayingState.java
+==================================================
+
+import greenfoot.*;
+import java.util.List;
+import java.util.ArrayList;
+
+public class PlayingState implements GameState {
+    private SpawnManager spawnManager;
+    private UIText scoreDisplay;
+    private Time_RewindManager rewindManager;
+    private UI_RewindBar rewindBar;
+    private FX_RewindOverlay rewindOverlay; // visual effect during rewind
+    
+    public void enter(MyWorld world) {
+        
+        world.removeObjects(world.getObjects(null));//Removes everything first
+        
+        GameRNG.randomize();//Sets a random seed for the game: its consistent
+        
+        ScoreManager.reset();//Resets score.
+        AudioManager.playLoop("dio_bgm");//Use Audio MGR to call the background music
+        FX_RewindOverlay.preLoad(); // Draws the rewind screens into memory early!
+        Greenfoot.setSpeed(50); //Set Game Tick to Normal
+        
+        rewindManager = new Time_RewindManager();//Initiate time rewind manager
+        
+        //Two images of roads are added: each of the side of the screen, they move side by side
+        //And go back to start after disappearing from screen to create "infinte scrolling"
+        world.addObject(new ScrollingRoad(), world.getWidth()/2, world.getHeight()/2);
+        world.addObject(new ScrollingRoad(), world.getWidth() + world.getWidth()/2, world.getHeight()/2);
+
+        //Initiate Spawning Manager: Handles all obstacle spawning
+        spawnManager = new SpawnManager();
+        
+        //Score label on left top corner
+        scoreDisplay = new UIText("SCORE: 0", GameConfig.s(25), Color.WHITE);
+        world.addObject(scoreDisplay, GameConfig.s(80), GameConfig.s(20));
+        
+        //Time rewind bar: shows how much "reversible time" has been accumulated
+        rewindBar = new UI_RewindBar(rewindManager);
+        world.addObject(rewindBar, world.getWidth() - GameConfig.s(100), GameConfig.s(20));
+        
+        // Save the Dio object so we can give it to the UI 
+        Dio dio = new Dio();
+        world.addObject(dio, GameConfig.s(80), GameConfig.s(80));
+        
+        // Spawn the Ability Icon in the bottom right corner
+        UI_AbilityIcon abilityIcon = new UI_AbilityIcon(dio);
+        world.addObject(abilityIcon, world.getWidth() - GameConfig.s(45), world.getHeight() - GameConfig.s(45));
+    }
+    
+    public void update(MyWorld world) {
+        //Key needs to be stored because Greenfoot.getKey() somehow can only be compared once,
+        //So I can't compare it with "w" and "r" at the same time. 
+        String key = Greenfoot.getKey();
+
+        // Pause if w is clicked
+        if (GameConfig.TIME_STOP_BUTTON.equals(key)) {
+            world.getGSM().pushState(new PausedState());
+        }
+        
+        // Trigger rewind on R press
+        if (GameConfig.REWIND_TIME_BUTTON.equals(key) && rewindManager.canRewind()) {
+            AudioManager.setAllSoundsPaused(true);
+            AudioManager.playPool("rewind");
+            rewindManager.startRewind();
+            rewindOverlay = new FX_RewindOverlay();
+            world.addObject(rewindOverlay, world.getWidth()/2, world.getHeight()/2);
+        }
+        
+        //
+        /* Each frame: either rewind or record
+         * Think of the following code like a DVD player. 
+         * Every frame, the game checks its mode: 
+         * if Rewind Mode is on, it plays the game backward 
+         * and removes the 'Rewind Overlay' once it reaches the start. 
+         * If Rewind Mode is off, it acts like a Record button,
+         * saving everything happening on screen so it can be reversed later.
+         */
+        if (rewindManager.isRewinding()) {
+            //Rewind if rewinding: still going rewinds, and returns if rewining is still going
+            boolean stillGoing = rewindManager.rewindStep(world, spawnManager);
+            //Check if rewinding has finished 
+            if (!stillGoing && rewindOverlay != null) {
+                if (rewindOverlay.getWorld() != null) world.removeObject(rewindOverlay);
+                rewindOverlay = null;//Clean up visuals
+                Greenfoot.setSpeed(50); 
+                AudioManager.setAllSoundsPaused(false);//Reusme normal game music
+                //Give i-frame to dio
+                List<Dio> dios = world.getObjects(Dio.class);
+                if (!dios.isEmpty()) {
+                    dios.get(0).startIFrame(1.0); // 1 second of safety after rewind
+                }
+            }
+        } else {
+            //Normal gameplay(recording mode): record the current object states to the history stack.
+            rewindManager.record(world, spawnManager);
+        }
+        
+        if (Greenfoot.isKeyDown("n")) { 
+            
+            Greenfoot.setSpeed(50); 
+        } 
+        //Testing speeding up game tick
+        /*
+        if (Greenfoot.isKeyDown("m")) { 
+            // "Made in Heaven": Speed up time!
+            Greenfoot.setSpeed(58); 
+        } 
+        if (Greenfoot.isKeyDown("n")) { 
+            
+            Greenfoot.setSpeed(46); 
+        } 
+        else { 
+            // Let go of the keys? Back to normal time.
+            Greenfoot.setSpeed(50); 
+        }
+        */
+        
+        //Update spawning manager and score. 
+        spawnManager.update(world);
+        scoreDisplay.setText("SCORE: " + ScoreManager.getScore());
+        
+    }
+    
+    public void exit(MyWorld world) {
+        //Clean up as we end playing state. 
+        //Note: normally we don't "end" the playing state, we simply put a new state on top of it
+        //So exit is only called when the entire playing state is over (aka game is lost)
+        AudioManager.stop("dio_bgm");
+        world.removeObjects(world.getObjects(null));
+        Greenfoot.setSpeed(50);
+    }
+    
+    //Getter methods 
+    public SpawnManager getSpawnManager() { return spawnManager; }
+    public boolean isRewinding() { return rewindManager != null && rewindManager.isRewinding(); }
+}
+
+
+==================================================
+FILE: ./GameState.java
+==================================================
+
+import greenfoot.*;
+/**
+ *This interface governs gamemodes:
+ *All game modes must have an enter, update and exit method. 
+ */
+public interface GameState  
+{
+    void enter (MyWorld world);
+    
+    void update(MyWorld world);
+    
+    void exit(MyWorld world);
+}
+
+
+
+==================================================
+FILE: ./Animator.java
+==================================================
+
+import java.util.ArrayList;
+import greenfoot.*;
+import java.io.File;
+/**
+ * Write a description of class Animator here.
+ * 
+ * Animator takes in the time and tracks the correct image from the animation
+ * Call animator with
+ * 
+ */
+
+
+/**
+ * ANIMATION LIST FOR DIO
+ * ---------------------
+ * Dash         - Runs
+ * High         - brain massage
+ * Idle         - Standing still
+ * Intro        - Cool intro
+ * Lose         - Defeat state
+ * Roll         - Dodge move
+ * Scratch       - Brain massag + wry
+ * Up           - Up slash
+ * WalkLeft     - Moving left
+ * WalkRight    - Moving right
+ * Wry          - WRYYYYYYY
+ * 
+ * (special: to be implemented later)
+ * Description: Dio teleports backwards as his Stand appears to punch.
+ * Requires two animations play simultaneously, and locatio change.
+ * WorldPunch   - Special attack
+ * Teleport     - pairs with WorldPunch
+ * 
+ */
+
+
+public class Animator  
+{
+    public static final int FRAME_DELAY = 6;//Frames per image, higher = slower; this is the standard speed
+    private GreenfootImage[] frames;
+    private int currentFrame = 0;
+    private int timer = 0;
+    private int speed;//Higher = slower (frames between images)
+    
+    /*
+     * The more detailed constructor for animator that takes in more parameters 
+     * to help with debugging and customizability. 
+     */
+    public Animator(String baseFolder,String folderName,String prefix, int frameCount, int speed, double scaleFactor){
+        this.speed = speed;
+        frames = new GreenfootImage[frameCount]; 
+        
+        for (int i = 0 ; i < frameCount; i++){
+            //%03d => 3 digits with leading zero
+            String suffix = String.format("%03d",i);
+            String fileName = baseFolder + "/" + folderName +"/" + prefix + "_" + suffix + ".png";
+            frames[i] = new GreenfootImage(fileName);
+            int newWidth = (int)(frames[i].getWidth() * scaleFactor);
+            int newHeight = (int)(frames[i].getHeight() * scaleFactor);
+            frames[i].scale(newWidth, newHeight);
+
+        }
+    }
+    
+    /*
+     * The more general constructor for animator that only takes in folder name
+     * Easy to call
+     */
+    public Animator(String baseFolder, String folderName, double scaleFactor) {
+        this(baseFolder, folderName, folderName, countFrames(baseFolder, folderName), FRAME_DELAY, scaleFactor);
+    }
+
+    /*
+     * The more general constructor for animator that only takes in folder name AND SPEED
+     * Easy to call
+     */
+    public Animator(String baseFolder, String folderName, int speed, double scaleFactor) {
+        this(baseFolder, folderName, folderName, countFrames(baseFolder, folderName), speed, scaleFactor);
+    }
+    
+    /*
+     * Counts the number of frames in the folder for easy registration
+     * HASDS NOTHING TO DO WITH ANIMATION
+     */
+    private static int countFrames(String baseFolder, String folderName) {
+    // Greenfoot looks for images in the "images" folder of your project
+        File dir = new File("images/" + baseFolder + "/"+ folderName);
+    
+    // Check if the directory exists
+        if (dir.exists() && dir.isDirectory()) {
+            // Filter to only count .png files
+            String[] files = dir.list((d, name) -> name.toLowerCase().endsWith(".png"));
+            return (files != null) ? files.length : 0;
+        }
+        return 0;
+    }
+    
+    /*
+     * Find the current image given the current time.
+     */
+    public GreenfootImage getCurrentFrame(){
+        timer++;
+        if(timer >= speed){
+            timer = 0;
+            //In case folder is empty due to some human mistake
+            if (frames.length > 0) {
+                currentFrame = (currentFrame +1)%frames.length; //loop back to start
+            }
+        }
+        return frames[currentFrame];
+    }
+    
+    /*
+     * Resets timer and frame. 
+     */
+    public void reset(){
+        currentFrame = 0; 
+        timer = 0;
+    }
+    
+    /*
+     * adjust speed upon request
+     */
+    public void setSpeed(int speed) {
+    this.speed = speed;
+    }
+}
+
+
+
+==================================================
+FILE: ./SpawnManager.java
+==================================================
+
+import greenfoot.*;
+import java.util.Random;
+/**
+ * Write a description of class SpawnManager here.
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+public class SpawnManager  
+{
+  
+    
+    private int globalTimer = 0;
+    
+    //== Difficulty Settings ==
+    private int difficultyLevel = 0;
+    private int levelUpTime = GameConfig.LEVEL_UP_TIME;//Level up every 5 seconds
+    
+    //Control Roadroller rate
+    private int roadrollerRate = GameConfig.ROADROLLER_RATE;// number of frames for a car
+    private final int roadrollerMin = GameConfig.ROADROLLER_MIN_RATE;
+    private int roadrollerSpeed = GameConfig.ROADROLLER_SPEED; // Manager tracks this now
+    private final int roadrollerSpeedMax = GameConfig.ROADROLLER_MAX_SPEED; 
+    
+    //Control train rate
+    private int trainRate = GameConfig.TRAIN_RATE;// number of frames for a car, decreass with difficulty
+    private final int trainMin = GameConfig.TRAIN_MIN_RATE;
+    private int trainSpeed = GameConfig.TRAIN_SPEED;//Increases with difficulty
+    private final int trainSpeedMax = GameConfig.TRAIN_MAX_SPEED;
+    
+    //Unnecessary boolean 
+    private boolean scorelessObstacle = false;
+    
+    private int masterSeed; //A master seed is used so that game reverse can be exactly replicated
+    
+    
+    public SpawnManager() {
+        masterSeed = Greenfoot.getRandomNumber(32052320);
+    }
+    public void update(MyWorld world){
+        globalTimer++; 
+        //Notice: this timer is exclusive to spawn manager, and only increases
+        //when it gets called (which usually means game is runnin)
+        
+        if(globalTimer % levelUpTime == 0){
+            increaseDifficulty();
+        }
+        
+        if(globalTimer % roadrollerRate == 0){
+            spawnRoadroller(world);
+        }
+        
+        if(globalTimer % trainRate == 0){
+            spawnTrain(world, trainSpeed);
+        }
+        
+    }
+    
+    private void increaseDifficulty(){
+        if(roadrollerRate > roadrollerMin) roadrollerRate -= 5;
+        
+        if(roadrollerSpeed < roadrollerSpeedMax) roadrollerSpeed += 1;
+        
+        if(trainRate > trainMin) trainRate -= 5;
+        
+        if(trainSpeed < trainSpeedMax) trainSpeed += 5;
+        
+        ScrollingRoad.increaseSpeed(1);
+    }
+    
+    private void spawnRoadroller(MyWorld world) {
+        int spawnY = getRandomLane();
+        world.addObject(new Roadroller(roadrollerSpeed), world.getWidth(), spawnY);
+    }
+
+    private void spawnTrain(MyWorld world, int speed) {
+        int spawnY = getRandomLane(); 
+        
+        int pathHeight = GameConfig.LANE_HEIGHT; 
+        int exclaimXOffset = GameConfig.s(20);
+        int trainXOffset = GameConfig.s(50);
+        
+        world.addObject(new Exclaimation(), world.getWidth() - exclaimXOffset, spawnY);
+        world.addObject(new PathWarning(world.getWidth(), pathHeight), world.getWidth() / 2, spawnY);
+        world.addObject(new Train(speed), world.getWidth() + trainXOffset, spawnY);
+    }
+
+    private int getRandomLane() {
+        return GameConfig.LANES[GameRNG.getRandomNumber(GameConfig.LANES.length)];
+    }
+    
+    
+    
+
+    //placeholder methods to prevent rewind manager form screaming
+    //Currently it doesnt consider the rate probably
+    // --- GETTERS (For Recording) ---
+    public int getSpawnTimer() { return globalTimer; }
+    public int getRoadrollerRate() { return roadrollerRate; }
+    public int getTrainRate() { return trainRate; }
+    // Usually difficulty depends on the global timer, but if you have a 
+    // separate difficultyLevel variable, add a getter for it too.
+    // --- SETTERS (For Rewinding) ---
+    public void setSpawnTimer(int time) { this.globalTimer = time; }
+    
+    public void setRoadrollerRate(int rate) { this.roadrollerRate = rate; }
+    
+    public void setTrainRate(int rate) { this.trainRate = rate; }
+
+    // If you want one setter for everything difficulty-related:
+    public void restoreState(int timer, int rRate, int tRate) {
+        this.globalTimer = timer;
+        this.roadrollerRate = rRate;
+        this.trainRate = tRate;
+    }
+    
+    public int getDifficultyTimer() { return levelUpTime; }
+    
+    public void setDifficultyTimer(int l) { this.levelUpTime = l; }
+
+}
+
+
+
+==================================================
+FILE: ./Ability_MadeInHeaven.java
+==================================================
+
+import greenfoot.*;
+
+public class Ability_MadeInHeaven {
+    private GameTimer durationTimer = new GameTimer(4.8, false); // Lasts 6.5 seconds to match the sound effect
+    private int afterimageCounter = 0;
+    private final double speedMultiplier = 2; // How much faster?
+    
+    
+    private final int ACCELERATED_TICK_SPEED = GameConfig.MIH_TICK_SPEED;//Everything moves slow as you speed up
+    private final int NORMAL_TICK_SPEED = GameConfig.NORMAL_TICK_SPEED;
+
+    public void activate() {
+        if (durationTimer.isExpired() || !durationTimer.isActive()) {
+            
+            durationTimer.reset();
+            durationTimer.start();
+            Greenfoot.setSpeed(ACCELERATED_TICK_SPEED);
+            AudioManager.play("speed_up_time");
+        }
+    }
+
+    public void update(Player p, MyWorld world) {
+        if (!durationTimer.isActive()) return;
+        
+        durationTimer.update(world);
+
+        // Spawn afterimage every frame
+        afterimageCounter++;
+        if (afterimageCounter % 1 == 0) {
+            world.addObject(new FX_Afterimage(p.getImage()), p.getX(), p.getY());
+        }
+
+        if (durationTimer.isExpired()) {
+            durationTimer.stop();
+            Greenfoot.setSpeed(NORMAL_TICK_SPEED);
+        }
+    }
+
+    public double getSpeedMultiplier() {
+        return durationTimer.isActive() && !durationTimer.isExpired() ? speedMultiplier : 1.0;
+    }
+    
+    // For the Time Machine snapshots
+    // These allow the Time Machine to save and load the ability's progress
+    public int getRemainingFrames() { return durationTimer.getRemainingFrames(); }
+    public void setRemainingFrames(int f) { durationTimer.setRemainingFrames(f); }
+    
+    public boolean isActive() { return durationTimer.isActive(); }
+    public void startTimer() { durationTimer.start(); }
+    public void stopTimer() { durationTimer.stop(); }
+}
+
+
+==================================================
+FILE: ./AudioManager.java
+==================================================
+
+import greenfoot.*;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
+
+public class AudioManager {
+    private static HashMap<String, GreenfootSound> sounds = new HashMap<>();
+    private static HashMap<String, List<GreenfootSound>> voicePools = new HashMap<>();
+    
+    // New: Storage for "Original" volumes
+    private static HashMap<String, Integer> baseVolumes = new HashMap<>();
+    private static HashMap<String, Integer> basePoolVolumes = new HashMap<>();
+    
+    // This remembers which sounds were active before we hit pause
+    private static List<GreenfootSound> activeBeforePause = new ArrayList<>();
+
+    private static int masterVolume = GameConfig.MASTER_VOLUME; // 0 to 200
+
+    public static void init() {
+        // Pre-load background music (using 100 as base, we scale it later)
+        loadSound("dio_bgm", "eye_of_heaven_dio_bgm.mp3", 60);
+        loadSound("lost_bgm", "brawl_stars_lost_bgm.mp3", 50);
+        loadSound("car_crash", "car_crash.mp3", 70);
+        loadSound("speed_up_time","speed_up_time.mp3", 100);
+        loadSound("summon_stand","summon_stand.mp3", 200);
+        loadSound("muda_barrage","muda_barrage.mp3", 90);
+        
+        // Pre-load voice pools
+        
+        String[] rewind = {
+            "rewind1.mp3"
+        };
+        loadVoicePool("rewind", rewind, 60);
+        
+        String[] loseFiles = {"dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3"};
+        loadVoicePool("dioLostVoices", loseFiles, 60);
+        
+        String[] dioBattleCry = {
+            "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3", 
+            "dio_voiceline/muda_muda.mp3", "dio_voiceline/Voicy_Timestop DiegoBrando.mp3"
+        };
+        loadVoicePool("dioBattleCry", dioBattleCry, 100);
+        
+        updateAllVolumes(); // Set initial volumes based on master
+    }
+
+    private static void loadSound(String key, String file, int volume) {
+        GreenfootSound s = new GreenfootSound(file);
+        //Pre load
+        s.play(); 
+        s.stop();
+        
+        sounds.put(key, s);
+        baseVolumes.put(key, volume);
+    }
+    
+    private static void loadVoicePool(String key, String[] files, int volume) {
+        List<GreenfootSound> pool = new ArrayList<>();
+        for (String f : files) {
+            GreenfootSound s = new GreenfootSound(f);
+            //Pre-load
+            s.play();
+            s.stop();
+            
+            pool.add(s);
+        }
+        voicePools.put(key, pool);
+        basePoolVolumes.put(key, volume);
+    }
+
+    // --- Master Volume Logic ---
+    
+    public static void setMasterVolume(int level) {
+        masterVolume = level;
+        if (masterVolume < 0) masterVolume = 0;
+        if (masterVolume > 200) masterVolume = 200;
+        updateAllVolumes();
+    }
+
+    private static void updateAllVolumes() {
+        // Update single sounds
+        for (String key : sounds.keySet()) {
+            int base = baseVolumes.get(key);
+            sounds.get(key).setVolume((base * masterVolume) / 200);
+        }
+        // Update pools
+        for (String key : voicePools.keySet()) {
+            int base = basePoolVolumes.get(key);
+            for (GreenfootSound s : voicePools.get(key)) {
+                s.setVolume((base * masterVolume) / 200);
+            }
+        }
+    }
+
+    // --- Special Control Logic ---
+
+    /**
+     * Stops everything currently playing.
+     */
+    public static void stopAll() {
+        for (GreenfootSound s : sounds.values()) s.stop();
+        for (List<GreenfootSound> pool : voicePools.values()) {
+            for (GreenfootSound s : pool) s.stop();
+        }
+    }
+
+    // --- Standard Methods ---
+
+    public static void play(String key) {
+        if (sounds.containsKey(key)) {
+            GreenfootSound s = sounds.get(key);
+            if (s.isPlaying()) s.stop();
+            s.play();
+        }
+    }
+
+    public static void playPool(String poolKey) {
+        if (voicePools.containsKey(poolKey)) {
+            List<GreenfootSound> pool = voicePools.get(poolKey);
+            int index = Greenfoot.getRandomNumber(pool.size());
+            pool.get(index).play(); 
+        }
+    }
+    
+    public static void playLoop(String key) {
+        if (sounds.containsKey(key)) {
+            GreenfootSound s = sounds.get(key);
+            if (!s.isPlaying()) s.playLoop();
+        }
+    }
+    
+    public static void stop(String key) {
+        if (sounds.containsKey(key)) sounds.get(key).stop();
+    }
+    
+     /**
+     * Pauses a specific looping sound.
+     */
+    public static void pause(String key) {
+        if (sounds.containsKey(key)) {
+            sounds.get(key).pause();
+        }
+    }
+
+    /**
+     * Resumes or Starts a looping sound.
+     */
+    public static void resume(String key) {
+        if (sounds.containsKey(key)) {
+            sounds.get(key).playLoop();
+        }
+    }
+    
+    /**
+     * UNIVERSAL SOUND CONTROL (With Memory)
+     * @param pause true to pause active sounds, false to resume ONLY those sounds.
+     */
+    public static void setAllSoundsPaused(boolean pause) {
+        if (pause) {
+            activeBeforePause.clear();
+
+            // 1. Pause BGM (we want to resume this later)
+            if (sounds.get("dio_bgm").isPlaying()) {
+                activeBeforePause.add(sounds.get("dio_bgm"));
+                sounds.get("dio_bgm").pause();
+            }
+
+            // 2. KILL everything else (One-shots like "crash" or "wry")
+            // We STOP them, not pause, so they don't echo during rewind
+            for (String key : sounds.keySet()) {
+                if (!key.equals("dio_bgm") && sounds.get(key).isPlaying()) {
+                    sounds.get(key).stop();
+                }
+            }
+            
+            for (List<GreenfootSound> pool : voicePools.values()) {
+                for (GreenfootSound s : pool) {
+                    if (s.isPlaying()) s.stop(); 
+                }
+            }
+        } 
+        else {
+            // Resume only the BGM
+            for (GreenfootSound s : activeBeforePause) {
+                s.play(); 
+            }
+            activeBeforePause.clear();
+        }
+    }
+}
+
+
+==================================================
+FILE: ./Ability_StandPunch.java
+==================================================
+
+
+import greenfoot.*;
+
+public class Ability_StandPunch {
+    private GameTimer durationTimer = new GameTimer(GameConfig.WORLD_PUNCH_DURATION, false);
+    private GameTimer cooldownTimer = new GameTimer(GameConfig.WORLD_PUNCH_COOLDOWN, false);
+    public int standAnimSpeed = 2;
+    
+    public void activate(Dio dio, MyWorld world) {
+        if (!durationTimer.isActive() && !cooldownTimer.isActive()) {
+            durationTimer.reset();
+            durationTimer.start();
+            
+            dio.setAnimation("Idle");
+            world.addObject(new TheWorldStand(this), dio.getX(), dio.getY());
+            
+            AudioManager.play("muda_barrage");
+        }
+    }
+
+    public void update(Dio dio, MyWorld world) {
+        if (cooldownTimer.isActive()) cooldownTimer.update(world);
+        if (!durationTimer.isActive()) return;
+        
+        durationTimer.update(world);
+
+        // If the ability expires OR the player died, stop the ability
+        if (durationTimer.isExpired() || dio.isDead()) {
+            stopAbility(dio);
+        }
+    }
+    
+    // New helper to handle clean shut-down
+    private void stopAbility(Dio dio) {
+        durationTimer.stop();
+        if (!dio.isDead()) {
+            cooldownTimer.reset();
+            cooldownTimer.start();
+            dio.setAnimation("Dash");
+        }
+    }
+
+    // This is called by Dio.die() to make sure the Stand disappears immediately
+    public void cancel() {
+        durationTimer.stop();
+        // TheWorldStand looks at isActive(), so it will remove itself next frame
+    }
+
+    public boolean isActive() { 
+        return durationTimer.isActive() && !durationTimer.isExpired(); 
+    }
+    
+    // ... (Keep your existing Time Machine getters/setters below) ...
+    public int getDurFrames() { return durationTimer.getRemainingFrames(); }
+    public void setDurFrames(int f) { durationTimer.setRemainingFrames(f); }
+    public boolean isDurActive() { return durationTimer.isActive(); }
+    public void startDur() { durationTimer.start(); }
+    public void stopDur() { durationTimer.stop(); }
+    public int getCoolFrames() { return cooldownTimer.getRemainingFrames(); }
+    public void setCoolFrames(int f) { cooldownTimer.setRemainingFrames(f); }
+    public boolean isCoolActive() { return cooldownTimer.isActive(); }
+    public void startCool() { cooldownTimer.start(); }
+    public void stopCool() { cooldownTimer.stop(); }
+}
+
