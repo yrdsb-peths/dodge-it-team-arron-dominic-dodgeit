@@ -12,6 +12,7 @@ public class HeroMaybe extends Actor
     private int currentFrame = 0;
     private int animationTimer = 0;
     private boolean isMoving = false;
+    private boolean facingRight = true;
     
     public HeroMaybe()
     {
@@ -36,5 +37,33 @@ public class HeroMaybe extends Actor
     public void act()
     {
         // Add your action code here.
+    }
+    
+    private void checkkeys()
+    {
+        isMoving = false;
+        
+        if (Greenfoot.isKeyDown("a") || Greenfoot.isKeyDown("left"))
+        {
+            setLocation(getX() - speed, getY());
+            isMoving = true;
+            facingRight = false;
+        }
+        if (Greenfoot.isKeyDown("d") || Greenfoot.isKeyDown("right"))
+        {
+            setLocation(getX() + speed, getY());
+            isMoving = true;
+            facingRight = true;
+        }
+        if (Greenfoot.isKeyDown("w") || Greenfoot.isKeyDown("up"))
+        {
+            setLocation(getX(), getY() - speed);
+            isMoving = true;
+        }
+        if (Greenfoot.isKeyDown("s") || Greenfoot.isKeyDown("Down"))
+        {
+            setLocation(getX(), getY() + speed);
+            isMoving = true;
+        }
     }
 }
