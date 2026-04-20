@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public enum CharacterConfig {
     
     DIO(
+        "Dio Brando",//Stage name user sees when picking charcters
         "Dio", // Folder name
         new String[]{"Idle", "Wry", "Dash", "Lose"}, // Folder names for animations
         "Dash", // Default animation
@@ -14,11 +15,27 @@ public enum CharacterConfig {
         "dioLostVoices", // Death sound
         BossConfig.DIO, // Boss banner (null if none)
         new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} // Abilities!
+        //Ability to stop time is built in
+    ),
+    
+    Dio2(
+        "Dio Brando",
+        "Dio", // Folder name
+        new String[]{"Idle", "Wry", "Dash", "Lose"}, // Folder names for animations
+        "Dash", // Default animation
+        GameConfig.DIO_MOVE_SPEED, // Speed
+        0.8 * GameConfig.SCALE, // Scale
+        "dio_bgm", // Music
+        "dioLostVoices", // Death sound
+        BossConfig.DIO, // Boss banner (null if none)
+        new String[]{"Ability_StandPunch", "Ability_Mandom"} // Abilities!
+        //Ability to stop time is built in
     );
     
     // To make a character, just add a comma after DIO's block
     // and write KIRA("Kira", new String[]{"Walk", "Die"...}, ...);
 
+    public final String displayName; 
     public final String folderName;
     public final String[] animNames;
     public final String defaultAnim;
@@ -29,9 +46,10 @@ public enum CharacterConfig {
     public final BossConfig bossConfig;
     public final String[] abilityClassNames;
 
-    private CharacterConfig(String folderName, String[] animNames, String defaultAnim, 
+    private CharacterConfig(String displayName,String folderName, String[] animNames, String defaultAnim, 
                            int moveSpeed, double scale, String bgmKey, 
                            String deathSoundKey, BossConfig bossConfig, String[] abilities) {
+        this.displayName = displayName; 
         this.folderName = folderName;
         this.animNames = animNames;
         this.defaultAnim = defaultAnim;

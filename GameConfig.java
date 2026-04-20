@@ -77,5 +77,5 @@ public class GameConfig {
     }
     
     //Character Active- later will implement character choosing menu
-    public static final CharacterConfig ACTIVE_CHARACTER = CharacterConfig.DIO;
+    public static CharacterConfig ACTIVE_CHARACTER = CharacterConfig.DIO;
 }

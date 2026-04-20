@@ -39,7 +39,7 @@ public class MenuState implements GameState {
 
     public void update(MyWorld world) {
         if ("enter".equals(Greenfoot.getKey())) {
-            world.getGSM().changeState(world.playingState);
+            world.getGSM().changeState(new CharacterSelectState());
         }
     }
 
