@@ -36,10 +36,11 @@ public class HeroMaybe extends Actor
     
     public void act()
     {
-        // Add your action code here.
+        checkKeys();
+        animate();
     }
     
-    private void checkkeys()
+    private void checkKeys()
     {
         isMoving = false;
         
