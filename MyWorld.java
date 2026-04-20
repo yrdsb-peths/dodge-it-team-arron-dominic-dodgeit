@@ -3,5 +3,9 @@ import greenfoot.*;
 public class MyWorld extends World {
     public MyWorld() {
         super(600, 400, 1);
+        
+        // Add our dear "Hero" to the world!
+        HeroMaybe hero = new HeroMaybe();
+        addObject (hero, 300, 200); 
     }
 }
