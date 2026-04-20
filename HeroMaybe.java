@@ -28,8 +28,8 @@ public class HeroMaybe extends Actor
         walkFramesLeft = new GreenfootImage[8];
         for (int i = 0; i < 8; i++)
         {
-            walkFrames[i] = new GreenfootImage(walkFrames[i]);
-            walkFrames[i].mirrorHorizontally();
+            walkFramesLeft[i] = new GreenfootImage(walkFrames[i]);
+            walkFramesLeft[i].mirrorHorizontally();
         }
         
         setImage(walkFrames[0]);
