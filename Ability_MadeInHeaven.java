@@ -28,6 +28,9 @@ public class Ability_MadeInHeaven implements Ability{
         
         if (!durationTimer.isActive()) return;
         
+        //Do not spawn afterimage when underground
+        if (p instanceof GenericPlayer && ((GenericPlayer)p).isHidden()) return;
+        
         durationTimer.update(world);
     
         // Spawn afterimage every frame
@@ -93,4 +96,6 @@ public class Ability_MadeInHeaven implements Ability{
         if (data[2] == 1) durationTimer.start(); else durationTimer.stop();
         if (data[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
     }
+    
+    public String getDisplayLabel() { return "S"; }//Ability Cooldown display symbol
 }

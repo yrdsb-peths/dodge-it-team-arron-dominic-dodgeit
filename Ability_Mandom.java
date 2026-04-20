@@ -21,4 +21,5 @@ public class Ability_Mandom implements Ability {
     // Time Machine hooks (Not needed, as the RewindManager handles itself)
     public Object captureState() { return null; }
     public void restoreState(Object state) {}
+    public String getDisplayLabel() { return "R"; }
 }

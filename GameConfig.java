@@ -46,9 +46,14 @@ public class GameConfig {
     public static final int NORMAL_TICK_SPEED = 50; 
     public static final int MIH_COOLDOWN = 3;// (3 seconds)
     
-    //Abiliyt: World Punch Setting
+    //Ability: World Punch Setting
     public static final double WORLD_PUNCH_DURATION = 3.5; //in seconds
     public static final double WORLD_PUNCH_COOLDOWN = 5.0; //in seconds
+    
+    //Ability: Sticky Fingers Settings
+    public static final String STICKY_FINGER_BUTTON = "f";
+    public static final int PORTAL_MARGIN = s(35);       // how close to edge triggers portal
+    public static final int PORTAL_COOLDOWN_FRAMES = 25; // frames before you can portal again
     
     //Volume Setting
     public static final int MASTER_VOLUME = 50;

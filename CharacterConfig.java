@@ -14,7 +14,7 @@ public enum CharacterConfig {
         "dio_bgm", // Music
         "dioLostVoices", // Death sound
         BossConfig.DIO, // Boss banner (null if none)
-        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven","Ability_Mandom"} // Abilities!
+        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven","Ability_Mandom", "Ability_StickyFingers"} // Abilities!
         //Ability to stop time is built in
     ),
     

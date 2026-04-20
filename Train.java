@@ -65,9 +65,16 @@ public class Train extends Obstacles implements Time_Snapshottable {
 
     protected void checkRemove() {
         if (getX() < -100) {
-            ScoreManager.addScore(5); // Big points for dodging the fast one
-            getWorld().removeObject(this);
+            java.util.List<Player> players = getWorld().getObjects(Player.class);
+        if (!players.isEmpty()) {
+            Player player = players.get(0);
+            boolean hiding = (player instanceof GenericPlayer) && ((GenericPlayer)player).isHidden();
+            if (!player.isDead() && !hiding) {
+                ScoreManager.addScore(5);
+            }
         }
+        getWorld().removeObject(this);
+            }
     }
     
     

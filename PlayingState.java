@@ -46,10 +46,18 @@ public class PlayingState implements GameState {
         } else {
             player = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
         }
+        //bility Cooldown Icons:
+        int abilityCount = player.getAbilityCount();
+        int iconSpacing = GameConfig.s(55); // Distance between icons
+        int startX = world.getWidth() - GameConfig.s(45);
+        int startY = world.getHeight() - GameConfig.s(45);
+        
+        for (int i = 0; i < abilityCount; i++) {
+            // Spawn icons moving from right to left
+            world.addObject(new UI_AbilityIcon(player, i), startX - (i * iconSpacing), startY);
+        }
         world.addObject(player, GameConfig.s(80), GameConfig.s(80));
         
-        UI_AbilityIcon abilityIcon = new UI_AbilityIcon(player);
-        world.addObject(abilityIcon, world.getWidth() - GameConfig.s(45), world.getHeight() - GameConfig.s(45));
     }
     
     public void update(MyWorld world) {

@@ -24,10 +24,10 @@ public class MyWorld extends World {
         
         //Set the order of rendeirng:
         //UI on top, then Dio, then after images, then the roadrollers
-        setPaintOrder(Banner.class, UIText.class,UI_AbilityIcon.class, UI_RewindBar.class, FX_RewindOverlay.class, 
+        setPaintOrder(Banner.class, UIText.class, UI_AbilityIcon.class, UI_RewindBar.class, FX_RewindOverlay.class, 
                       Exclaimation.class, PathWarning.class, 
-                      TheWorldStand.class, GenericPlayer.class, FX_Afterimage.class, Obstacles.class, ScrollingRoad.class);
-                      
+                      TheWorldStand.class, FX_Portal.class, FX_ZipperGround.class, GenericPlayer.class, 
+                      FX_Afterimage.class, Obstacles.class, ScrollingRoad.class);
         //Start the game in the playing state
         //Remember, pushState adds the state on top of the stack,and enters that state
         
@@ -132,7 +132,7 @@ public class GameOverState implements GameState {
 
     public void update(MyWorld world) {
         if ("enter".equals(Greenfoot.getKey())) {
-            world.getGSM().changeState(new PlayingState());
+            world.getGSM().changeState(new MenuState());
         }
     }
 
@@ -224,20 +224,38 @@ import java.util.ArrayList;
 public enum CharacterConfig {
     
     DIO(
-        "Dio", 
-        new String[]{"Idle", "Wry", "Dash", "Lose", "WalkLeft", "WalkRight", "Intro", "Scratch", "Roll", "High", "Teleport"},
-        "Dash", 
-        GameConfig.DIO_MOVE_SPEED,
-        0.8 * GameConfig.SCALE, // Base Scale
-        "dio_bgm",
-        "dioLostVoices",
-        BossConfig.DIO,
-        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} 
+        "Dio Brando",//Stage name user sees when picking charcters
+        "Dio", // Folder name
+        new String[]{"Idle", "Wry", "Dash", "Lose"}, // Folder names for animations
+        "Dash", // Default animation
+        GameConfig.DIO_MOVE_SPEED, // Speed
+        0.8 * GameConfig.SCALE, // Scale
+        "dio_bgm", // Music
+        "dioLostVoices", // Death sound
+        BossConfig.DIO, // Boss banner (null if none)
+        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven","Ability_Mandom", "Ability_StickyFingers"} // Abilities!
+        //Ability to stop time is built in
+    ),
+    
+    //Dio 2 is just a tester to test character selection menu
+    Dio2(
+        "Dio Brando",
+        "Dio", // Folder name
+        new String[]{"Idle", "Wry", "Dash", "Lose"}, // Folder names for animations
+        "Dash", // Default animation
+        GameConfig.DIO_MOVE_SPEED, // Speed
+        0.8 * GameConfig.SCALE, // Scale
+        "dio_bgm", // Music
+        "dioLostVoices", // Death sound
+        BossConfig.DIO, // Boss banner (null if none)
+        new String[]{"Ability_StandPunch", "Ability_Mandom"} // Abilities!
+        //Ability to stop time is built in
     );
     
     // To make a character, just add a comma after DIO's block
     // and write KIRA("Kira", new String[]{"Walk", "Die"...}, ...);
 
+    public final String displayName; 
     public final String folderName;
     public final String[] animNames;
     public final String defaultAnim;
@@ -248,9 +266,10 @@ public enum CharacterConfig {
     public final BossConfig bossConfig;
     public final String[] abilityClassNames;
 
-    private CharacterConfig(String folderName, String[] animNames, String defaultAnim, 
+    private CharacterConfig(String displayName,String folderName, String[] animNames, String defaultAnim, 
                            int moveSpeed, double scale, String bgmKey, 
                            String deathSoundKey, BossConfig bossConfig, String[] abilities) {
+        this.displayName = displayName; 
         this.folderName = folderName;
         this.animNames = animNames;
         this.defaultAnim = defaultAnim;
@@ -260,6 +279,72 @@ public enum CharacterConfig {
         this.deathSoundKey = deathSoundKey;
         this.bossConfig = bossConfig;
         this.abilityClassNames = abilities;
+    }
+}
+
+
+==================================================
+FILE: ./FX_ZipperGround.java
+==================================================
+
+import greenfoot.*;
+
+/*
+ * The zipper on the ground while Sticky Fingers is hiding.
+ * Pulses slowly to show "someone is in here."
+ * Drawn programmatically — no sprites needed.
+ */
+public class FX_ZipperGround extends Actor {
+    private int frame = 0;
+    private static final int W = 70; // unscaled width of the zipper
+    private static final int H = 12; // unscaled height
+
+    public FX_ZipperGround() {
+        redraw(0);
+    }
+
+    public void act() {
+        MyWorld world = (MyWorld) getWorld();
+        if (world == null || !world.getGSM().isState(PlayingState.class)) return;
+        frame++;
+        redraw(frame);
+    }
+
+    private void redraw(int f) {
+        int w = GameConfig.s(W);
+        int h = GameConfig.s(H);
+        GreenfootImage img = new GreenfootImage(w, h);
+
+        // Pulse: brightness oscillates between 180 and 255
+        int brightness = 180 + (int)(75 * (0.5 + 0.5 * Math.sin(f * 0.1)));
+
+        // ── Zipper spine (centre line) ──
+        img.setColor(new Color(brightness, brightness, 0)); // gold
+        img.fillRect(0, h/2 - GameConfig.s(1), w, GameConfig.s(2));
+
+        // ── Teeth: alternating triangles above and below the spine ──
+        int toothW = GameConfig.s(6);
+        int toothH = GameConfig.s(4);
+        img.setColor(new Color(brightness, brightness, 0));
+
+        for (int x = 0; x + toothW <= w; x += toothW * 2) {
+            // Tooth above
+            int[] xpts = {x, x + toothW/2, x + toothW};
+            int[] ypts = {h/2, h/2 - toothH, h/2};
+            img.fillPolygon(xpts, ypts, 3);
+
+            // Tooth below
+            int[] ypts2 = {h/2, h/2 + toothH, h/2};
+            img.fillPolygon(xpts, ypts2, 3);
+        }
+
+        // ── Zipper pull (small rectangle at the right edge) ──
+        int pullW = GameConfig.s(6);
+        int pullH = GameConfig.s(8);
+        img.setColor(new Color(220, 180, 0));
+        img.fillRect(w - pullW, h/2 - pullH/2, pullW, pullH);
+
+        setImage(img);
     }
 }
 
@@ -444,7 +529,8 @@ public class Roadroller extends Obstacles implements Time_Snapshottable
             java.util.List<Player> players = getWorld().getObjects(Player.class);
             if (!players.isEmpty()) {
                 Player player = players.get(0);
-                if (!player.isDead()) {
+                boolean hiding = (player instanceof GenericPlayer) && ((GenericPlayer)player).isHidden();
+                if (!player.isDead() && !hiding) {
                     ScoreManager.addScore(scoreToAdd);
                 }
             }
@@ -559,7 +645,7 @@ public class MenuState implements GameState {
 
     public void update(MyWorld world) {
         if ("enter".equals(Greenfoot.getKey())) {
-            world.getGSM().changeState(world.playingState);
+            world.getGSM().changeState(new CharacterSelectState());
         }
     }
 
@@ -572,6 +658,102 @@ public class MenuState implements GameState {
         // We adjust x slightly for the left-aligned text so the center of the block is aligned
         int drawX = (a instanceof UIText && x < world.getWidth()/2) ? x + GameConfig.s(120) : x;
         world.addObject(a, drawX, y);
+        uiElements.add(a);
+    }
+}
+
+
+==================================================
+FILE: ./CharacterSelectState.java
+==================================================
+
+
+import greenfoot.*;
+import java.util.ArrayList;
+import java.util.List;
+public class CharacterSelectState implements GameState {
+    private List<Actor> uiElements = new ArrayList<>();
+    private int currentIndex = 0;
+    private CharacterConfig[] roster = CharacterConfig.values();
+    
+    private UIText nameDisplay;
+    private UIText abilitiesDisplay;
+    private UI_Preview currentPreview; // <--- ADD THIS
+
+    public void enter(MyWorld world) {
+        int midX = world.getWidth() / 2;
+        
+        // Title
+        addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(80));
+        
+        // Character Name (Starts blank, we update it immediately)
+        nameDisplay = new UIText("", GameConfig.s(60), Color.WHITE);
+        addUI(world, nameDisplay, midX, GameConfig.s(180));
+        
+        // Instructions
+        addUI(world, new UIText("< LEFT ARROW       RIGHT ARROW >", GameConfig.s(20), Color.CYAN), midX, GameConfig.s(240));
+
+
+        // Name Display
+        nameDisplay = new UIText("", GameConfig.s(45), Color.WHITE);
+        addUI(world, nameDisplay, midX, GameConfig.s(220)); // Moved down a bit
+        
+        // Abilities Display
+        abilitiesDisplay = new UIText("", GameConfig.s(18), Color.ORANGE);
+        addUI(world, abilitiesDisplay, midX, GameConfig.s(260));
+
+        updateScreen(world); // Pass the world so we can add the preview
+    }
+
+    public void update(MyWorld world) {
+        String key = Greenfoot.getKey();
+        if (key != null) {
+            if (key.equals("right")) {
+                currentIndex = (currentIndex + 1) % roster.length;
+                updateScreen(world);
+            } 
+            else if (key.equals("left")) {
+                currentIndex = (currentIndex - 1 + roster.length) % roster.length;
+                updateScreen(world);
+            }
+            else if (key.equals("enter")) {
+                GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
+                world.getGSM().changeState(new PlayingState());
+            }
+        }
+    }
+
+    private void updateScreen(MyWorld world) {
+        CharacterConfig selected = roster[currentIndex];
+        
+        // 1. Update Text
+        nameDisplay.setText(selected.displayName); // Use the new Stage Name!
+        
+        // 2. Update the Image Preview
+        if (currentPreview != null) {
+            world.removeObject(currentPreview);
+        }
+        currentPreview = new UI_Preview(selected);
+        world.addObject(currentPreview, world.getWidth()/2, GameConfig.s(140));
+        // We don't add currentPreview to uiElements list because 
+        // we manually manage its removal when switching characters
+        
+        // 3. Update Abilities Text
+        String abilityText = "Abilities: ";
+        for (String s : selected.abilityClassNames) {
+            abilityText += s.replace("Ability_", "") + " ";
+        }
+        abilitiesDisplay.setText(abilityText);
+    }
+
+    public void exit(MyWorld world) {
+        world.removeObjects(uiElements);
+        if (currentPreview != null) world.removeObject(currentPreview); // Clean up
+        uiElements.clear();
+    }
+
+    private void addUI(MyWorld world, Actor a, int x, int y) {
+        world.addObject(a, x, y);
         uiElements.add(a);
     }
 }
@@ -739,9 +921,16 @@ public class Train extends Obstacles implements Time_Snapshottable {
 
     protected void checkRemove() {
         if (getX() < -100) {
-            ScoreManager.addScore(5); // Big points for dodging the fast one
-            getWorld().removeObject(this);
+            java.util.List<Player> players = getWorld().getObjects(Player.class);
+        if (!players.isEmpty()) {
+            Player player = players.get(0);
+            boolean hiding = (player instanceof GenericPlayer) && ((GenericPlayer)player).isHidden();
+            if (!player.isDead() && !hiding) {
+                ScoreManager.addScore(5);
+            }
         }
+        getWorld().removeObject(this);
+            }
     }
     
     
@@ -821,7 +1010,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
     protected void movementLogic() {
         iFrameTimer.update((MyWorld)getWorld());
-
+        
         // Update and Trigger Abilities
         for (Ability a : abilities) {
             a.update(this, (MyWorld)getWorld());
@@ -847,21 +1036,29 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         for(Ability a : abilities) if(a instanceof Ability_MadeInHeaven && a.isActive()) speed *= 2;
 
         int nextX = getX(), nextY = getY();
-        if (Greenfoot.isKeyDown("up")) nextY -= speed;
-        if (Greenfoot.isKeyDown("down")) nextY += speed;
+        if (Greenfoot.isKeyDown("up")){
+            nextY -= speed;
+        }
         
-        int halfWidth = getImage().getWidth() / 2;
-        int halfHeight = getImage().getHeight() / 2;
+        if (Greenfoot.isKeyDown("down")){
+            nextY += speed;
+        }
         
-        nextX = Math.max(halfWidth, Math.min(getWorld().getWidth() - halfWidth, nextX));
-        nextY = Math.max(halfHeight, Math.min(getWorld().getHeight() - halfHeight, nextY));
+        int padding = GameConfig.s(30); 
+        
+        nextX = Math.max(padding, Math.min(getWorld().getWidth() - padding, nextX));
+        nextY = Math.max(padding, Math.min(getWorld().getHeight() - padding, nextY));
     
         setLocation(nextX, nextY);
     }
 
     public void die() {
         if (iFrameTimer.isActive() || isDead) return;
-        for (Ability a : abilities) if (a.isActive() && a instanceof Ability_StandPunch) return; // Invincible during punch
+        for (Ability a : abilities) 
+        {
+            if (a.isActive() && a instanceof Ability_StandPunch) return; // Invincible during punch
+            if (a.shouldHidePlayer()) return;//Invincibel when hidden
+        }
         
         isDead = true;
         setAnimation("Lose");
@@ -874,6 +1071,18 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         if (getWorld() == null) return;
         setImage(currentAnimator.getCurrentFrame());
 
+        // Check if any ability wants us hidden
+        boolean hidden = false;
+        for (Ability a : abilities) {
+            if (a.shouldHidePlayer()) { hidden = true; break; }
+        }
+    
+        if (hidden) {
+            getImage().setTransparency(0);
+            return; // skip i-frame blinking when hidden
+        }
+        
+        //I-Frame logic: blink
         if (iFrameTimer.isActive() && !iFrameTimer.isExpired()) {
             if (iFrameTimer.getRemainingFrames() % 4 < 2) {
                 getImage().setTransparency(60); 
@@ -942,16 +1151,12 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             setAnimation(name);                   
         }
     }
-    
-    //should be speicific to dio
-    protected void onPauseUpdate(MyWorld world) {
-        if (!bannerSpawned && config.bossConfig != null) {
-            world.addObject(new Banner(config.bossConfig), GameConfig.s(1120), GameConfig.s(200));
-            bannerSpawned = true;
-            setAnimation("Wry"); // Or whichever intro animation fits
+
+    public boolean isHidden() {
+        for (Ability a : abilities) {
+            if (a.shouldHidePlayer()) return true;
         }
-        movementLogic(); 
-        animationLogic();
+        return false;
     }
     
 }
@@ -993,11 +1198,10 @@ FILE: ./GameConfig.java
 import greenfoot.*;
 
 public class GameConfig {
+    //Character active is at the very bottom
+    
     // 0. GLOBAL SCALING: This scales every image. By default, it is 1. To make things larger and occupy more screen, it is currently 1.5 
     public static final float SCALE = 1.5f; 
-    
-    //1. Character Active- later will implement character choosing menu
-    public static final CharacterConfig ACTIVE_CHARACTER = CharacterConfig.DIO;
     
     // 2. WORLD SETTINGS
     public static final int WORLD_WIDTH = s(600);//World widht is 600 pixels
@@ -1026,7 +1230,7 @@ public class GameConfig {
     public static final int TRAIN_RATE = 200;// number of frames for a car, decreass with difficulty;
     public static final int TRAIN_MIN_RATE = 36;
     public static final int TRAIN_SPEED = s(25);//Train moves at 25 pixesl per frame by default
-    public static final int TRAIN_MAX_SPEED = s(130);//Train can move at 60 pixels per frame at its peak
+    public static final int TRAIN_MAX_SPEED = s(50);//Train can move at 50 pixels per frame at its peak
       
     
     // Rewind Time Settings
@@ -1039,9 +1243,14 @@ public class GameConfig {
     public static final int NORMAL_TICK_SPEED = 50; 
     public static final int MIH_COOLDOWN = 3;// (3 seconds)
     
-    //Abiliyt: World Punch Setting
+    //Ability: World Punch Setting
     public static final double WORLD_PUNCH_DURATION = 3.5; //in seconds
     public static final double WORLD_PUNCH_COOLDOWN = 5.0; //in seconds
+    
+    //Ability: Sticky Fingers Settings
+    public static final String STICKY_FINGER_BUTTON = "f";
+    public static final int PORTAL_MARGIN = s(35);       // how close to edge triggers portal
+    public static final int PORTAL_COOLDOWN_FRAMES = 25; // frames before you can portal again
     
     //Volume Setting
     public static final int MASTER_VOLUME = 50;
@@ -1068,6 +1277,9 @@ public class GameConfig {
     public static int s(int pixels) {
         return Math.round(pixels * SCALE);
     }
+    
+    //Character Active- later will implement character choosing menu
+    public static CharacterConfig ACTIVE_CHARACTER = CharacterConfig.DIO;
 }
 
 
@@ -1093,6 +1305,189 @@ public interface Ability {
     // Time Machine hooks!
     Object captureState();
     void restoreState(Object state);
+    
+    //Sticky Finger
+    default boolean shouldHidePlayer() { return false; }
+}
+
+
+==================================================
+FILE: ./Ability_StickyFingers.java
+==================================================
+
+import greenfoot.*;
+
+/*
+ * STICKY FINGERS — Bruno Bucciarati's Stand
+ * 
+ * Two abilities in one key:
+ * 
+ * 1. PORTAL WRAP (passive, always active):
+ *    Move to the top/bottom edge and you zip through a portal,
+ *    emerging from the opposite side. Top → Bottom, Bottom → Top.
+ *    A brief flash shows the zipper opening at both edges.
+ * 
+ * 2. HIDE IN THE ROAD (press F to toggle):
+ *    Zip into the road itself. You become invisible and invincible.
+ *    Obstacles pass through you. BUT you earn zero score while hidden.
+ *    The difficulty keeps climbing while you hide — risky to stay too long!
+ *    Press F again to emerge with a brief i-frame.
+ * 
+ * Both mechanics use the same zipper visual language.
+ */
+public class Ability_StickyFingers implements Ability {
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    private boolean hidden = false;
+
+    // ── Timers ─────────────────────────────────────────────────────────────────
+    // Cooldown before you can hide again after emerging
+    private GameTimer hideCooldown = new GameTimer(2.0, false);
+    // Prevents the portal from re-firing every frame while at the edge
+    private int portalCooldownFrames = 0;
+
+    // ── Actors we need to clean up ─────────────────────────────────────────────
+    private FX_ZipperGround zipperGround = null;
+    private FX_Portal topPortal   = null;
+    private FX_Portal bottomPortal = null;
+    private int portalVisualFrames = 0;
+    private static final int PORTAL_FLASH_DURATION = 18; // frames the portal flash stays
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // ACTIVATE — toggle hide/unhide
+    // ══════════════════════════════════════════════════════════════════════════
+    public void activate(Player p, MyWorld world) {
+        if (!hidden && !hideCooldown.isActive()) {
+            // ── ZIP INTO THE ROAD ──
+            hidden = true;
+            p.setAnimation("Idle");
+
+            zipperGround = new FX_ZipperGround();
+            world.addObject(zipperGround, p.getX(), p.getY());
+
+        } else if (hidden) {
+            // ── POP BACK OUT ──
+            hidden = false;
+
+            if (zipperGround != null && zipperGround.getWorld() != null) {
+                world.removeObject(zipperGround);
+            }
+            zipperGround = null;
+
+            // Brief i-frame so you don't instantly die emerging
+            if (p instanceof GenericPlayer) ((GenericPlayer) p).startIFrame(0.8);
+            p.setAnimation("Dash");
+
+            hideCooldown.reset();
+            hideCooldown.start();
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // UPDATE — called every frame
+    // ══════════════════════════════════════════════════════════════════════════
+    public void update(Player p, MyWorld world) {
+        hideCooldown.update(world);
+        if (portalCooldownFrames > 0) portalCooldownFrames--;
+
+        // Keep zipper glued to the player's position while hiding
+        if (hidden && zipperGround != null && zipperGround.getWorld() != null) {
+            zipperGround.setLocation(p.getX(), p.getY());
+        }
+
+        // Count down portal flash visuals
+        if (portalVisualFrames > 0) {
+            portalVisualFrames--;
+            if (portalVisualFrames <= 0) cleanupPortals(world);
+        }
+
+        // ── PORTAL WRAP CHECK (passive, only when not hidden) ──
+        if (!hidden && portalCooldownFrames <= 0) {
+            int margin = GameConfig.PORTAL_MARGIN;
+
+            if (p.getY() <= margin) {
+                // At top — warp to bottom
+                doPortalWarp(p, world, true);
+            } else if (p.getY() >= world.getHeight() - margin) {
+                // At bottom — warp to top
+                doPortalWarp(p, world, false);
+            }
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // PORTAL WARP
+    // ══════════════════════════════════════════════════════════════════════════
+    private void doPortalWarp(Player p, MyWorld world, boolean fromTop) {
+        // Teleport: top ↔ bottom with a small inset so we don't immediately re-trigger
+        int exitY = fromTop
+            ? world.getHeight() - GameConfig.PORTAL_MARGIN - GameConfig.s(5)
+            : GameConfig.PORTAL_MARGIN + GameConfig.s(5);
+
+        p.setLocation(p.getX(), exitY);
+
+        // Spawn flash portals at both edges
+        cleanupPortals(world);
+        topPortal    = new FX_Portal(world.getWidth(), false); // top edge, teeth face down
+        bottomPortal = new FX_Portal(world.getWidth(), true);  // bottom edge, teeth face up
+        world.addObject(topPortal,    world.getWidth() / 2, GameConfig.s(10));
+        world.addObject(bottomPortal, world.getWidth() / 2, world.getHeight() - GameConfig.s(10));
+
+        portalVisualFrames = PORTAL_FLASH_DURATION;
+        portalCooldownFrames = GameConfig.PORTAL_COOLDOWN_FRAMES;
+
+        // Very short i-frame during transit
+        if (p instanceof GenericPlayer) ((GenericPlayer) p).startIFrame(0.15);
+    }
+
+    private void cleanupPortals(MyWorld world) {
+        if (topPortal    != null && topPortal.getWorld()    != null) world.removeObject(topPortal);
+        if (bottomPortal != null && bottomPortal.getWorld() != null) world.removeObject(bottomPortal);
+        topPortal = null;
+        bottomPortal = null;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // ABILITY INTERFACE
+    // ══════════════════════════════════════════════════════════════════════════
+    public void cancel() {
+        hidden = false;
+        hideCooldown.stop();
+    }
+
+    public boolean isActive()         { return hidden; }
+    public boolean shouldHidePlayer() { return hidden; }
+    public boolean isCooldownActive() { return hideCooldown.isActive(); }
+    public String getKeybind()        { return GameConfig.STICKY_FINGER_BUTTON; }
+
+    public double getActivePercent() {
+        // When hidden: show full orange (no drain — you can stay as long as you dare)
+        return hidden ? 1.0 : 0.0;
+    }
+
+    public double getCooldownPercent() {
+        return hideCooldown.isActive() ? hideCooldown.getPercentComplete() : 0.0;
+    }
+
+    // ── Time Machine ──────────────────────────────────────────────────────────
+    public Object captureState() {
+        return new int[]{
+            hidden ? 1 : 0,
+            hideCooldown.getRemainingFrames(),
+            hideCooldown.isActive() ? 1 : 0,
+            portalCooldownFrames
+        };
+    }
+
+    public void restoreState(Object state) {
+        int[] d = (int[]) state;
+        // If we were hidden and now we're not (or vice versa), the
+        // ZipperGround actor is handled by the RewindManager's actor restore.
+        hidden = (d[0] == 1);
+        hideCooldown.setRemainingFrames(d[1]);
+        if (d[2] == 1) hideCooldown.start(); else hideCooldown.stop();
+        portalCooldownFrames = d[3];
+    }
 }
 
 
@@ -1106,7 +1501,21 @@ public class Dio extends GenericPlayer {
     public Dio() {
         super(CharacterConfig.DIO);
     }
+    
+    //should be speicific to dio
+    protected void onPauseUpdate(MyWorld world) {
+        if (!bannerSpawned && CharacterConfig.DIO.bossConfig != null) {
+            world.addObject(new Banner(CharacterConfig.DIO.bossConfig), GameConfig.s(1120), GameConfig.s(200));
+            bannerSpawned = true;
+            setAnimation("Wry"); // Or whichever intro animation fits
+        }
+        movementLogic(); 
+        animationLogic();
+    }
+    
 }
+
+
 
 
 ==================================================
@@ -1540,6 +1949,36 @@ public class GameTimer {
     public void setRemainingFrames(int frames) { this.remainingFrames = frames; }
     public boolean isActive() { return active; }
     public int getTotalFrames() { return totalFrames; }
+}
+
+
+==================================================
+FILE: ./Ability_Mandom.java
+==================================================
+
+import greenfoot.*;
+
+public class Ability_Mandom implements Ability {
+    public void activate(Player p, MyWorld world) {
+        if (world.getGSM().peekState() instanceof PlayingState) {
+            PlayingState ps = (PlayingState) world.getGSM().peekState();
+            // Trigger the rewind safely through the Playing State
+            ps.triggerRewind(world);
+        }
+    }
+
+    // Rewind is a global state, so the player ability doesn't need to track timers
+    public void update(Player p, MyWorld world) {}
+    public void cancel() {}
+    public boolean isActive() { return false; }
+    public String getKeybind() { return GameConfig.REWIND_TIME_BUTTON; }
+    public boolean isCooldownActive() { return false; }
+    public double getActivePercent() { return 0.0; }
+    public double getCooldownPercent() { return 0.0; }
+    
+    // Time Machine hooks (Not needed, as the RewindManager handles itself)
+    public Object captureState() { return null; }
+    public void restoreState(Object state) {}
 }
 
 
@@ -2013,6 +2452,91 @@ public class Banner extends Actor {
 
 
 ==================================================
+FILE: ./FX_Portal.java
+==================================================
+
+import greenfoot.*;
+
+/*
+ * A brief zipper-portal flash drawn at the top or bottom screen edge.
+ * Full screen width, just a thin strip that fades out.
+ * Drawn programmatically.
+ * 
+ * teethFaceUp: true means teeth point upward (bottom portal), false = teeth point down (top portal)
+ */
+public class FX_Portal extends Actor {
+    private int alpha = 255;
+    private int width;
+    private boolean teethFaceUp;
+
+    public FX_Portal(int worldWidth, boolean teethFaceUp) {
+        this.width = worldWidth;
+        this.teethFaceUp = teethFaceUp;
+        redraw();
+    }
+
+    public void act() {
+        alpha -= 14; // fades in ~18 frames
+        if (alpha <= 0) {
+            if (getWorld() != null) getWorld().removeObject(this);
+            return;
+        }
+        redraw();
+    }
+
+    private void redraw() {
+        int h = GameConfig.s(18);
+        GreenfootImage img = new GreenfootImage(width, h);
+
+        // Purple/gold portal background
+        img.setColor(new Color(160, 60, 220, Math.min(alpha, 200)));
+        img.fill();
+
+        // Zipper teeth along the inner edge
+        int toothW = GameConfig.s(8);
+        int toothH = GameConfig.s(7);
+        img.setColor(new Color(255, 220, 0, alpha));
+
+        int teethY = teethFaceUp ? 0 : h - toothH; // base of teeth
+        int tipY   = teethFaceUp ? toothH : h - toothH; // direction
+
+        for (int x = 0; x + toothW <= width; x += toothW) {
+            int mid = x + toothW / 2;
+            int[] xpts = {x, mid, x + toothW};
+            int[] ypts = {teethFaceUp ? toothH : h - toothH,
+                          teethFaceUp ? 0 : h,
+                          teethFaceUp ? toothH : h - toothH};
+            img.fillPolygon(xpts, ypts, 3);
+        }
+
+        img.setTransparency(alpha);
+        setImage(img);
+    }
+}
+
+
+==================================================
+FILE: ./UI_Preview.java
+==================================================
+
+import greenfoot.*;
+
+public class UI_Preview extends Actor {
+    private Animator anim;
+
+    public UI_Preview(CharacterConfig config) {
+        // Load the character's default animation (usually Idle or Dash)
+        this.anim = new Animator(config.folderName, config.defaultAnim, config.scale);
+    }
+
+    public void act() {
+        // Just cycle the animation frames
+        setImage(anim.getCurrentFrame());
+    }
+}
+
+
+==================================================
 FILE: ./FX_RewindOverlay.java
 ==================================================
 
@@ -2231,16 +2755,7 @@ public class PlayingState implements GameState {
         if (GameConfig.TIME_STOP_BUTTON.equals(key)) {
             world.getGSM().pushState(new PausedState());
         }
-        
-        // Trigger rewind on R press
-        if (GameConfig.REWIND_TIME_BUTTON.equals(key) && rewindManager.canRewind()) {
-            AudioManager.setAllSoundsPaused(true);
-            AudioManager.playPool("rewind");
-            rewindManager.startRewind();
-            rewindOverlay = new FX_RewindOverlay();
-            world.addObject(rewindOverlay, world.getWidth()/2, world.getHeight()/2);
-        }
-        
+
         //
         /* Each frame: either rewind or record
          * Think of the following code like a DVD player. 
@@ -2304,6 +2819,17 @@ public class PlayingState implements GameState {
         AudioManager.stop(GameConfig.ACTIVE_CHARACTER.bgmKey);
         world.removeObjects(world.getObjects(null));
         Greenfoot.setSpeed(50);
+    }
+    
+    //Rewind time trigger
+    public void triggerRewind(MyWorld world) {
+        if (rewindManager.canRewind()) {
+            AudioManager.setAllSoundsPaused(true);
+            AudioManager.playPool("rewind");
+            rewindManager.startRewind();
+            rewindOverlay = new FX_RewindOverlay();
+            world.addObject(rewindOverlay, world.getWidth()/2, world.getHeight()/2);
+        }
     }
     
     //Getter methods 

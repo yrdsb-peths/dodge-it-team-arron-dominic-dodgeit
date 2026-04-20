@@ -70,6 +70,7 @@ public class Ability_StandPunch implements Ability {
         if (data[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
     }
     
+    public String getDisplayLabel() { return "E"; }//Ability Cooldown display symbol
     //Time machine getters setters
     public int getDurFrames() { return durationTimer.getRemainingFrames(); }
     public void setDurFrames(int f) { durationTimer.setRemainingFrames(f); }
@@ -81,4 +82,5 @@ public class Ability_StandPunch implements Ability {
     public boolean isCoolActive() { return cooldownTimer.isActive(); }
     public void startCool() { cooldownTimer.start(); }
     public void stopCool() { cooldownTimer.stop(); }
+    
 }

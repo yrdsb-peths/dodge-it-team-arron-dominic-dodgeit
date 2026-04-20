@@ -40,7 +40,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
     protected void movementLogic() {
         iFrameTimer.update((MyWorld)getWorld());
-
+        
         // Update and Trigger Abilities
         for (Ability a : abilities) {
             a.update(this, (MyWorld)getWorld());
@@ -84,7 +84,11 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
     public void die() {
         if (iFrameTimer.isActive() || isDead) return;
-        for (Ability a : abilities) if (a.isActive() && a instanceof Ability_StandPunch) return; // Invincible during punch
+        for (Ability a : abilities) 
+        {
+            if (a.isActive() && a instanceof Ability_StandPunch) return; // Invincible during punch
+            if (a.shouldHidePlayer()) return;//Invincibel when hidden
+        }
         
         isDead = true;
         setAnimation("Lose");
@@ -97,6 +101,18 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         if (getWorld() == null) return;
         setImage(currentAnimator.getCurrentFrame());
 
+        // Check if any ability wants us hidden
+        boolean hidden = false;
+        for (Ability a : abilities) {
+            if (a.shouldHidePlayer()) { hidden = true; break; }
+        }
+    
+        if (hidden) {
+            getImage().setTransparency(0);
+            return; // skip i-frame blinking when hidden
+        }
+        
+        //I-Frame logic: blink
         if (iFrameTimer.isActive() && !iFrameTimer.isExpired()) {
             if (iFrameTimer.getRemainingFrames() % 4 < 2) {
                 getImage().setTransparency(60); 
@@ -104,6 +120,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
                 getImage().setTransparency(255); 
             }
         } else {
+            //Ensure player is fully visible if not in i frames
             getImage().setTransparency(255);
         }
     }
@@ -164,6 +181,22 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             animations.get(name).setSpeed(speed); 
             setAnimation(name);                   
         }
+    }
+
+    public boolean isHidden() {
+        for (Ability a : abilities) {
+            if (a.shouldHidePlayer()) return true;
+        }
+        return false;
+    }
+    
+    public int getAbilityCount() {
+        return abilities.size();
+    }
+    
+    public Ability getAbilityAt(int index) {
+        if (index >= 0 && index < abilities.size()) return abilities.get(index);
+        return null;
     }
     
 }

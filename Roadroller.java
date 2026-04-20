@@ -72,7 +72,8 @@ public class Roadroller extends Obstacles implements Time_Snapshottable
             java.util.List<Player> players = getWorld().getObjects(Player.class);
             if (!players.isEmpty()) {
                 Player player = players.get(0);
-                if (!player.isDead()) {
+                boolean hiding = (player instanceof GenericPlayer) && ((GenericPlayer)player).isHidden();
+                if (!player.isDead() && !hiding) {
                     ScoreManager.addScore(scoreToAdd);
                 }
             }
