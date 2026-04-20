@@ -66,4 +66,24 @@ public class HeroMaybe extends Actor
             isMoving = true;
         }
     }
+    
+    private void animate()
+    {
+        if (!isMoving)
+        {
+            //stand still on first frame when not moving
+            setImage(facingRight ? walkFrames[0] : walkFramesLeft[0]);
+            currentFrame = 0;
+            animationTimer = 0;
+            return;
+        }
+        
+        animationTimer++;
+        if (animationTimer % 5 == 0)
+        {
+            setImage(facingRight ? walkFrames[currentFrame] : walkFramesLeft[currentFrame]);
+            currentFrame++;
+            if (currentFrame >= walkFrames.length) currentFrame = 0;
+        }
+    }
 }
