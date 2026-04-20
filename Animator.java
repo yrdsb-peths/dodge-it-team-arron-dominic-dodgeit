@@ -124,4 +124,6 @@ public class Animator
     public void setSpeed(int speed) {
     this.speed = speed;
     }
+    //needed by GenericPlayer's animation loader
+    public boolean hasFrames() { return frames != null && frames.length > 0; }
 }

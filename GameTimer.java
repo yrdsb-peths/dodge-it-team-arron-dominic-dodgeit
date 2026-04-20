@@ -125,4 +125,5 @@ public class GameTimer {
     public int getRemainingFrames() { return remainingFrames; }
     public void setRemainingFrames(int frames) { this.remainingFrames = frames; }
     public boolean isActive() { return active; }
+    public int getTotalFrames() { return totalFrames; }
 }
