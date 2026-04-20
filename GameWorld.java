@@ -10,14 +10,13 @@ public class GameWorld extends World {
         
         // add BGM when the game starts
         gameMusic = new GreenfootSound("game-music.mp3");
-        gameMusic.playLoop();
         
         prepare();
     }
     
     public void act()
     {
-        if (! musicStarted)
+        if (!musicStarted)
         {
             gameMusic.playLoop();
             musicStarted = true;
