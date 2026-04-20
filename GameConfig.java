@@ -33,7 +33,7 @@ public class GameConfig {
     public static final int TRAIN_RATE = 200;// number of frames for a car, decreass with difficulty;
     public static final int TRAIN_MIN_RATE = 36;
     public static final int TRAIN_SPEED = s(25);//Train moves at 25 pixesl per frame by default
-    public static final int TRAIN_MAX_SPEED = s(130);//Train can move at 60 pixels per frame at its peak
+    public static final int TRAIN_MAX_SPEED = s(50);//Train can move at 50 pixels per frame at its peak
       
     
     // Rewind Time Settings
