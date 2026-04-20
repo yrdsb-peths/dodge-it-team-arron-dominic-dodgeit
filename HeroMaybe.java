@@ -45,6 +45,7 @@ public class HeroMaybe extends Actor
     {
         isMoving = false;
         
+        // could be either keys, whatever makes the player feel comfortable
         if (Greenfoot.isKeyDown("a") || Greenfoot.isKeyDown("left"))
         {
             setLocation(getX() - speed, getY());
@@ -71,6 +72,8 @@ public class HeroMaybe extends Actor
     
     private void animate()
     {
+        // this part I do some research since I have no idea how to animate it
+        // though I tried my best to incorporate unit 4 knowledge for the code
         if (!isMoving)
         {
             //stand still on first frame when not moving
