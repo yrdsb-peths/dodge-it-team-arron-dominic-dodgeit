@@ -4,7 +4,7 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
 public class HeroMaybe extends Actor
 {
     private int health = 3;
-    private int speed = 2;
+    private int speed = 4; // adjust the speed of the hero
     
     private GreenfootImage[] walkFrames;
     private GreenfootImage[] walkFramesLeft;
