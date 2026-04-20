@@ -3,6 +3,7 @@ import greenfoot.*;
 public class GameWorld extends World {
     
     private GreenfootSound gameMusic;
+    private boolean musicStarted = false;
     
     public GameWorld() {
         super(800, 400, 1);
@@ -12,6 +13,15 @@ public class GameWorld extends World {
         gameMusic.playLoop();
         
         prepare();
+    }
+    
+    public void act()
+    {
+        if (! musicStarted)
+        {
+            gameMusic.playLoop();
+            musicStarted = true;
+        }
     }
     
     private void prepare() 
