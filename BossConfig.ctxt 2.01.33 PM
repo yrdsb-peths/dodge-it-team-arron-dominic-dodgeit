@@ -1,0 +1,5 @@
+#BlueJ class context
+comment0.target=BossConfig
+comment1.params=color\ soundsKey\ overlays
+comment1.target=BossConfig(greenfoot.Color,\ java.lang.String,\ Banner.SpriteOverlay[])
+numComments=2
