@@ -86,10 +86,6 @@ public class PlayingState implements GameState {
         scoreDisplay = new UIText("SCORE: 0", GameConfig.s(25), Color.WHITE);
         world.addObject(scoreDisplay, GameConfig.s(80), GameConfig.s(20));
 
-        // Rewind bar in the top-right corner
-        rewindBar = new UI_RewindBar(rewindManager);
-        world.addObject(rewindBar, world.getWidth() - GameConfig.s(100), GameConfig.s(20));
-
         // ── Spawn the player ─────────────────────────────────────────────────
         // Dio gets his own subclass so onPauseUpdate() can spawn the boss banner.
         // All other characters use GenericPlayer directly.
@@ -99,7 +95,11 @@ public class PlayingState implements GameState {
         } else {
             player = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
         }
-
+        // Rewind bar in the top-right corner
+        if (player.hasAbility(Ability_Mandom.class)) {
+            rewindBar = new UI_RewindBar(rewindManager);
+            world.addObject(rewindBar, world.getWidth() - GameConfig.s(100), GameConfig.s(20));
+        }
         // ── Ability icons (bottom-right corner, one per visible ability) ──────
         List<Ability> visibleAbilities = player.getVisibleAbilities();
         int iconCount   = visibleAbilities.size();

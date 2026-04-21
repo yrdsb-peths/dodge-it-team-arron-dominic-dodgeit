@@ -426,4 +426,18 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             abilities.get(i).restoreState(data.abilityStates.get(i));
         }
     }
+    
+    /**
+     * Returns whether the character has a certain ability
+     * Called by PlayingState when deciding what icons to add 
+     * (specifically, rewind bar for Mandom)
+     */
+    public boolean hasAbility(Class<? extends Ability> abilityClass) {
+        for (Ability a : abilities) {
+            if (abilityClass.isInstance(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
