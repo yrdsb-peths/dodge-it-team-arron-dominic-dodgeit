@@ -199,12 +199,13 @@ public class Ability_StickyFingers implements Ability {
             if (portalVisualFrames <= 0) cleanupPortals(world); // remove flash actors
         }
 
-        // ── PORTAL WRAP CHECK (passive, only when above ground and off cooldown) ──
+         // ── PORTAL WRAP CHECK (passive, only when above ground and off cooldown) ──
         if (!hidden && !portalCooldown.isActive()) {
             int margin = GameConfig.PORTAL_MARGIN;
+            int bottomBound = ((MyWorld) world).getBottomBound();
             if (p.getY() <= margin) {
                 doPortalWarp(p, world, true);  // at top → warp to bottom
-            } else if (p.getY() >= world.getHeight() - margin) {
+            } else if (p.getY() >= bottomBound - margin) {
                 doPortalWarp(p, world, false); // at bottom → warp to top
             }
         }
@@ -223,11 +224,12 @@ public class Ability_StickyFingers implements Ability {
      * @param fromTop  True if warping from top to bottom; false for bottom to top.
      */
     private void doPortalWarp(Player p, MyWorld world, boolean fromTop) {
+        int bottomBound = ((MyWorld) world).getBottomBound();
+        
         // Calculate the exit Y so we land slightly inward from the edge
-        // (prevents immediately re-triggering the warp on the next frame)
         int exitY = fromTop
-            ? world.getHeight() - GameConfig.PORTAL_MARGIN - GameConfig.s(5) // top→bottom
-            : GameConfig.PORTAL_MARGIN + GameConfig.s(5);                    // bottom→top
+            ? bottomBound - GameConfig.PORTAL_MARGIN - GameConfig.s(5) // top→bottom
+            : GameConfig.PORTAL_MARGIN + GameConfig.s(5);              // bottom→top
 
         p.setLocation(p.getX(), exitY);
 
@@ -237,11 +239,11 @@ public class Ability_StickyFingers implements Ability {
         portalCooldown.start();
 
         // Spawn zipper flashes at both edges simultaneously
-        cleanupPortals(world); // remove any previous flash actors first
-        topPortal    = new FX_Portal(world.getWidth(), false); // teeth face DOWN (top edge)
-        bottomPortal = new FX_Portal(world.getWidth(), true);  // teeth face UP  (bottom edge)
+        cleanupPortals(world); 
+        topPortal    = new FX_Portal(world.getWidth(), false); 
+        bottomPortal = new FX_Portal(world.getWidth(), true);  
         world.addObject(topPortal,    world.getWidth() / 2, GameConfig.s(10));
-        world.addObject(bottomPortal, world.getWidth() / 2, world.getHeight() - GameConfig.s(10));
+        world.addObject(bottomPortal, world.getWidth() / 2, bottomBound - GameConfig.s(10));
 
         portalVisualFrames = PORTAL_FLASH_DURATION; // they fade out over 18 frames
     }

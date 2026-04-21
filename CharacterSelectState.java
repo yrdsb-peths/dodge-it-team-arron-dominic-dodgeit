@@ -56,7 +56,9 @@ public class CharacterSelectState implements GameState {
 
         addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(80));
         addUI(world, new UIText("< LEFT ARROW       RIGHT ARROW >", GameConfig.s(20), Color.CYAN), midX, GameConfig.s(240));
-
+        addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(22), Color.GREEN), midX, GameConfig.s(320));
+        addUI(world, new UIText("[ ENTER : START GAME]", GameConfig.s(22), Color.RED), midX, GameConfig.s(360));
+        
         // Name and ability labels start empty — updateScreen() fills them.
         nameDisplay = new UIText("", GameConfig.s(45), Color.WHITE);
         addUI(world, nameDisplay, midX, GameConfig.s(220));
@@ -79,6 +81,10 @@ public class CharacterSelectState implements GameState {
                 // Wrap backward through the roster
                 currentIndex = (currentIndex - 1 + roster.length) % roster.length;
                 updateScreen(world);
+            } else if (key.equals("l")) {
+                // Enter the interactive tutorial overlay
+                GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
+                world.getGSM().pushState(new AbilityDisplayState());
             } else if (key.equals("enter")) {
                 GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
                 world.getGSM().changeState(new PlayingState());

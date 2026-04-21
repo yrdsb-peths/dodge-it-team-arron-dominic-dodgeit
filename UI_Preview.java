@@ -33,6 +33,10 @@ public class UI_Preview extends Actor {
 
     @Override
     public void act() {
-        setImage(anim.getCurrentFrame()); // advance and display the animation
+        MyWorld world = (MyWorld) getWorld();
+        // Only animate if the Character Select screen is the active top state
+        if (world != null && world.getGSM().isState(CharacterSelectState.class)) {
+            setImage(anim.getCurrentFrame()); 
+        }
     }
 }

@@ -47,7 +47,9 @@ public class PathWarning extends Actor implements Time_Snapshottable {
     public void act() {
         MyWorld world = (MyWorld) getWorld();
         // Standard guard: freeze during pause/menu/rewind (rewind restores timer)
-        if (world == null || !world.getGSM().isState(PlayingState.class)) return;
+        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
+        IActiveGameState activeState = (IActiveGameState) world.getGSM().peekState();
+        if (activeState.isGameFrozen()) return;
 
         timer--;
 

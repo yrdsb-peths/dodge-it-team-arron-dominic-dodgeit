@@ -37,6 +37,11 @@ public class Exclaimation extends Actor implements Time_Snapshottable {
 
     @Override
     public void act() {
+        MyWorld world = (MyWorld) getWorld();
+        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
+        IActiveGameState activeState = (IActiveGameState) world.getGSM().peekState();
+        if (activeState.isGameFrozen()) return;
+        
         setImage(exclaimAnim.getCurrentFrame());
         lifeTimer.update((MyWorld) getWorld());
         if (lifeTimer.isExpired()) {

@@ -193,7 +193,10 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
                 ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
             }
         } else {
-            handleStandardMovement();
+            // REPLACE handleStandardMovement(); WITH THIS:
+            if (!((MyWorld) getWorld()).isRewinding()) {
+                handleStandardMovement();
+            }
         }
     }
 
@@ -216,11 +219,13 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         if (Greenfoot.isKeyDown("up"))   nextY -= speed;
         if (Greenfoot.isKeyDown("down")) nextY += speed;
 
+        
         // Clamp: keep the player at least 'padding' pixels from any edge.
         int padding = GameConfig.s(30);
+        int bottomBound = ((MyWorld) getWorld()).getBottomBound();
         nextX = Math.max(padding, Math.min(getWorld().getWidth()  - padding, nextX));
-        nextY = Math.max(padding, Math.min(getWorld().getHeight() - padding, nextY));
-
+        nextY = Math.max(padding, Math.min(bottomBound - padding, nextY));
+        
         setLocation(nextX, nextY);
     }
 
@@ -438,5 +443,29 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             }
         }
         return false;
+    }
+    
+    /**
+     * Checks if a specific ability class is currently active.
+     * Used by the Demo Engine to know when the player followed instructions.
+     */
+    public boolean isAbilityActive(Class<? extends Ability> clazz) {
+        for (Ability a : abilities) {
+            if (clazz.isInstance(a) && a.isActive()) return true;
+        }
+        return false;
+    }
+    
+    /**Gets a list of all abilities*/
+    public List<Ability> getAllAbilities() {
+        return abilities;
+    }
+    
+    /** Gets a specific ability so the Demo Engine can check its status. */
+    public Ability getAbility(Class<? extends Ability> clazz) {
+        for (Ability a : abilities) {
+            if (clazz.isInstance(a)) return a;
+        }
+        return null;
     }
 }

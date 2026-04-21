@@ -201,6 +201,16 @@ public class GameConfig {
      * pushing PlayingState, and PlayingState reads it when spawning the player.
      */
     public static CharacterConfig ACTIVE_CHARACTER = CharacterConfig.DIO;
+    
+    
+    // =========================================================================
+    // SECTION 12 — DEMO SANDBOX SETTINGS
+    // =========================================================================
+    /** 
+     * The Y-coordinate where the sandbox floor ends. 
+     * Tweak this! s(280) makes the UI deck exactly 30% of the screen.
+     */
+    public static final int DEMO_BOTTOM_BOUND = s(290);
 
     // =========================================================================
     // THE SCALING HELPER — the most important method in this file

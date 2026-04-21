@@ -39,7 +39,7 @@ import greenfoot.*;
 import java.util.List;
 import java.util.ArrayList;
 
-public class PlayingState implements GameState{
+public class PlayingState implements GameState,IActiveGameState{
 
     private SpawnManager spawnManager;
     private UIText scoreDisplay;
@@ -108,7 +108,7 @@ public class PlayingState implements GameState{
         int startY      = world.getHeight() - GameConfig.s(45);
 
         for (int i = 0; i < iconCount; i++) {
-            world.addObject(new UI_AbilityIcon(player, i), startX - (i * iconSpacing), startY);
+            world.addObject(new UI_AbilityIcon(player, visibleAbilities.get(i)), startX - (i * iconSpacing), startY);
         }
 
         world.addObject(player, GameConfig.s(80), GameConfig.s(80));
@@ -221,5 +221,10 @@ public class PlayingState implements GameState{
     /** @return True while the rewind manager is actively rewinding. */
     public boolean isRewinding() {
         return rewindManager != null && rewindManager.isRewinding();
+    }
+    
+    @Override
+    public boolean isGameFrozen() {
+        return false; 
     }
 }

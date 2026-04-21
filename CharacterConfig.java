@@ -76,7 +76,7 @@ public enum CharacterConfig {
         "dio_bgm",
         "dioLostVoices",
         BossConfig.DIO,
-        new String[]{"Ability_StandPunch"} // fewer abilities than DIO
+        new String[]{"Ability_StandPunch","Ability_StickyFingers"} // fewer abilities than DIO
     );
 
     // =========================================================================

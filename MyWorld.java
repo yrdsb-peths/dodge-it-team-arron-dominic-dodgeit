@@ -66,6 +66,8 @@ public class MyWorld extends World {
          *   UIText          — score label and text overlays
          *   UI_AbilityIcon  — ability cooldown wheels
          *   UI_RewindBar    — the TIME rewind meter
+         *   FX_DimOverlay   - dim overlay in abiity display state
+         *   UI_Panel        - UI during abiity display section
          *   FX_RewindOverlay— blue scanline effect during rewind
          *   Exclaimation    — the ! warning mark above a Train's lane
          *   PathWarning     — red lane highlight before a Train charges
@@ -78,12 +80,14 @@ public class MyWorld extends World {
          *   ScrollingRoad   — the moving road background (bottommost)
          */
         setPaintOrder(
-            Banner.class, UIText.class, UI_AbilityIcon.class, UI_RewindBar.class,
-            FX_RewindOverlay.class,
+            Banner.class, UIText.class, UI_HighlightBox.class, UI_AbilityIcon.class, UI_RewindBar.class,
+            TheWorldStand.class,GenericPlayer.class,
+            UI_Panel.class,FX_RewindOverlay.class,
             Exclaimation.class, PathWarning.class,
-            TheWorldStand.class, FX_Portal.class, FX_ZipperGround.class,
-            GenericPlayer.class,
-            FX_Afterimage.class, Obstacles.class, ScrollingRoad.class
+            FX_Portal.class, FX_ZipperGround.class,
+            FX_Afterimage.class, Obstacles.class, 
+            ScrollingRoad.class,
+            FX_DimOverlay.class
         );
 
         // Pre-create a PlayingState (stored but not used yet — see field note above).
@@ -135,9 +139,21 @@ public class MyWorld extends World {
      */
     public boolean isRewinding() {
         GameState s = gsm.peekState();
-        if (s instanceof PlayingState) {
-            return ((PlayingState) s).isRewinding();
+        if (s instanceof IActiveGameState) {
+            return ((IActiveGameState) s).isRewinding();
         }
         return false;
+    }
+    
+    /**
+     * Returns the playable height of the world.
+     * During normal play, this is the full world height.
+     * During the ability demo, it restricts actors to the top sandbox area.
+     */
+    public int getBottomBound() {
+        if (gsm.isState(AbilityDisplayState.class)) {
+            return GameConfig.DEMO_BOTTOM_BOUND;
+        }
+        return getHeight();
     }
 }

@@ -33,20 +33,15 @@ public class MenuState implements GameState {
         int middle = world.getWidth() / 2;
 
         // ── Title ─────────────────────────────────────────────────────────────
-        addUI(world, new UIText("DIO-DGE IT",                      GameConfig.s(55), Color.YELLOW),         middle,          GameConfig.s(60));
-        addUI(world, new UIText("The World is your playground.",   GameConfig.s(18), Color.WHITE),           middle,          GameConfig.s(95));
+        addUI(world, new UIText("DIO-DGE IT",                      GameConfig.s(55), Color.YELLOW),         middle,          GameConfig.s(120));
 
         // ── Controls (left-aligned block, visually centred) ───────────────────
         int leftAlign = middle - GameConfig.s(120);
         int rowStart  = GameConfig.s(150);
         int spacing   = GameConfig.s(35);
 
-        addUI(world, new UIText("ARROWS : Move Dio",                            GameConfig.s(22), Color.WHITE),               leftAlign, rowStart);
-        addUI(world, new UIText("W : THE WORLD (Stop Time)",                    GameConfig.s(22), new Color(200, 255, 0)),     leftAlign, rowStart + spacing);
-        addUI(world, new UIText("R : MANDOM (Rewind 2s)",                       GameConfig.s(22), new Color(100, 200, 255)),   leftAlign, rowStart + spacing * 2);
-        addUI(world, new UIText("S : MADE IN HEAVEN (Speed)",                   GameConfig.s(22), new Color(255, 100, 255)),   leftAlign, rowStart + spacing * 3);
-        addUI(world, new UIText("E : Summon Stand (Fights for You)",             GameConfig.s(22), new Color(255, 100, 255)),   leftAlign, rowStart + spacing * 4);
-
+        addUI(world, new UIText("ARROWS : Move Dio",                            GameConfig.s(22), Color.BLACK),               leftAlign, GameConfig.s(200));
+     
         // ── Objective ─────────────────────────────────────────────────────────
         addUI(world, new UIText("Dodge the Road Rollers and Ambulances!", GameConfig.s(18), Color.ORANGE), middle, GameConfig.s(330));
 
