@@ -46,13 +46,15 @@ public class PathWarning extends Actor implements Time_Snapshottable {
     @Override
     public void act() {
         MyWorld world = (MyWorld) getWorld();
-        // Standard guard: freeze during pause/menu/rewind (rewind restores timer)
-        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
-        IActiveGameState activeState = (IActiveGameState) world.getGSM().peekState();
-        if (activeState.isGameFrozen()) return;
+        if (world == null) return;
+        
+        GameState state = world.getGSM().peekState();
+        if (!(state instanceof IActiveGameState)) return; // Stop if paused
+        
+        IActiveGameState activeState = (IActiveGameState) state;
+        if (activeState.isGameFrozen()) return; // Stop if demo is waiting
 
         timer--;
-
         // Flicker: alternate between dim (40) and bright (140) every 5 frames
         getImage().setTransparency(timer % 10 < 5 ? 40 : 140);
 

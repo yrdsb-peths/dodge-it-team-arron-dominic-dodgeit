@@ -1084,6 +1084,22 @@ public class TheWorldStand extends Actor implements Time_Snapshottable {
 
 
 ==================================================
+FILE: ./UI_MenuBackground.java
+==================================================
+
+import greenfoot.*;
+
+public class UI_MenuBackground extends Actor {
+    public UI_MenuBackground(String imageName) {
+        GreenfootImage img = new GreenfootImage(imageName);
+        // Scale to the full world size
+        img.scale(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
+        setImage(img);
+    }
+}
+
+
+==================================================
 FILE: ./Roadroller.java
 ==================================================
 
@@ -1663,20 +1679,15 @@ public class MenuState implements GameState {
         int middle = world.getWidth() / 2;
 
         // ── Title ─────────────────────────────────────────────────────────────
-        addUI(world, new UIText("DIO-DGE IT",                      GameConfig.s(55), Color.YELLOW),         middle,          GameConfig.s(60));
-        addUI(world, new UIText("The World is your playground.",   GameConfig.s(18), Color.WHITE),           middle,          GameConfig.s(95));
+        addUI(world, new UIText("DIO-DGE IT",                      GameConfig.s(55), Color.YELLOW),         middle,          GameConfig.s(120));
 
         // ── Controls (left-aligned block, visually centred) ───────────────────
         int leftAlign = middle - GameConfig.s(120);
         int rowStart  = GameConfig.s(150);
         int spacing   = GameConfig.s(35);
 
-        addUI(world, new UIText("ARROWS : Move Dio",                            GameConfig.s(22), Color.WHITE),               leftAlign, rowStart);
-        addUI(world, new UIText("W : THE WORLD (Stop Time)",                    GameConfig.s(22), new Color(200, 255, 0)),     leftAlign, rowStart + spacing);
-        addUI(world, new UIText("R : MANDOM (Rewind 2s)",                       GameConfig.s(22), new Color(100, 200, 255)),   leftAlign, rowStart + spacing * 2);
-        addUI(world, new UIText("S : MADE IN HEAVEN (Speed)",                   GameConfig.s(22), new Color(255, 100, 255)),   leftAlign, rowStart + spacing * 3);
-        addUI(world, new UIText("E : Summon Stand (Fights for You)",             GameConfig.s(22), new Color(255, 100, 255)),   leftAlign, rowStart + spacing * 4);
-
+        addUI(world, new UIText("ARROWS : Move Dio",                            GameConfig.s(22), Color.BLACK),               leftAlign, GameConfig.s(200));
+     
         // ── Objective ─────────────────────────────────────────────────────────
         addUI(world, new UIText("Dodge the Road Rollers and Ambulances!", GameConfig.s(18), Color.ORANGE), middle, GameConfig.s(330));
 
@@ -1762,9 +1773,12 @@ public class DemoScripts {
         }
         
         if (clazz == Ability_Mandom.class) {
-            return new DemoStage("Mandom rewinds time to fix mistakes.")
-                .spawnRoadrollerAt(20, 1)
+            return new DemoStage("Mandom rewinds time to fix mistakes. \nIf you've been here before, you have mastered this skill")
+                .spawnRoadrollerAt(50, 1)
                 .spawnRoadrollerAt(50, 2)
+                .spawnRoadrollerAt(80, 0)
+                .spawnRoadrollerAt(80, 2)
+                .spawnRoadrollerAt(80, 1)
                 .addWaitPoint(150, 
                     (player, world) -> world.isRewinding(), 
                     "You're trapped! Press R to rewind time!"
@@ -2285,6 +2299,7 @@ public class CharacterSelectState implements GameState {
         addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(80));
         addUI(world, new UIText("< LEFT ARROW       RIGHT ARROW >", GameConfig.s(20), Color.CYAN), midX, GameConfig.s(240));
         addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(22), Color.GREEN), midX, GameConfig.s(320));
+        addUI(world, new UIText("[ ENTER : START GAME]", GameConfig.s(22), Color.RED), midX, GameConfig.s(360));
         
         // Name and ability labels start empty — updateScreen() fills them.
         nameDisplay = new UIText("", GameConfig.s(45), Color.WHITE);
@@ -2313,6 +2328,8 @@ public class CharacterSelectState implements GameState {
                 GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
                 world.getGSM().pushState(new AbilityDisplayState());
             } else if (key.equals("enter")) {
+                GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
+                world.getGSM().changeState(new PlayingState());
             }
         }
     }
@@ -3328,7 +3345,9 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     private int dieX;
     /** The Y position where the player died, used as the centre of the death shake. */
     private int dieY;
-
+    
+    //Special filter setting for demo
+    private Class<? extends Ability> demoAbilityFilter = null;
     // ─────────────────────────────────────────────────────────────────────────
     // CONSTRUCTOR
     // ─────────────────────────────────────────────────────────────────────────
@@ -3422,7 +3441,13 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
         // ── Ability update + activation ───────────────────────────────────────
         for (Ability a : abilities) {
-            // Always update the ability so its timers run.
+            
+            //Do not use ability if in demo and not demo-ing current ability
+            if (demoAbilityFilter != null && !demoAbilityFilter.isInstance(a)) {
+                continue;
+            }
+            
+             // Always update the ability so its timers run.
             // But if the player is hidden, skip updates for abilities that
             // would move the visible player (shouldHidePlayer = true means they
             // already know about the hide state).
@@ -3445,10 +3470,20 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             if (!deathTimer.isExpired()) {
                 shake(); 
             } else if (!((MyWorld) getWorld()).isRewinding()) {
-                ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
+                GameState currentState = ((MyWorld) getWorld()).getGSM().peekState();
+                if (currentState instanceof AbilityDisplayState) {
+                // Tell the demo state we died so it can restart the demo
+                ((AbilityDisplayState) currentState).notifyPlayerDied();
+                } else {
+                    // Otherwise, proceed to the real Game Over screen
+                    ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
+                }
             }
         } else {
-            handleStandardMovement();
+            // REPLACE handleStandardMovement(); WITH THIS:
+            if (!((MyWorld) getWorld()).isRewinding()) {
+                handleStandardMovement();
+            }
         }
     }
 
@@ -3477,6 +3512,8 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         int bottomBound = ((MyWorld) getWorld()).getBottomBound();
         nextX = Math.max(padding, Math.min(getWorld().getWidth()  - padding, nextX));
         nextY = Math.max(padding, Math.min(bottomBound - padding, nextY));
+        
+        setLocation(nextX, nextY);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -3717,6 +3754,11 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             if (clazz.isInstance(a)) return a;
         }
         return null;
+    }
+        
+    //Special Setting for Demo
+    public void setDemoAbilityFilter(Class<? extends Ability> clazz) {
+        this.demoAbilityFilter = clazz;
     }
 }
 
@@ -6781,9 +6823,10 @@ public class Ability_Mandom implements Ability {
      */
     @Override
     public void activate(Player p, MyWorld world) {
-        if (world.getGSM().peekState() instanceof PlayingState) {
-            PlayingState ps = (PlayingState) world.getGSM().peekState();
-            ps.triggerRewind(world);
+        // Change from PlayingState to IActiveGameState so it works in the demo
+        if (world.getGSM().peekState() instanceof IActiveGameState) {
+            IActiveGameState state = (IActiveGameState) world.getGSM().peekState();
+            state.triggerRewind(world);
         }
     }
 
@@ -8108,6 +8151,9 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         int splitY = GameConfig.DEMO_BOTTOM_BOUND;
         int worldH = world.getHeight();
         int uiHeight = worldH - splitY;
+
+        int midX = world.getWidth() / 2;
+        addUI(world, new UI_MenuBackground("background_image.jpg"), midX, world.getHeight() / 2);
         addUI(world, new UI_Panel(world.getWidth(), uiHeight, new Color(30, 30, 30)), world.getWidth() / 2, splitY + (uiHeight / 2));
 
         if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) dummyPlayer = new Dio();
@@ -8142,7 +8188,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         btnEsc = new UIText("[ ESC : Back ]", GameConfig.s(18), Color.CYAN);
         btnEnter = new UIText("[ ENTER : Try Ability ]", GameConfig.s(18), Color.GREEN);
         addUI(world, btnEsc, GameConfig.s(90), worldH - GameConfig.s(20));
-        addUI(world, btnEnter, world.getWidth() - GameConfig.s(110), worldH - GameConfig.s(20));
+        addUI(world, btnEnter, world.getWidth() - GameConfig.s(85), worldH - GameConfig.s(20));
 
         updateMenuSelection();
     }
@@ -8194,6 +8240,9 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) activePlayer = new Dio();
         else activePlayer = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
         
+        //Get ability list
+        activePlayer.setDemoAbilityFilter(selectedAbility.getClass());
+        
         world.addObject(activePlayer, GameConfig.s(80), GameConfig.DEMO_BOTTOM_BOUND / 2);
         
         // FIX 3: Ensure Rewind Bar appears during the Mandom demo
@@ -8214,7 +8263,14 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         if (playerDiedThisFrame) { playerDiedThisFrame = false; startDemo(world); return; }
 
         // --- REWIND LOGIC ---
-        if (rewindManager.isRewinding()) {
+       if (rewindManager.isRewinding()) {
+            
+            // ADD THESE LINES TO REMOVE THE DIM OVERLAY:
+            if (dimOverlay != null) {
+                world.removeObject(dimOverlay);
+                dimOverlay = null;
+            }
+
             boolean stillGoing = rewindManager.rewindStep(world, demoSpawnManager);
             if (!stillGoing) {
                 if (rewindOverlay != null && rewindOverlay.getWorld() != null) world.removeObject(rewindOverlay);
@@ -8223,9 +8279,12 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
                 AudioManager.setAllSoundsPaused(false);
                 activePlayer.startIFrame(1.0);
             }
+            
         } else {
             // CRUCIAL: Record history every frame, even when frozen, so Mandom works!
-            rewindManager.record(world, demoSpawnManager);
+            if (!isFrozen) {
+                rewindManager.record(world, demoSpawnManager);
+            }
             
             int frame = demoSpawnManager.getSpawnTimer();
             
@@ -8240,6 +8299,11 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
                     world.addObject(dimOverlay, world.getWidth()/2, GameConfig.DEMO_BOTTOM_BOUND/2);
                 }
             } else {
+                if (isFrozen) {
+                    demoSpawnManager.setSpawnTimer(demoSpawnManager.getSpawnTimer() + 1);
+                }
+
+                isFrozen = false;
                 // Not blocked by a wait point
                 if (currentStage.isComplete(frame)) {
                     isFrozen = true;
