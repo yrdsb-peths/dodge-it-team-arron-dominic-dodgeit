@@ -62,7 +62,8 @@ public abstract class Player extends Actor {
         MyWorld world = (MyWorld) getWorld();
         if (world == null) return;
 
-        if (!world.getGSM().isState(PlayingState.class)) {
+        if (!world.getGSM().isState(IActiveGameState.class)) {
+            // We are NOT in the main game — check for the special pause case.
             // We are NOT in the main game — check for the special pause case.
             if (world.getGSM().isState(PausedState.class)) {
                 onPauseUpdate(world);
