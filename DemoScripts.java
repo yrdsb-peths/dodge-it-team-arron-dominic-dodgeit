@@ -42,9 +42,12 @@ public class DemoScripts {
         }
         
         if (clazz == Ability_Mandom.class) {
-            return new DemoStage("Mandom rewinds time to fix mistakes.")
-                .spawnRoadrollerAt(20, 1)
+            return new DemoStage("Mandom rewinds time to fix mistakes. \nIf you've been here before, you have mastered this skill")
+                .spawnRoadrollerAt(50, 1)
                 .spawnRoadrollerAt(50, 2)
+                .spawnRoadrollerAt(80, 0)
+                .spawnRoadrollerAt(80, 2)
+                .spawnRoadrollerAt(80, 1)
                 .addWaitPoint(150, 
                     (player, world) -> world.isRewinding(), 
                     "You're trapped! Press R to rewind time!"

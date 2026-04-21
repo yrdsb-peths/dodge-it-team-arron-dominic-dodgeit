@@ -46,6 +46,9 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         int splitY = GameConfig.DEMO_BOTTOM_BOUND;
         int worldH = world.getHeight();
         int uiHeight = worldH - splitY;
+
+        int midX = world.getWidth() / 2;
+        addUI(world, new UI_MenuBackground("background_image.jpg"), midX, world.getHeight() / 2);
         addUI(world, new UI_Panel(world.getWidth(), uiHeight, new Color(30, 30, 30)), world.getWidth() / 2, splitY + (uiHeight / 2));
 
         if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) dummyPlayer = new Dio();
@@ -80,7 +83,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         btnEsc = new UIText("[ ESC : Back ]", GameConfig.s(18), Color.CYAN);
         btnEnter = new UIText("[ ENTER : Try Ability ]", GameConfig.s(18), Color.GREEN);
         addUI(world, btnEsc, GameConfig.s(90), worldH - GameConfig.s(20));
-        addUI(world, btnEnter, world.getWidth() - GameConfig.s(110), worldH - GameConfig.s(20));
+        addUI(world, btnEnter, world.getWidth() - GameConfig.s(85), worldH - GameConfig.s(20));
 
         updateMenuSelection();
     }
@@ -131,6 +134,9 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         
         if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) activePlayer = new Dio();
         else activePlayer = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
+        
+        //Get ability list
+        activePlayer.setDemoAbilityFilter(selectedAbility.getClass());
         
         world.addObject(activePlayer, GameConfig.s(80), GameConfig.DEMO_BOTTOM_BOUND / 2);
         
@@ -188,6 +194,11 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
                     world.addObject(dimOverlay, world.getWidth()/2, GameConfig.DEMO_BOTTOM_BOUND/2);
                 }
             } else {
+                if (isFrozen) {
+                    demoSpawnManager.setSpawnTimer(demoSpawnManager.getSpawnTimer() + 1);
+                }
+
+                isFrozen = false;
                 // Not blocked by a wait point
                 if (currentStage.isComplete(frame)) {
                     isFrozen = true;

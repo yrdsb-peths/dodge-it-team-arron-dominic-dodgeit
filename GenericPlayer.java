@@ -73,7 +73,9 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     private int dieX;
     /** The Y position where the player died, used as the centre of the death shake. */
     private int dieY;
-
+    
+    //Special filter setting for demo
+    private Class<? extends Ability> demoAbilityFilter = null;
     // ─────────────────────────────────────────────────────────────────────────
     // CONSTRUCTOR
     // ─────────────────────────────────────────────────────────────────────────
@@ -167,7 +169,13 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
         // ── Ability update + activation ───────────────────────────────────────
         for (Ability a : abilities) {
-            // Always update the ability so its timers run.
+            
+            //Do not use ability if in demo and not demo-ing current ability
+            if (demoAbilityFilter != null && !demoAbilityFilter.isInstance(a)) {
+                continue;
+            }
+            
+             // Always update the ability so its timers run.
             // But if the player is hidden, skip updates for abilities that
             // would move the visible player (shouldHidePlayer = true means they
             // already know about the hide state).
@@ -190,7 +198,14 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             if (!deathTimer.isExpired()) {
                 shake(); 
             } else if (!((MyWorld) getWorld()).isRewinding()) {
-                ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
+                GameState currentState = ((MyWorld) getWorld()).getGSM().peekState();
+                if (currentState instanceof AbilityDisplayState) {
+                // Tell the demo state we died so it can restart the demo
+                ((AbilityDisplayState) currentState).notifyPlayerDied();
+                } else {
+                    // Otherwise, proceed to the real Game Over screen
+                    ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
+                }
             }
         } else {
             // REPLACE handleStandardMovement(); WITH THIS:
@@ -467,5 +482,10 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             if (clazz.isInstance(a)) return a;
         }
         return null;
+    }
+        
+    //Special Setting for Demo
+    public void setDemoAbilityFilter(Class<? extends Ability> clazz) {
+        this.demoAbilityFilter = clazz;
     }
 }
