@@ -52,7 +52,7 @@ public class GameConfig {
     // =========================================================================
     /** How many pixels per frame Dio moves when an arrow key is held. */
     public static final int DIO_MOVE_SPEED = s(5);
-    public static final int AGUY_MOVE_SPEED = s(9); // aguy's move speed
+
     /**
      * The scale factor applied to Dio's sprite images.
      * 0.8 × SCALE means the sprite is drawn at 80% of its source size,

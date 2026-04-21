@@ -86,7 +86,6 @@ public class AudioManager {
         loadSound("speed_up_time", "speed_up_time.mp3",          100);
         loadSound("summon_stand",  "summon_stand.mp3",            200);
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
-        loadSound("gothicbgm", "gothicbgm.mp3",                   200);
 
         // ── Voice pools ───────────────────────────────────────────────────────
         loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 60);
@@ -95,8 +94,6 @@ public class AudioManager {
             "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3",
             "dio_voiceline/muda_muda.mp3", "dio_voiceline/Voicy_Timestop DiegoBrando.mp3"
         }, 100);
-        
-        // follow the same format above
 
         updateAllVolumes(); // apply master volume to everything at startup
     }
@@ -213,18 +210,16 @@ public class AudioManager {
     public static void setAllSoundsPaused(boolean pause) {
         if (pause) {
             activeBeforePause.clear();
-            
-             // Pause the BGM and remember it for resume
-            String currentBGM = GameConfig.ACTIVE_CHARACTER.bgmKey;
-            if(sounds.containsKey(currentBGM) && sounds.get(currentBGM).isPlaying()){
-                 activeBeforePause.add(sounds.get(currentBGM));
-                sounds.get(currentBGM).pause();
+
+            // Pause the BGM and remember it for resume
+            if (sounds.get("dio_bgm").isPlaying()) {
+                activeBeforePause.add(sounds.get("dio_bgm"));
+                sounds.get("dio_bgm").pause();
             }
-           
 
             // Stop (do not pause) all other sounds so they don't echo during rewind
             for (String key : sounds.keySet()) {
-                if (!key.equals(currentBGM) && sounds.get(key).isPlaying()) {
+                if (!key.equals("dio_bgm") && sounds.get(key).isPlaying()) {
                     sounds.get(key).stop();
                 }
             }

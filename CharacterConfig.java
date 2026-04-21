@@ -66,17 +66,17 @@ public enum CharacterConfig {
      * entries.  It is NOT a distinct character.  If you want a real second
      * character, replace this with proper data.
      */
-    HeroMaybe(
-        "Someguy",
-        "aguy",
+    Dio2(
+        "Dio Brando",
+        "Dio",
         new String[]{"Idle", "Wry", "Dash", "Lose"},
-        "Idle",
-        GameConfig.AGUY_MOVE_SPEED,
+        "Dash",
+        GameConfig.DIO_MOVE_SPEED,
         0.8 * GameConfig.SCALE,
-        "gothicbgm",
+        "dio_bgm",
         "dioLostVoices",
         BossConfig.DIO,
-        new String[]{"Ability_StandPunch", "Ability_StickyFingers"} // fewer abilities than DIO
+        new String[]{"Ability_StandPunch"} // fewer abilities than DIO
     );
 
     // =========================================================================
