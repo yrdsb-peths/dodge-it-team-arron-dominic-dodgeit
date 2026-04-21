@@ -122,7 +122,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         world.removeObjects(world.getObjects(null));
 
         CharacterConfig cfg = GameConfig.ACTIVE_CHARACTER;
-        script = DemoScript.getScript(cfg);
+        script = DemoScripts.getScript(cfg);
 
         // Start the character's BGM (same key as PlayingState uses)
         AudioManager.playLoop(cfg.bgmKey);
