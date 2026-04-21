@@ -9,6 +9,7 @@ public interface Ability {
 
     // Binding and UI
     String getDisplayLabel();
+    default boolean shouldShowIcon() { return true; }
     String getKeybind();
     boolean isCooldownActive();
     double getActivePercent();   // Returns 0.0 to 1.0 for the orange drain bar
@@ -21,4 +22,5 @@ public interface Ability {
     
     //Sticky Finger
     default boolean shouldHidePlayer() { return false; }
+
 }

@@ -1,4 +1,6 @@
 import greenfoot.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public class UI_AbilityIcon extends Actor {    
     private Player player;
@@ -20,12 +22,13 @@ public class UI_AbilityIcon extends Actor {
         Ability ability = null;
         if (player instanceof GenericPlayer) {
             GenericPlayer gp = (GenericPlayer)player;
+            List<Ability> visible = gp.getVisibleAbilities(); // Use the filtered list
             // If the player doesn't have an ability for this slot, remove the icon
-            if (slotIndex >= gp.getAbilityCount()) {
+            if (slotIndex >= visible.size()) {
                 if (getWorld() != null) getWorld().removeObject(this);
                 return;
             }
-            ability = gp.getAbilityAt(slotIndex);
+            ability = visible.get(slotIndex);
         }
 
         if (ability == null) return;

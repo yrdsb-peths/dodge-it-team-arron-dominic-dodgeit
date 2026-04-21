@@ -199,4 +199,14 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         return null;
     }
     
+    public List<Ability> getVisibleAbilities() {
+        List<Ability> visible = new ArrayList<>();
+        for (Ability a : abilities) {
+            if (a.shouldShowIcon()) {
+                visible.add(a);
+            }
+        }
+        return visible;
+    }
+    
 }

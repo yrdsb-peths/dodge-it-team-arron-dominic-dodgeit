@@ -46,14 +46,15 @@ public class PlayingState implements GameState {
         } else {
             player = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
         }
-        //bility Cooldown Icons:
-        int abilityCount = player.getAbilityCount();
-        int iconSpacing = GameConfig.s(55); // Distance between icons
+        //Ability Cooldown Icons:
+                
+        List<Ability> visibleAbilities = player.getVisibleAbilities();
+        int iconCount = visibleAbilities.size();
+        int iconSpacing = GameConfig.s(55);
         int startX = world.getWidth() - GameConfig.s(45);
         int startY = world.getHeight() - GameConfig.s(45);
         
-        for (int i = 0; i < abilityCount; i++) {
-            // Spawn icons moving from right to left
+        for (int i = 0; i < iconCount; i++) {
             world.addObject(new UI_AbilityIcon(player, i), startX - (i * iconSpacing), startY);
         }
         world.addObject(player, GameConfig.s(80), GameConfig.s(80));

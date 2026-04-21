@@ -1,6 +1,7 @@
 import greenfoot.*;
 
 public class Ability_Mandom implements Ability {
+    public boolean shouldShowIcon() { return false; }//Doesnt show icon: has a bar already
     public void activate(Player p, MyWorld world) {
         if (world.getGSM().peekState() instanceof PlayingState) {
             PlayingState ps = (PlayingState) world.getGSM().peekState();

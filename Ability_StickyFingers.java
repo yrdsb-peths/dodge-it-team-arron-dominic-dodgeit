@@ -28,6 +28,8 @@ public class Ability_StickyFingers implements Ability {
     private GameTimer hideCooldown = new GameTimer(2.0, false);
     // Prevents the portal from re-firing every frame while at the edge
     private int portalCooldownFrames = 0;
+    //Cooldown timer
+    private GameTimer portalCooldown = new GameTimer(GameConfig.PORTAL_COOLDOWN_DURATION, false);
 
     // ── Actors we need to clean up ─────────────────────────────────────────────
     private FX_ZipperGround zipperGround = null;
@@ -75,6 +77,7 @@ public class Ability_StickyFingers implements Ability {
     // ══════════════════════════════════════════════════════════════════════════
     public void update(Player p, MyWorld world) {
         hideCooldown.update(world);
+        portalCooldown.update(world);//Update cooldown timer
         //Reset key bounce
         if (!Greenfoot.isKeyDown(getKeybind())) {
             keyWasDown = false;
@@ -110,7 +113,7 @@ public class Ability_StickyFingers implements Ability {
         }
 
         // ── PORTAL WRAP CHECK (passive, only when not hidden) ──
-        if (!hidden && portalCooldownFrames <= 0) {
+        if (!hidden && !portalCooldown.isActive()) {
             int margin = GameConfig.PORTAL_MARGIN;
 
             if (p.getY() <= margin) {
@@ -134,6 +137,10 @@ public class Ability_StickyFingers implements Ability {
 
         p.setLocation(p.getX(), exitY);
 
+        //Grant i frames and start cooldown
+        p.startIFrame(GameConfig.PORTAL_IFRAME_DURATION); 
+        portalCooldown.reset();
+        portalCooldown.start();
         // Spawn flash portals at both edges
         cleanupPortals(world);
         topPortal    = new FX_Portal(world.getWidth(), false); // top edge, teeth face down
@@ -144,8 +151,6 @@ public class Ability_StickyFingers implements Ability {
         portalVisualFrames = PORTAL_FLASH_DURATION;
         portalCooldownFrames = GameConfig.PORTAL_COOLDOWN_FRAMES;
 
-        // Very short i-frame during transit
-        if (p instanceof GenericPlayer) ((GenericPlayer) p).startIFrame(0.15);
     }
 
     private void cleanupPortals(MyWorld world) {
@@ -164,8 +169,10 @@ public class Ability_StickyFingers implements Ability {
     }
 
     public boolean isActive()         { return hidden; }
-    public boolean shouldHidePlayer() { return hidden; }
-    public boolean isCooldownActive() { return hideCooldown.isActive(); }
+    public boolean shouldHidePlayer() { return hidden; }  
+    public boolean isCooldownActive() {
+        return hideCooldown.isActive() || portalCooldown.isActive();
+    }
     public String getKeybind()        { return GameConfig.STICKY_FINGER_BUTTON; }
 
     public double getActivePercent() {
@@ -174,7 +181,15 @@ public class Ability_StickyFingers implements Ability {
     }
 
     public double getCooldownPercent() {
-        return hideCooldown.isActive() ? hideCooldown.getPercentComplete() : 0.0;
+        // Priority 1: If you are waiting to be able to hide again
+        if (hideCooldown.isActive()) {
+            return hideCooldown.getPercentComplete();
+        }
+        // Priority 2: If you are waiting for the portal to recharge
+        if (portalCooldown.isActive()) {
+            return portalCooldown.getPercentComplete();
+        }
+        return 0.0;
     }
     
     public String getDisplayLabel() { return "F"; }
@@ -185,16 +200,16 @@ public class Ability_StickyFingers implements Ability {
             hidden ? 1 : 0,
             hideCooldown.getRemainingFrames(),
             hideCooldown.isActive() ? 1 : 0,
-            portalCooldownFrames
+            portalCooldown.getRemainingFrames(),
+            portalCooldown.isActive() ? 1 : 0,    
+            keyWasDown ? 1 : 0                   
         };
     }
 
     public void restoreState(Object state) {
         int[] d = (int[]) state;
-        boolean wasHidden = hidden;// Keep track of current state before restoring
-        // If we were hidden and now we're not (or vice versa), the
+        boolean wasHidden = hidden;
         
-        // If we were hidden but the rewind says we AREN'T anymore:
         hidden = (d[0] == 1);
          if (wasHidden && !hidden) {
             if (zipperGround != null && zipperGround.getWorld() != null) {
@@ -202,8 +217,14 @@ public class Ability_StickyFingers implements Ability {
             }
             zipperGround = null;
         } 
+        
         hideCooldown.setRemainingFrames(d[1]);
         if (d[2] == 1) hideCooldown.start(); else hideCooldown.stop();
-        portalCooldownFrames = d[3];
+        
+        // RESTORE THE PORTAL COOLDOWN
+        portalCooldown.setRemainingFrames(d[3]);
+        if (d[4] == 1) portalCooldown.start(); else portalCooldown.stop();
+        
+        this.keyWasDown = (d[5] == 1);
     }
 }
