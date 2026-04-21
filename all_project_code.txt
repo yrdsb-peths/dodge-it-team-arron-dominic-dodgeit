@@ -289,15 +289,10 @@ FILE: ./FX_ZipperGround.java
 
 import greenfoot.*;
 
-/*
- * The zipper on the ground while Sticky Fingers is hiding.
- * Pulses slowly to show "someone is in here."
- * Drawn programmatically — no sprites needed.
- */
 public class FX_ZipperGround extends Actor {
     private int frame = 0;
-    private static final int W = 70; // unscaled width of the zipper
-    private static final int H = 12; // unscaled height
+    private static final int W = 70; 
+    private static final int H = 12;
 
     public FX_ZipperGround() {
         redraw(0);
@@ -318,35 +313,34 @@ public class FX_ZipperGround extends Actor {
         // Pulse: brightness oscillates between 180 and 255
         int brightness = 180 + (int)(75 * (0.5 + 0.5 * Math.sin(f * 0.1)));
 
-        // ── Zipper spine (centre line) ──
-        img.setColor(new Color(brightness, brightness, 0)); // gold
+        // ── Zipper spine & Teeth (Purple) ── 
+        // We use (brightness, 0, brightness) for a vibrant purple pulse
+        img.setColor(new Color(brightness, 0, brightness)); 
+        
+        // Spine
         img.fillRect(0, h/2 - GameConfig.s(1), w, GameConfig.s(2));
 
-        // ── Teeth: alternating triangles above and below the spine ──
+        // Teeth
         int toothW = GameConfig.s(6);
         int toothH = GameConfig.s(4);
-        img.setColor(new Color(brightness, brightness, 0));
-
         for (int x = 0; x + toothW <= w; x += toothW * 2) {
-            // Tooth above
             int[] xpts = {x, x + toothW/2, x + toothW};
             int[] ypts = {h/2, h/2 - toothH, h/2};
             img.fillPolygon(xpts, ypts, 3);
-
-            // Tooth below
             int[] ypts2 = {h/2, h/2 + toothH, h/2};
             img.fillPolygon(xpts, ypts2, 3);
         }
 
-        // ── Zipper pull (small rectangle at the right edge) ──
+        // ── Zipper pull (Darker/Deep Purple) ──
+        img.setColor(new Color(120, 0, 150)); 
         int pullW = GameConfig.s(6);
         int pullH = GameConfig.s(8);
-        img.setColor(new Color(220, 180, 0));
         img.fillRect(w - pullW, h/2 - pullH/2, pullW, pullH);
 
         setImage(img);
     }
 }
+
 
 
 ==================================================
@@ -764,14 +758,18 @@ FILE: ./UI_AbilityIcon.java
 ==================================================
 
 import greenfoot.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public class UI_AbilityIcon extends Actor {    
     private Player player;
+    private int slotIndex;
     private int size;
     
-    public UI_AbilityIcon(Player player) {
+    public UI_AbilityIcon(Player player, int slotIndex) {
         this.player = player;
-        this.size = GameConfig.s(55); // Scales with GameConfig
+        this.slotIndex = slotIndex;
+        this.size = GameConfig.s(50); // Slightly smaller to fit rows
         updateImage();
     }
     
@@ -780,57 +778,56 @@ public class UI_AbilityIcon extends Actor {
     }
     
     private void updateImage() {
-        GreenfootImage img = new GreenfootImage(size, size);
-        int cx = size / 2;
-        int cy = size / 2;
-        int radiusSq = cx * cy;
-        
-        // If Dio is dead, the UI grays out and turns red.
-        if (player.isDead()) {
-            img.setColor(new Color(255, 0, 0, 150));
-            img.fillOval(0, 0, size, size);
-            setImage(img);
-            return;
-        }
-
-        // Draw Base Background
-        img.setColor(new Color(30, 30, 30, 220));
-        img.fillOval(0, 0, size, size);
-        
-        // Draw the Letter "E"
-        img.setColor(Color.WHITE);
-        img.setFont(new Font("Arial", true, false, GameConfig.s(22)));
-        img.drawString("E", cx - GameConfig.s(7), cy + GameConfig.s(8));
-
-        double percent = 0;
-        Color sweepColor = null;
-        
         Ability ability = null;
         if (player instanceof GenericPlayer) {
-            ability = ((GenericPlayer)player).getPrimaryAbility();
+            GenericPlayer gp = (GenericPlayer)player;
+            List<Ability> visible = gp.getVisibleAbilities(); // Use the filtered list
+            // If the player doesn't have an ability for this slot, remove the icon
+            if (slotIndex >= visible.size()) {
+                if (getWorld() != null) getWorld().removeObject(this);
+                return;
+            }
+            ability = visible.get(slotIndex);
         }
 
         if (ability == null) return;
 
+        GreenfootImage img = new GreenfootImage(size, size);
+        int cx = size / 2;
+        int cy = size / 2;
+        int radiusSq = (size/2) * (size/2);
+        
+        // 1. Background Circle
+        img.setColor(new Color(30, 30, 30, 200));
+        if (player.isDead()) img.setColor(new Color(100, 0, 0, 150));
+        img.fillOval(0, 0, size, size);
+        
+        // 2. Ability Letter Label
+        img.setColor(Color.WHITE);
+        img.setFont(new Font("Arial", true, false, GameConfig.s(18)));
+        // Center the text roughly
+        img.drawString(ability.getDisplayLabel(), cx - GameConfig.s(6), cy + GameConfig.s(7));
 
-        // Check Timers
+        // 3. Cooldown/Active Sweeps
+        double percent = 0;
+        Color sweepColor = null;
+
         if (ability.isActive()) {
             percent = ability.getActivePercent();
-            sweepColor = new Color(255, 140, 0, 180);
+            sweepColor = new Color(255, 140, 0, 160); // Orange
         } 
         else if (ability.isCooldownActive()) {
             percent = ability.getCooldownPercent();
-            sweepColor = new Color(0, 150, 255, 180);
+            sweepColor = new Color(0, 150, 255, 160); // Blue
         }
 
-        // Fills the circle slice (LoL Cooldown Style)
         if (sweepColor != null) {
             for (int x = 0; x < size; x++) {
                 for (int y = 0; y < size; y++) {
                     int dx = x - cx;
                     int dy = y - cy;
                     if (dx * dx + dy * dy <= radiusSq) {
-                        double angle = Math.toDegrees(Math.atan2(dx, -dy)); // 0 degrees is Top
+                        double angle = Math.toDegrees(Math.atan2(dx, -dy));
                         if (angle < 0) angle += 360;
                         if (angle <= percent * 360) {
                             img.setColorAt(x, y, sweepColor);
@@ -838,10 +835,9 @@ public class UI_AbilityIcon extends Actor {
                     }
                 }
             }
-        } else {
-            // Ready to be used! Draw a green border.
-            img.setColor(new Color(0, 255, 0));
-            img.drawOval(0, 0, size - 1, size - 1);
+        } else if (!player.isDead()) {
+            // Ready Border
+            img.setColor(Color.GREEN);
             img.drawOval(1, 1, size - 3, size - 3);
         }
         
@@ -1090,6 +1086,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
                 getImage().setTransparency(255); 
             }
         } else {
+            //Ensure player is fully visible if not in i frames
             getImage().setTransparency(255);
         }
     }
@@ -1157,6 +1154,25 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             if (a.shouldHidePlayer()) return true;
         }
         return false;
+    }
+    
+    public int getAbilityCount() {
+        return abilities.size();
+    }
+    
+    public Ability getAbilityAt(int index) {
+        if (index >= 0 && index < abilities.size()) return abilities.get(index);
+        return null;
+    }
+    
+    public List<Ability> getVisibleAbilities() {
+        List<Ability> visible = new ArrayList<>();
+        for (Ability a : abilities) {
+            if (a.shouldShowIcon()) {
+                visible.add(a);
+            }
+        }
+        return visible;
     }
     
 }
@@ -1250,7 +1266,8 @@ public class GameConfig {
     //Ability: Sticky Fingers Settings
     public static final String STICKY_FINGER_BUTTON = "f";
     public static final int PORTAL_MARGIN = s(35);       // how close to edge triggers portal
-    public static final int PORTAL_COOLDOWN_FRAMES = 25; // frames before you can portal again
+    public static final double PORTAL_IFRAME_DURATION = 1; // Invincibility time
+    public static final double PORTAL_COOLDOWN_DURATION = 4; // Time before you can portal again  
     
     //Volume Setting
     public static final int MASTER_VOLUME = 50;
@@ -1295,12 +1312,15 @@ public interface Ability {
     void update(Player p, MyWorld world);
     void cancel();
     boolean isActive();
-    
+
     // Binding and UI
+    String getDisplayLabel();
+    default boolean shouldShowIcon() { return true; }
     String getKeybind();
     boolean isCooldownActive();
     double getActivePercent();   // Returns 0.0 to 1.0 for the orange drain bar
     double getCooldownPercent(); // Returns 0.0 to 1.0 for the blue fill bar
+    
     
     // Time Machine hooks!
     Object captureState();
@@ -1308,6 +1328,7 @@ public interface Ability {
     
     //Sticky Finger
     default boolean shouldHidePlayer() { return false; }
+
 }
 
 
@@ -1339,12 +1360,14 @@ public class Ability_StickyFingers implements Ability {
 
     // ── State ──────────────────────────────────────────────────────────────────
     private boolean hidden = false;
-
+    private boolean keyWasDown = false; // Debounce flag
     // ── Timers ─────────────────────────────────────────────────────────────────
     // Cooldown before you can hide again after emerging
     private GameTimer hideCooldown = new GameTimer(2.0, false);
     // Prevents the portal from re-firing every frame while at the edge
     private int portalCooldownFrames = 0;
+    //Cooldown timer
+    private GameTimer portalCooldown = new GameTimer(GameConfig.PORTAL_COOLDOWN_DURATION, false);
 
     // ── Actors we need to clean up ─────────────────────────────────────────────
     private FX_ZipperGround zipperGround = null;
@@ -1357,6 +1380,10 @@ public class Ability_StickyFingers implements Ability {
     // ACTIVATE — toggle hide/unhide
     // ══════════════════════════════════════════════════════════════════════════
     public void activate(Player p, MyWorld world) {
+        //do not trigger again when already key down
+        if (keyWasDown) return; 
+        keyWasDown = true;
+        
         if (!hidden && !hideCooldown.isActive()) {
             // ── ZIP INTO THE ROAD ──
             hidden = true;
@@ -1388,7 +1415,29 @@ public class Ability_StickyFingers implements Ability {
     // ══════════════════════════════════════════════════════════════════════════
     public void update(Player p, MyWorld world) {
         hideCooldown.update(world);
+        portalCooldown.update(world);//Update cooldown timer
+        //Reset key bounce
+        if (!Greenfoot.isKeyDown(getKeybind())) {
+            keyWasDown = false;
+        }
         if (portalCooldownFrames > 0) portalCooldownFrames--;
+        
+        //TO fix the visual bug where reinwing from above ground to underground doesnt show the zipper back
+        if (hidden) {
+            // If the reference is lost (common after rewind), find it in the world
+            if (zipperGround == null || zipperGround.getWorld() == null) {
+                java.util.List<FX_ZipperGround> zippers = world.getObjects(FX_ZipperGround.class);
+                if (!zippers.isEmpty()) {
+                    zipperGround = zippers.get(0); // Re-link the reference
+                } else {
+                    // If it's truly gone from the world, recreate it
+                    zipperGround = new FX_ZipperGround();
+                    world.addObject(zipperGround, p.getX(), p.getY());
+                }
+            }
+            // Now that we definitely have a reference, move it
+            zipperGround.setLocation(p.getX(), p.getY());
+        }
 
         // Keep zipper glued to the player's position while hiding
         if (hidden && zipperGround != null && zipperGround.getWorld() != null) {
@@ -1402,7 +1451,7 @@ public class Ability_StickyFingers implements Ability {
         }
 
         // ── PORTAL WRAP CHECK (passive, only when not hidden) ──
-        if (!hidden && portalCooldownFrames <= 0) {
+        if (!hidden && !portalCooldown.isActive()) {
             int margin = GameConfig.PORTAL_MARGIN;
 
             if (p.getY() <= margin) {
@@ -1426,6 +1475,10 @@ public class Ability_StickyFingers implements Ability {
 
         p.setLocation(p.getX(), exitY);
 
+        //Grant i frames and start cooldown
+        p.startIFrame(GameConfig.PORTAL_IFRAME_DURATION); 
+        portalCooldown.reset();
+        portalCooldown.start();
         // Spawn flash portals at both edges
         cleanupPortals(world);
         topPortal    = new FX_Portal(world.getWidth(), false); // top edge, teeth face down
@@ -1434,10 +1487,6 @@ public class Ability_StickyFingers implements Ability {
         world.addObject(bottomPortal, world.getWidth() / 2, world.getHeight() - GameConfig.s(10));
 
         portalVisualFrames = PORTAL_FLASH_DURATION;
-        portalCooldownFrames = GameConfig.PORTAL_COOLDOWN_FRAMES;
-
-        // Very short i-frame during transit
-        if (p instanceof GenericPlayer) ((GenericPlayer) p).startIFrame(0.15);
     }
 
     private void cleanupPortals(MyWorld world) {
@@ -1456,8 +1505,10 @@ public class Ability_StickyFingers implements Ability {
     }
 
     public boolean isActive()         { return hidden; }
-    public boolean shouldHidePlayer() { return hidden; }
-    public boolean isCooldownActive() { return hideCooldown.isActive(); }
+    public boolean shouldHidePlayer() { return hidden; }  
+    public boolean isCooldownActive() {
+        return hideCooldown.isActive() || portalCooldown.isActive();
+    }
     public String getKeybind()        { return GameConfig.STICKY_FINGER_BUTTON; }
 
     public double getActivePercent() {
@@ -1466,27 +1517,51 @@ public class Ability_StickyFingers implements Ability {
     }
 
     public double getCooldownPercent() {
-        return hideCooldown.isActive() ? hideCooldown.getPercentComplete() : 0.0;
+        // Priority 1: If you are waiting to be able to hide again
+        if (hideCooldown.isActive()) {
+            return hideCooldown.getPercentComplete();
+        }
+        // Priority 2: If you are waiting for the portal to recharge
+        if (portalCooldown.isActive()) {
+            return portalCooldown.getPercentComplete();
+        }
+        return 0.0;
     }
-
+    
+    public String getDisplayLabel() { return "F"; }
+    
     // ── Time Machine ──────────────────────────────────────────────────────────
     public Object captureState() {
         return new int[]{
             hidden ? 1 : 0,
             hideCooldown.getRemainingFrames(),
             hideCooldown.isActive() ? 1 : 0,
-            portalCooldownFrames
+            portalCooldown.getRemainingFrames(),
+            portalCooldown.isActive() ? 1 : 0,    
+            keyWasDown ? 1 : 0                   
         };
     }
 
     public void restoreState(Object state) {
         int[] d = (int[]) state;
-        // If we were hidden and now we're not (or vice versa), the
-        // ZipperGround actor is handled by the RewindManager's actor restore.
+        boolean wasHidden = hidden;
+        
         hidden = (d[0] == 1);
+         if (wasHidden && !hidden) {
+            if (zipperGround != null && zipperGround.getWorld() != null) {
+                zipperGround.getWorld().removeObject(zipperGround);
+            }
+            zipperGround = null;
+        } 
+        
         hideCooldown.setRemainingFrames(d[1]);
         if (d[2] == 1) hideCooldown.start(); else hideCooldown.stop();
-        portalCooldownFrames = d[3];
+        
+        // RESTORE THE PORTAL COOLDOWN
+        portalCooldown.setRemainingFrames(d[3]);
+        if (d[4] == 1) portalCooldown.start(); else portalCooldown.stop();
+        
+        this.keyWasDown = (d[5] == 1);
     }
 }
 
@@ -1959,6 +2034,7 @@ FILE: ./Ability_Mandom.java
 import greenfoot.*;
 
 public class Ability_Mandom implements Ability {
+    public boolean shouldShowIcon() { return false; }//Doesnt show icon: has a bar already
     public void activate(Player p, MyWorld world) {
         if (world.getGSM().peekState() instanceof PlayingState) {
             PlayingState ps = (PlayingState) world.getGSM().peekState();
@@ -1979,6 +2055,7 @@ public class Ability_Mandom implements Ability {
     // Time Machine hooks (Not needed, as the RewindManager handles itself)
     public Object captureState() { return null; }
     public void restoreState(Object state) {}
+    public String getDisplayLabel() { return "R"; }
 }
 
 
@@ -2740,10 +2817,19 @@ public class PlayingState implements GameState {
         } else {
             player = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
         }
+        //Ability Cooldown Icons:
+                
+        List<Ability> visibleAbilities = player.getVisibleAbilities();
+        int iconCount = visibleAbilities.size();
+        int iconSpacing = GameConfig.s(55);
+        int startX = world.getWidth() - GameConfig.s(45);
+        int startY = world.getHeight() - GameConfig.s(45);
+        
+        for (int i = 0; i < iconCount; i++) {
+            world.addObject(new UI_AbilityIcon(player, i), startX - (i * iconSpacing), startY);
+        }
         world.addObject(player, GameConfig.s(80), GameConfig.s(80));
         
-        UI_AbilityIcon abilityIcon = new UI_AbilityIcon(player);
-        world.addObject(abilityIcon, world.getWidth() - GameConfig.s(45), world.getHeight() - GameConfig.s(45));
     }
     
     public void update(MyWorld world) {
@@ -3156,6 +3242,9 @@ public class Ability_MadeInHeaven implements Ability{
         
         if (!durationTimer.isActive()) return;
         
+        //Do not spawn afterimage when underground
+        if (p instanceof GenericPlayer && ((GenericPlayer)p).isHidden()) return;
+        
         durationTimer.update(world);
     
         // Spawn afterimage every frame
@@ -3221,6 +3310,8 @@ public class Ability_MadeInHeaven implements Ability{
         if (data[2] == 1) durationTimer.start(); else durationTimer.stop();
         if (data[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
     }
+    
+    public String getDisplayLabel() { return "S"; }//Ability Cooldown display symbol
 }
 
 
@@ -3496,6 +3587,7 @@ public class Ability_StandPunch implements Ability {
         if (data[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
     }
     
+    public String getDisplayLabel() { return "E"; }//Ability Cooldown display symbol
     //Time machine getters setters
     public int getDurFrames() { return durationTimer.getRemainingFrames(); }
     public void setDurFrames(int f) { durationTimer.setRemainingFrames(f); }
@@ -3507,5 +3599,6 @@ public class Ability_StandPunch implements Ability {
     public boolean isCoolActive() { return cooldownTimer.isActive(); }
     public void startCool() { cooldownTimer.start(); }
     public void stopCool() { cooldownTimer.stop(); }
+    
 }
 

@@ -76,8 +76,12 @@ public class Ability_StickyFingers implements Ability {
     // UPDATE — called every frame
     // ══════════════════════════════════════════════════════════════════════════
     public void update(Player p, MyWorld world) {
-        hideCooldown.update(world);
-        portalCooldown.update(world);//Update cooldown timer
+        // Timers only progress if we are NOT hidden underground.
+        // This prevents the "Infinite I-Frame" abuse.
+        if (!hidden) {
+            hideCooldown.update(world);
+            portalCooldown.update(world);
+        }
         //Reset key bounce
         if (!Greenfoot.isKeyDown(getKeybind())) {
             keyWasDown = false;
@@ -115,7 +119,6 @@ public class Ability_StickyFingers implements Ability {
         // ── PORTAL WRAP CHECK (passive, only when not hidden) ──
         if (!hidden && !portalCooldown.isActive()) {
             int margin = GameConfig.PORTAL_MARGIN;
-
             if (p.getY() <= margin) {
                 // At top — warp to bottom
                 doPortalWarp(p, world, true);
@@ -149,8 +152,6 @@ public class Ability_StickyFingers implements Ability {
         world.addObject(bottomPortal, world.getWidth() / 2, world.getHeight() - GameConfig.s(10));
 
         portalVisualFrames = PORTAL_FLASH_DURATION;
-        portalCooldownFrames = GameConfig.PORTAL_COOLDOWN_FRAMES;
-
     }
 
     private void cleanupPortals(MyWorld world) {
@@ -169,10 +170,13 @@ public class Ability_StickyFingers implements Ability {
     }
 
     public boolean isActive()         { return hidden; }
+    
     public boolean shouldHidePlayer() { return hidden; }  
+    
     public boolean isCooldownActive() {
         return hideCooldown.isActive() || portalCooldown.isActive();
     }
+    
     public String getKeybind()        { return GameConfig.STICKY_FINGER_BUTTON; }
 
     public double getActivePercent() {
@@ -181,16 +185,16 @@ public class Ability_StickyFingers implements Ability {
     }
 
     public double getCooldownPercent() {
-        // Priority 1: If you are waiting to be able to hide again
-        if (hideCooldown.isActive()) {
-            return hideCooldown.getPercentComplete();
-        }
-        // Priority 2: If you are waiting for the portal to recharge
-        if (portalCooldown.isActive()) {
-            return portalCooldown.getPercentComplete();
-        }
-        return 0.0;
+        // Main wheel shows the "Hide" cooldown
+        return hideCooldown.getPercentComplete();
     }
+    
+    
+    public double getSecondaryCooldownPercent() {
+        // Inner wheel shows the "Portal" cooldown
+        return portalCooldown.getPercentComplete();
+    }
+
     
     public String getDisplayLabel() { return "F"; }
     

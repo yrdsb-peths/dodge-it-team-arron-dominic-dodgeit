@@ -22,5 +22,6 @@ public interface Ability {
     
     //Sticky Finger
     default boolean shouldHidePlayer() { return false; }
+    default double getSecondaryCooldownPercent() { return 0.0; }
 
 }

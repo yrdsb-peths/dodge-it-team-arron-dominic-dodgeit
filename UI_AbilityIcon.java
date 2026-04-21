@@ -22,8 +22,7 @@ public class UI_AbilityIcon extends Actor {
         Ability ability = null;
         if (player instanceof GenericPlayer) {
             GenericPlayer gp = (GenericPlayer)player;
-            List<Ability> visible = gp.getVisibleAbilities(); // Use the filtered list
-            // If the player doesn't have an ability for this slot, remove the icon
+            List<Ability> visible = gp.getVisibleAbilities();
             if (slotIndex >= visible.size()) {
                 if (getWorld() != null) getWorld().removeObject(this);
                 return;
@@ -36,8 +35,11 @@ public class UI_AbilityIcon extends Actor {
         GreenfootImage img = new GreenfootImage(size, size);
         int cx = size / 2;
         int cy = size / 2;
-        int radiusSq = (size/2) * (size/2);
         
+        // Define our ring boundaries
+        int outerRadiusSq = (size / 2) * (size / 2);
+        int innerRadiusSq = (int)((size * 0.32) * (size * 0.32)); // Boundary between rings
+
         // 1. Background Circle
         img.setColor(new Color(30, 30, 30, 200));
         if (player.isDead()) img.setColor(new Color(100, 0, 0, 150));
@@ -46,38 +48,53 @@ public class UI_AbilityIcon extends Actor {
         // 2. Ability Letter Label
         img.setColor(Color.WHITE);
         img.setFont(new Font("Arial", true, false, GameConfig.s(18)));
-        // Center the text roughly
         img.drawString(ability.getDisplayLabel(), cx - GameConfig.s(6), cy + GameConfig.s(7));
 
-        // 3. Cooldown/Active Sweeps
-        double percent = 0;
-        Color sweepColor = null;
+        // 3. Prepare Percentages
+        double primaryPercent = 0;
+        Color primaryColor = null;
 
         if (ability.isActive()) {
-            percent = ability.getActivePercent();
-            sweepColor = new Color(255, 140, 0, 160); // Orange
-        } 
-        else if (ability.isCooldownActive()) {
-            percent = ability.getCooldownPercent();
-            sweepColor = new Color(0, 150, 255, 160); // Blue
+            primaryPercent = ability.getActivePercent();
+            primaryColor = new Color(255, 140, 0, 180); // Orange for active
+        } else {
+            primaryPercent = ability.getCooldownPercent();
+            primaryColor = new Color(0, 150, 255, 180); // Blue for cooldown
         }
 
-        if (sweepColor != null) {
-            for (int x = 0; x < size; x++) {
-                for (int y = 0; y < size; y++) {
-                    int dx = x - cx;
-                    int dy = y - cy;
-                    if (dx * dx + dy * dy <= radiusSq) {
-                        double angle = Math.toDegrees(Math.atan2(dx, -dy));
-                        if (angle < 0) angle += 360;
-                        if (angle <= percent * 360) {
-                            img.setColorAt(x, y, sweepColor);
+        double secondaryPercent = ability.getSecondaryCooldownPercent();
+        Color secondaryColor = new Color(150, 220, 255, 200); // Lighter blue for portal
+
+        // 4. Per-Pixel Rendering for the Wheels
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                int dx = x - cx;
+                int dy = y - cy;
+                int distSq = dx * dx + dy * dy;
+
+                // Only draw if within the outer circle
+                if (distSq <= outerRadiusSq) {
+                    double angle = Math.toDegrees(Math.atan2(dx, -dy));
+                    if (angle < 0) angle += 360;
+
+                    // OUTER RING (Primary Ability / Hide Cooldown)
+                    if (distSq > innerRadiusSq) {
+                        if (angle <= primaryPercent * 360 && primaryPercent > 0) {
+                            img.setColorAt(x, y, primaryColor);
+                        }
+                    }
+                    // INNER RING (Secondary Ability / Portal Cooldown)
+                    else {
+                        if (angle <= secondaryPercent * 360 && secondaryPercent > 0) {
+                            img.setColorAt(x, y, secondaryColor);
                         }
                     }
                 }
             }
-        } else if (!player.isDead()) {
-            // Ready Border
+        }
+
+        // 5. Ready Border (Only if both are ready)
+        if (!ability.isCooldownActive() && !ability.isActive() && !player.isDead()) {
             img.setColor(Color.GREEN);
             img.drawOval(1, 1, size - 3, size - 3);
         }

@@ -41,11 +41,18 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     protected void movementLogic() {
         iFrameTimer.update((MyWorld)getWorld());
         
+        boolean playerIsHidden = isHidden();
         // Update and Trigger Abilities
         for (Ability a : abilities) {
-            a.update(this, (MyWorld)getWorld());
+            if (!playerIsHidden || a.shouldHidePlayer() || a.isActive()) {
+                a.update(this, (MyWorld)getWorld());
+            }
+
             if (Greenfoot.isKeyDown(a.getKeybind())) {
-                a.activate(this, (MyWorld)getWorld());
+                // You still can't START a new ability while underground.
+                if (!playerIsHidden || a.shouldHidePlayer()) {
+                    a.activate(this, (MyWorld)getWorld());
+                }
             }
         }
 

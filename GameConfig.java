@@ -53,9 +53,8 @@ public class GameConfig {
     //Ability: Sticky Fingers Settings
     public static final String STICKY_FINGER_BUTTON = "f";
     public static final int PORTAL_MARGIN = s(35);       // how close to edge triggers portal
-    public static final int PORTAL_COOLDOWN_FRAMES = 20; // frames before you can portal again
     public static final double PORTAL_IFRAME_DURATION = 1; // Invincibility time
-    public static final double PORTAL_COOLDOWN_DURATION = 2; // Time before you can portal again  
+    public static final double PORTAL_COOLDOWN_DURATION = 4; // Time before you can portal again  
     
     //Volume Setting
     public static final int MASTER_VOLUME = 50;
