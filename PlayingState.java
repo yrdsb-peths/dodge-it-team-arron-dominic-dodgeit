@@ -39,7 +39,7 @@ import greenfoot.*;
 import java.util.List;
 import java.util.ArrayList;
 
-public class PlayingState implements GameState, IActiveGameState {
+public class PlayingState implements GameState{
 
     private SpawnManager spawnManager;
     private UIText scoreDisplay;

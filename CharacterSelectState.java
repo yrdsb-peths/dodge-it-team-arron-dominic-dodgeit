@@ -80,9 +80,8 @@ public class CharacterSelectState implements GameState {
                 currentIndex = (currentIndex - 1 + roster.length) % roster.length;
                 updateScreen(world);
             } else if (key.equals("enter")) {
-                // Confirm selection and start the game
                 GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
-                world.getGSM().changeState(new AbilityDisplayState());
+                world.getGSM().changeState(new PlayingState());
             }
         }
     }

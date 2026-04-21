@@ -110,7 +110,7 @@ public class GameTimer {
      * @param world  Needed to check the current game state via the GSM.
      */
     public void update(MyWorld world) {
-        if (active && world.getGSM().isState(IActiveGameState.class)) {
+        if (active && world.getGSM().isState(PlayingState.class)) {
             if (remainingFrames > 0) {
                 remainingFrames--;
             } else if (loop) {

@@ -79,7 +79,7 @@ public class ScrollingRoad extends Actor implements Time_Snapshottable {
     public void act() {
         MyWorld world = (MyWorld) getWorld();
         // Only scroll during active gameplay — freeze during menus, pause, and rewind.
-        if (world.getGSM().isState(IActiveGameState.class) && !world.isRewinding()) {
+        if (world.getGSM().isState(PlayingState.class) && !world.isRewinding()) {
             scroll();
         }
     }

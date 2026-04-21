@@ -188,15 +188,9 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         if (isDead) {
             deathTimer.update((MyWorld) getWorld());
             if (!deathTimer.isExpired()) {
-                shake(); // vibrate around the death position until timer expires
+                shake(); 
             } else if (!((MyWorld) getWorld()).isRewinding()) {
-                // Timer expired and we're not being rewound 
-                GameState currentState = ((MyWorld) getWorld()).getGSM().peekState();
-                if (currentState instanceof AbilityDisplayState) {
-                    ((AbilityDisplayState) currentState).notifyPlayerDied();
-                } else {
-                    ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
-                }
+                ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
             }
         } else {
             handleStandardMovement();

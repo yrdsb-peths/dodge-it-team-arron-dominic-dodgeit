@@ -46,7 +46,7 @@ public abstract class Obstacles extends Actor {
     public void act() {
         MyWorld world = (MyWorld) getWorld();
         // Safety check: if we are not in a world or not in PlayingState, do nothing.
-        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
+        if (world == null || !world.getGSM().isState(PlayingState.class)) return;
 
         movementLogic();  // 1. Move
         collisionLogic(); // 2. Check hits
