@@ -41,7 +41,7 @@ public class FX_ZipperGround extends Actor {
     @Override
     public void act() {
         MyWorld world = (MyWorld) getWorld();
-        if (world == null || !world.getGSM().isState(PlayingState.class)) return;
+        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
         frame++;
         redraw(frame);
     }

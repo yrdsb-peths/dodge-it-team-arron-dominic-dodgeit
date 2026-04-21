@@ -135,8 +135,8 @@ public class MyWorld extends World {
      */
     public boolean isRewinding() {
         GameState s = gsm.peekState();
-        if (s instanceof PlayingState) {
-            return ((PlayingState) s).isRewinding();
+        if (s instanceof IActiveGameState) {
+            return ((IActiveGameState) s).isRewinding();
         }
         return false;
     }
