@@ -1,19 +1,22 @@
-import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
-
-/**
- * Write a description of class SadFace here.
- * 
- * @author (your name) 
- * @version (a version number or a date)
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * SadFace.java  —  EMPTY STUB (ABANDONED PROTOTYPE)
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Status:
+ *   This class is never instantiated anywhere in the project.
+ *   It appears to be an abandoned early prototype or test actor.
+ *   It is safe to delete.
+ *
+ * If you ever want to use this class for something (e.g., a visual death icon),
+ * add your logic inside act() and spawn it where needed.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
-public class SadFace extends Actor
-{
-    /**
-     * Act - do whatever the SadFace wants to do. This method is called whenever
-     * the 'Act' or 'Run' button gets pressed in the environment.
-     */
-    public void act()
-    {
-        // Add your action code here.
+import greenfoot.*;
+
+public class SadFace extends Actor {
+
+    @Override
+    public void act() {
+        // Currently unused. See class comment above.
     }
 }

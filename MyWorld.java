@@ -1,60 +1,138 @@
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * MyWorld.java  —  THE ENTRY POINT OF THE ENTIRE GAME
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Role:
+ *   This is the one-and-only World class that Greenfoot instantiates when
+ *   the project starts.  Everything in the game lives inside this world.
+ *
+ * How it works:
+ *   Greenfoot calls world.act() 60 times per second.  Instead of putting
+ *   all game logic here, we delegate immediately to the GameStateManager (GSM).
+ *   The GSM then delegates to whichever GameState is currently on top of
+ *   its stack (Menu, Playing, Paused, etc.).
+ *
+ * Key responsibilities:
+ *   1. Create the GameStateManager.
+ *   2. Set the paint (rendering) order so actors are drawn in the right layers.
+ *   3. Push the first state (MenuState) to kick off the game.
+ *   4. Pre-load all audio into RAM so there is no lag on first play.
+ *   5. Expose isRewinding() so any actor can ask "are we currently rewinding?"
+ *
+ * Interacts with:
+ *   GameStateManager, MenuState, PlayingState, AudioManager, GameConfig
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 import greenfoot.*;
 
 public class MyWorld extends World {
+
+    /** The state machine that drives the entire game. All logic flows through it. */
     private GameStateManager gsm;
-    
-    public PlayingState playingState; 
-    //Game state manager is a class we defined to manage game states
-    //Game states are stored as classes, with the "blueprint" (interface) GameState, 
-    //which requires:
-    //an enter method, an update method, and an exit method
-    
-    public MyWorld() {
-        //Initiate a world (arguments: width, height, idk, bound)
-        //False means things are not limited by the boundary and can go through it
-        //This is helpful as we do not want a limiting boundar
-        super(GameConfig.WORLD_WIDTH,GameConfig.WORLD_HEIGHT, 1,false);
-        //Initiate a game state manager, pasing this world (MyWorld) as the argument
-        gsm = new GameStateManager(this);//gsm stands for game state manager.
-        
-        //Set the order of rendeirng:
-        //UI on top, then Dio, then after images, then the roadrollers
-        setPaintOrder(Banner.class, UIText.class, UI_AbilityIcon.class, UI_RewindBar.class, FX_RewindOverlay.class, 
-                      Exclaimation.class, PathWarning.class, 
-                      TheWorldStand.class, FX_Portal.class, FX_ZipperGround.class, GenericPlayer.class, 
-                      FX_Afterimage.class, Obstacles.class, ScrollingRoad.class);
-        //Start the game in the playing state
-        //Remember, pushState adds the state on top of the stack,and enters that state
-        
-        playingState = new PlayingState();
-        gsm.pushState(new MenuState());
-        //Initilaise the audio manager to load sounds into RAM
-        AudioManager.init();
-        
-        
-    }
-    
-    /*
-     * Main function running the game.
-     * We "replaced" the "act" method of greenfoot with our own update method to handle 
-     * different game states and pausing. 
-     * 
-     * So actors do not get their movement logic called 60 times a second as in act,
-     * but get controlled by our own update method, depending on the game state.
+
+    /**
+     * A stored reference to a PlayingState object.
+     * NOTE: This field is currently unused in practice — the real PlayingState
+     * is created inside gsm.pushState() when the game begins.  It is safe to
+     * ignore this field for now.
      */
-    public void act(){
-        //All logic is delegated to the state machine,
-        //which delegates the taskto the specific state classes
+    public PlayingState playingState;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONSTRUCTOR
+    // ─────────────────────────────────────────────────────────────────────────
+    public MyWorld() {
+        /*
+         * super(width, height, cellSize, bounded)
+         *   width / height : size of the world in pixels (scaled by GameConfig.s())
+         *   cellSize = 1   : each grid cell is 1×1 pixel (so coordinates = pixels)
+         *   bounded = false: actors are NOT clipped to the world boundary —
+         *                    they can move off-screen, which we need for
+         *                    obstacles entering from the right edge.
+         */
+        super(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT, 1, false);
+
+        // Create the game state manager, passing ourselves so states can
+        // add/remove actors from this world.
+        gsm = new GameStateManager(this);
+
+        /*
+         * PAINT ORDER — controls which actors are drawn on top of which.
+         * Earlier in the list = drawn LAST = appears on top.
+         * Later in the list  = drawn FIRST = appears at the bottom (background).
+         *
+         * Layer order (top → bottom):
+         *   Banner          — boss intro banner (always on top of everything)
+         *   UIText          — score label and text overlays
+         *   UI_AbilityIcon  — ability cooldown wheels
+         *   UI_RewindBar    — the TIME rewind meter
+         *   FX_RewindOverlay— blue scanline effect during rewind
+         *   Exclaimation    — the ! warning mark above a Train's lane
+         *   PathWarning     — red lane highlight before a Train charges
+         *   TheWorldStand   — Dio's punch stand (beside the player)
+         *   FX_Portal       — zipper flash at screen edges
+         *   FX_ZipperGround — zipper drawn on the road when hiding
+         *   GenericPlayer   — the player character sprite
+         *   FX_Afterimage   — motion-blur ghost trail (behind player)
+         *   Obstacles       — road rollers and trains
+         *   ScrollingRoad   — the moving road background (bottommost)
+         */
+        setPaintOrder(
+            Banner.class, UIText.class, UI_AbilityIcon.class, UI_RewindBar.class,
+            FX_RewindOverlay.class,
+            Exclaimation.class, PathWarning.class,
+            TheWorldStand.class, FX_Portal.class, FX_ZipperGround.class,
+            GenericPlayer.class,
+            FX_Afterimage.class, Obstacles.class, ScrollingRoad.class
+        );
+
+        // Pre-create a PlayingState (stored but not used yet — see field note above).
+        playingState = new PlayingState();
+
+        // Start the game in the main menu.
+        // pushState adds the state on top of the GSM stack and calls its enter() method.
+        gsm.pushState(new MenuState());
+
+        // Pre-load every sound file into RAM now, so the first play of any
+        // sound does not cause a noticeable lag spike.
+        AudioManager.init();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MAIN GAME LOOP
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Called by Greenfoot ~60 times per second.
+     * We do NOT put any game logic here directly.
+     * Instead, we delegate entirely to the GameStateManager, which forwards
+     * the call to whichever GameState is currently active (Menu, Playing, etc.).
+     */
+    @Override
+    public void act() {
         gsm.update();
     }
-    
-    /*
-     * Getter method to get the game state manager.
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // GETTERS / HELPERS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the GameStateManager so that any actor or state can interact
+     * with the state machine (e.g., to check isState() or changeState()).
      */
-    public GameStateManager getGSM(){
+    public GameStateManager getGSM() {
         return gsm;
     }
-    
+
+    /**
+     * Convenience method: returns true if the game is currently performing
+     * a time-rewind.  Actors use this to freeze their own movement while
+     * the rewind system restores past positions.
+     *
+     * How it works: peeks the current state; if it is a PlayingState,
+     * asks it whether its rewind manager is active.
+     */
     public boolean isRewinding() {
         GameState s = gsm.peekState();
         if (s instanceof PlayingState) {
@@ -62,5 +140,4 @@ public class MyWorld extends World {
         }
         return false;
     }
-    
 }

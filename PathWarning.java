@@ -1,40 +1,71 @@
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * PathWarning.java  —  RED LANE HIGHLIGHT BEFORE A TRAIN CHARGES
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Role:
+ *   A semi-transparent red rectangle that spans the full screen width and
+ *   highlights the lane a Train is about to charge through.
+ *   Flickers for 60 frames (1 second) then removes itself.
+ *   Spawned by SpawnManager.spawnTrain() alongside the Exclaimation mark.
+ *
+ * Telegraph timing:
+ *   PathWarning lasts 60 frames.  The Train waits 65 frames before charging.
+ *   So the warning disappears 5 frames before the Train moves, creating a
+ *   brief "oh no" moment right before the charge.
+ *
+ * Time Machine:
+ *   Saves the remaining timer so rewinding correctly returns the warning to
+ *   its past flicker state.
+ *
+ * Interacts with:
+ *   SpawnManager (creates this alongside Train), Train (arrives 5 frames later),
+ *   Time_RewindManager (snapshot)
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 import greenfoot.*;
 
 public class PathWarning extends Actor implements Time_Snapshottable {
-    private int timer = 60; // How long the warning stays (1 second)
 
+    /** Remaining frames before this warning auto-removes itself.  60 frames = 1 second. */
+    private int timer = 60;
+
+    /**
+     * Creates a semi-transparent red rectangle of the given size.
+     * Width should match the world width; height should match the lane height.
+     *
+     * @param width   Width of the warning zone in pixels.
+     * @param height  Height of the warning zone in pixels.
+     */
     public PathWarning(int width, int height) {
         GreenfootImage img = new GreenfootImage(width, height);
-        img.setColor(new Color(255, 0, 0, 100)); // Semi-transparent red
+        img.setColor(new Color(255, 0, 0, 100)); // semi-transparent red
         img.fill();
         setImage(img);
     }
 
+    @Override
     public void act() {
-        // Standard GSM check so it freezes during Time Stop
         MyWorld world = (MyWorld) getWorld();
+        // Standard guard: freeze during pause/menu/rewind (rewind restores timer)
         if (world == null || !world.getGSM().isState(PlayingState.class)) return;
 
         timer--;
-        
-        // Flashing effect: gets more intense as time runs out
-        if (timer % 10 < 5) {
-            getImage().setTransparency(40);
-        } else {
-            getImage().setTransparency(140);
-        }
+
+        // Flicker: alternate between dim (40) and bright (140) every 5 frames
+        getImage().setTransparency(timer % 10 < 5 ? 40 : 140);
 
         if (timer <= 0) {
             world.removeObject(this);
         }
     }
-    
-    // --- TIME MACHINE ADDITIONS ---
+
+    @Override
     public Time_ActorMemento captureState() {
         return new Time_ActorMemento(this, getX(), getY(), timer);
     }
 
+    @Override
     public void restoreState(Time_ActorMemento m) {
-        this.timer = (int)m.customData;
+        this.timer = (int) m.customData;
     }
 }
