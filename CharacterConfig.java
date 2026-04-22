@@ -94,7 +94,7 @@ public enum CharacterConfig {
         "Dash",
         GameConfig.MOON_KNIGHT_MOVE_SPEED,
         1.2 * GameConfig.SCALE,
-        "dio_bgm",
+        "gothic_bgm",
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,

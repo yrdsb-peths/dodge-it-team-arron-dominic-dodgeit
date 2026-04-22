@@ -87,20 +87,21 @@ public class AudioManager {
         loadSound("dio_bgm",       "eye_of_heaven_dio_bgm.mp3",  60);
         loadSound("lost_bgm",      "brawl_stars_lost_bgm.mp3",   50);
         loadSound("car_crash",     "car_crash.mp3",               70);
-        loadSound("speed_up_time", "speed_up_time.mp3",          100);
+        loadSound("speed_up_time", "speed_up_time.mp3",          80);
         loadSound("summon_stand",  "summon_stand.mp3",            200);
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
         loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
+        loadSound("gothic_bgm",  "gothicbgm.mp3",             90);
         
         
         // ── Voice pools ───────────────────────────────────────────────────────
         loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 80);
         loadVoicePool("zipper",        new String[]{ "zipper1.mp3","zipper2.mp3","zipper3.mp3" }, 120);
-        loadVoicePool("dioLostVoices", new String[]{ "dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3" }, 80);
+        loadVoicePool("dioLostVoices", new String[]{ "dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3" }, 60);
         loadVoicePool("dioBattleCry",  new String[]{
             "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3",
             "dio_voiceline/muda_muda.mp3", "dio_voiceline/Voicy_Timestop DiegoBrando.mp3"
-        }, 100);
+        }, 70);
 
         updateAllVolumes(); // apply master volume to everything at startup
     }
