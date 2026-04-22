@@ -232,7 +232,8 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
     private void clearSandbox(MyWorld world) {
         isFrozen = false;
         playerDiedThisFrame = false;
-        
+        AudioManager.stopAllPools();
+        AudioManager.stopAllAbilities();
         world.removeObjects(world.getObjects(ScrollingRoad.class));
         world.removeObjects(world.getObjects(Obstacles.class));
         world.removeObjects(world.getObjects(Player.class));

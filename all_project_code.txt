@@ -299,6 +299,7 @@ public class GameOverState implements GameState {
 
     @Override
     public void enter(MyWorld world) {
+        AudioManager.stopAllAbilities();//Stop ability sounds
         AudioManager.playLoop("lost_bgm"); // play the loss music
 
         // Freeze the scores before building the UI
@@ -328,6 +329,7 @@ public class GameOverState implements GameState {
         world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
         AudioManager.stop("lost_bgm");
         world.removeObjects(uiElements);
+        AudioManager.stopPool(GameConfig.ACTIVE_CHARACTER.deathSoundKey);
     }
 
     private void addUI(MyWorld world, Actor a, int x, int y) {
@@ -516,6 +518,189 @@ public class UI_RewindBar extends Actor {
 
 
 ==================================================
+FILE: ./CharacterConfig.java
+==================================================
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CharacterConfig.java  —  THE CHARACTER ROSTER (DATA-DRIVEN DESIGN)
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Role:
+ *   An enum that defines every playable character.  Each enum constant (DIO,
+ *   Dio2, etc.) is a single object that holds all the data needed to build that
+ *   character at runtime — sprites, speed, music, abilities, and more.
+ *
+ * Why an enum?
+ *   Enums in Java are a fixed list of named constants, but unlike simple
+ *   integers, each constant can carry rich data (via a constructor).
+ *   CharacterConfig.values() returns all characters, which is how
+ *   CharacterSelectState shows the roster without knowing each character by name.
+ *
+ * HOW TO ADD A NEW CHARACTER:
+ *   1. Add a comma after the last entry (e.g., after Dio2's closing parenthesis).
+ *   2. Write KIRA("Kira Yoshikage", "Kira", new String[]{"Walk", "Die"}, ...) etc.
+ *   3. The new character immediately appears in the character-select screen.
+ *      No other files need to change.
+ *
+ * Ability loading:
+ *   Abilities are listed as class-name Strings (e.g., "Ability_StandPunch").
+ *   GenericPlayer uses Java Reflection (Class.forName()) to instantiate them
+ *   at runtime.  This means you add abilities by listing their class name here
+ *   — you do NOT modify GenericPlayer.
+ *
+ * Interacts with:
+ *   GenericPlayer (reads all fields), CharacterSelectState (iterates roster),
+ *   PlayingState (reads ACTIVE_CHARACTER to spawn the right player),
+ *   Animator (uses folderName + animNames to load sprites)
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+import greenfoot.*;
+import java.util.List;
+import java.util.ArrayList;
+
+public enum CharacterConfig {
+
+    // =========================================================================
+    // CHARACTER: DIO BRANDO
+    // =========================================================================
+    Testing_DIO(
+        "Omnipotent Dio",                               // displayName  (shown in UI)
+        "Dio",                                      // folderName   (images/Dio/)
+        "dio_full.jpg",                             //Portrait Image (new, for character select)
+        "standard_road.png",                             //CUstomised road(new, for character select)
+        new String[]{"Idle", "Wry", "Dash", "Lose"}, // animNames  (sub-folders)
+        "Dash",                                     // defaultAnim  (starts here)
+        GameConfig.DIO_MOVE_SPEED,                  // moveSpeed    (pixels/frame)
+        0.8 * GameConfig.SCALE,                     // scale        (sprite size)
+        "dio_bgm",                                  // bgmKey       (AudioManager)
+        "dioLostVoices",                            // deathSoundKey (voice pool)
+        "dioBattleCry",                             //Select sound key (new, for character select)
+        BossConfig.DIO,                             // bossConfig   (intro banner)
+        new String[]{                               // abilityClassNames (loaded via Reflection)
+            "Ability_StandPunch",   // E — summon TheWorldStand
+            "Ability_MadeInHeaven", // S — speed boost
+            "Ability_Mandom",       // R — time rewind (delegates to PlayingState)
+            "Ability_StickyFingers" // F — portal wrap + hide underground
+        }
+    ),
+
+    // =========================================================================
+    // CHARACTER: DIO2  (test/placeholder — duplicate of DIO with fewer abilities)
+    // =========================================================================
+    /*
+     * Dio2 exists only to verify that CharacterSelectState works with multiple
+     * entries.  It is NOT a distinct character.  If you want a real second
+     * character, replace this with proper data.
+     */
+    DIO(
+        "Dio Brando",
+        "Dio",
+        "dio_full.jpg",                             //Portrait Image (new, for character select)
+        "punk_road.png",                             //CUstomised road(new, for character select)
+        new String[]{"Idle", "Wry", "Dash", "Lose"},
+        "Dash",
+        GameConfig.DIO_MOVE_SPEED,
+        0.8 * GameConfig.SCALE,
+        "dio_bgm",
+        "dioLostVoices",
+        "dioBattleCry",                             //Select sound key (new, for character select)
+        BossConfig.DIO,
+        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} // fewer abilities than DIO
+    ),
+    
+    MoonKnight(
+        "Moon Knight",
+        "MoonKnight",
+        "moon_knight_full.png",                             //Portrait Image (new, for character select)
+        "red_road.png",                             //CUstomised road(new, for character select)
+        new String[]{"Idle", "Dash", "Lose"},
+        "Dash",
+        GameConfig.MOON_KNIGHT_MOVE_SPEED,
+        1.2 * GameConfig.SCALE,
+        "dio_bgm",
+        "dioLostVoices",
+        "dioBattleCry",                             //Select sound key (new, for character select)
+        BossConfig.DIO,
+        new String[]{"Ability_Mandom","Ability_MadeInHeaven"} // fewer abilities than DIO
+    );
+
+    // =========================================================================
+    // FIELDS  (every character carries these values)
+    // =========================================================================
+    /** The name displayed on the character-select screen. */
+    public final String displayName;
+
+    /** Name of the sprite sub-folder under images/ (e.g., "Dio" → images/Dio/). */
+    public final String folderName;
+    
+     /** Name of theportrait image sub-folder under images*/
+    public final String portraitImage;  
+    
+    public final String roadImage;
+    
+    /** Names of the animation sub-folders to load (e.g., "Idle", "Dash"). */
+    public final String[] animNames;
+
+    /** Which animation plays when the character is first created. */
+    public final String defaultAnim;
+
+    /** How many pixels per frame the character moves when an arrow key is held. */
+    public final int moveSpeed;
+
+    /**
+     * The scale factor applied to all sprite images for this character.
+     * Combines character-specific sizing with the global SCALE multiplier.
+     */
+    public final double scale;
+
+    /** AudioManager key for the character's background music. */
+    public final String bgmKey;
+
+    /** AudioManager pool key played when the character dies. */
+    public final String deathSoundKey;
+    
+    /** AudioManager pool key played when the character is selected. */    
+     public final String selectSoundKey;
+    /**
+     * The boss-intro banner configuration.  If null, no banner plays.
+     * Dio uses BossConfig.DIO which defines the black banner with his image.
+     */
+    public final BossConfig bossConfig;
+
+    /**
+     * Class name strings for each ability, loaded at runtime via Reflection.
+     * Order matters: abilities are displayed as icons in this order.
+     */
+    public final String[] abilityClassNames;
+
+    // =========================================================================
+    // CONSTRUCTOR
+    // =========================================================================
+    private CharacterConfig(
+            String displayName, String folderName,String portraitImage , String roadImage,
+            String[] animNames,
+            String defaultAnim, int moveSpeed, double scale,
+            String bgmKey, String deathSoundKey, String selectSoundKey,
+            BossConfig bossConfig, String[] abilities) {
+        this.displayName      = displayName;
+        this.folderName       = folderName;
+        this.portraitImage    = portraitImage;
+        this.roadImage = roadImage;
+        this.animNames        = animNames;
+        this.defaultAnim      = defaultAnim;
+        this.moveSpeed        = moveSpeed;
+        this.scale            = scale;
+        this.bgmKey           = bgmKey;
+        this.deathSoundKey    = deathSoundKey;
+        this.selectSoundKey   = selectSoundKey;
+        this.bossConfig       = bossConfig;
+        this.abilityClassNames = abilities;
+    }
+}
+
+
+
+==================================================
 FILE: ./FX_ZipperGround.java
 ==================================================
 
@@ -654,6 +839,7 @@ public abstract class Obstacles extends Actor {
      * Protected so subclasses can read and write it directly.
      */
     protected int speed;
+    public abstract int getRadius();
 
     /**
      * Called by Greenfoot each frame.
@@ -663,15 +849,16 @@ public abstract class Obstacles extends Actor {
     @Override
     public void act() {
         MyWorld world = (MyWorld) getWorld();
-        if (world == null) return;
+        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
 
-        GameState state = world.getGSM().peekState();
-
-        // Safe check: If not a gameplay state, or we are paused/frozen, stop here.
-        if (!(state instanceof IActiveGameState)) return; 
-        
-        IActiveGameState activeState = (IActiveGameState) state;
-        if (activeState.isGameFrozen()) return;
+        // --- ACCURATE DEBUG VISUAL ---
+        if (GameConfig.DEBUG_MODE) {
+            GreenfootImage img = getImage();
+            img.setColor(Color.CYAN);
+            int r = getRadius();
+            // Draw circle centered on the sprite center
+            img.drawOval(img.getWidth()/2 - r, img.getHeight()/2 - r, r*2, r*2);
+        }
 
         movementLogic();  
         collisionLogic(); 
@@ -1127,6 +1314,9 @@ public class Roadroller extends Obstacles implements Time_Snapshottable {
         this.speed      = d.speed;
         this.scoreToAdd = d.scoreToAdd;
     }
+    
+    @Override
+    public int getRadius() { return GameConfig.ROADROLLER_RADIUS; }
 }
 
 
@@ -1540,7 +1730,6 @@ public class MenuState implements GameState {
     public void enter(MyWorld world) {
         world.setBackground(new GreenfootImage("dodge_it.png")); 
         world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
-        AudioManager.playLoop("menu_bgm"); 
         /*
         int middle = world.getWidth() / 2;
 
@@ -1566,6 +1755,15 @@ public class MenuState implements GameState {
     /** Waits for ENTER, then transitions to the character select screen. */
     @Override
     public void update(MyWorld world) {
+        
+        if (Greenfoot.getRandomNumber(120) == 0) {
+            
+            // Start way off-screen to the right
+            int startX = world.getWidth() + GameConfig.s(300);
+            
+            world.addObject(new FX_MenuAmbulance(), startX, GameConfig.s(290));
+        }
+
         AudioManager.playLoop("menu_bgm"); 
         if ("enter".equals(Greenfoot.getKey())) {
             world.getGSM().changeState(new CharacterSelectState());
@@ -2110,124 +2308,105 @@ public class SpawnManager {
 FILE: ./CharacterSelectState.java
 ==================================================
 
-/*
- * ─────────────────────────────────────────────────────────────────────────────
- * CharacterSelectState.java  —  CHARACTER SELECTION SCREEN
- * ─────────────────────────────────────────────────────────────────────────────
- * Role:
- *   Shows the roster of characters (from CharacterConfig.values()),
- *   lets the player browse with LEFT/RIGHT arrows, displays the character's
- *   name, abilities, and a spinning preview animation.
- *   Pressing ENTER sets GameConfig.ACTIVE_CHARACTER and starts PlayingState.
- *
- * How the roster is driven:
- *   CharacterConfig.values() returns all defined enum constants.
- *   currentIndex tracks which one is selected.  LEFT/RIGHT wrap around.
- *   updateScreen() refreshes the name display, ability list, and preview sprite.
- *
- * UI_Preview management:
- *   currentPreview is NOT in the uiElements list.  It is removed manually
- *   in updateScreen() each time the player switches characters (so it is
- *   replaced, not accumulated) and in exit() for final cleanup.
- *
- * Interacts with:
- *   CharacterConfig (roster data), GameConfig (sets ACTIVE_CHARACTER),
- *   PlayingState (next state), UIText, UI_Preview, GameStateManager
- * ─────────────────────────────────────────────────────────────────────────────
- */
 import greenfoot.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CharacterSelectState implements GameState {
 
-    /** All static UI actors — removed together in exit(). */
     private List<Actor> uiElements = new ArrayList<>();
-
-    /** Index into CharacterConfig.values() for the currently highlighted character. */
     private int currentIndex = 0;
-
-    /** The full roster of available characters. */
     private CharacterConfig[] roster = CharacterConfig.values();
 
-    /** Dynamic text label updated when the selection changes. */
     private UIText nameDisplay;
-    /** Dynamic text label listing the selected character's abilities. */
     private UIText abilitiesDisplay;
-
-    /**
-     * The animated sprite preview for the selected character.
-     * Managed separately from uiElements because it is replaced on every
-     * character switch, not just at exit.
-     */
     private UI_Preview currentPreview;
+
+    // Prevents spamming the arrow keys and breaking the slide animation
+    private int slideCooldown = 0;
 
     @Override
     public void enter(MyWorld world) {
         int midX = world.getWidth() / 2;
-        
-        world.setBackground(new GreenfootImage("background_image.jpg")); 
+
+        // 1. Menu Background
+        world.setBackground(new GreenfootImage("background_image.jpg"));
         world.getBackground().scale(GameConfig.WORLD_WIDTH+685, GameConfig.WORLD_HEIGHT+300);
         
-        addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(80));
-        addUI(world, new UIText("< LEFT ARROW       RIGHT ARROW >", GameConfig.s(20), Color.CYAN), midX, GameConfig.s(250));
-        addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(22), Color.GREEN), midX, GameConfig.s(320));
-        addUI(world, new UIText("[ ENTER : START GAME]", GameConfig.s(22), Color.RED), midX, GameConfig.s(360));
-        
-        // Name and ability labels start empty — updateScreen() fills them.
-        nameDisplay = new UIText("", GameConfig.s(45), Color.WHITE);
-        addUI(world, nameDisplay, midX, GameConfig.s(220));
+        // 2. Dark Panel for the bottom half text UI
+        addUI(world, new UI_Panel(world.getWidth(), GameConfig.s(160), new Color(0, 0, 0, 180)), midX, GameConfig.s(320));
 
-        abilitiesDisplay = new UIText("", GameConfig.s(18), Color.WHITE);
-        addUI(world, abilitiesDisplay, midX, GameConfig.s(280));
+        // 3. Static Text
+        addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(40));
+        addUI(world, new UIText("< LEFT ARROW               RIGHT ARROW >", GameConfig.s(18), Color.CYAN), midX, GameConfig.s(260));
+        addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(20), Color.GREEN), midX - GameConfig.s(130), GameConfig.s(370));
+        addUI(world, new UIText("[ ENTER : START GAME ]", GameConfig.s(20), Color.RED), midX + GameConfig.s(130), GameConfig.s(370));
 
-        updateScreen(world); // populate with the first character's data
+        // 4. Dynamic Text Elements
+        nameDisplay = new UIText("", GameConfig.s(40), Color.WHITE);
+        addUI(world, nameDisplay, midX, GameConfig.s(295));
+
+        abilitiesDisplay = new UIText("", GameConfig.s(16), Color.ORANGE);
+        addUI(world, abilitiesDisplay, midX, GameConfig.s(330));
+
+        // 5. Spawn the first character (no slide on initial load)
+        spawnNewCharacter(world, true, true);
     }
 
     @Override
     public void update(MyWorld world) {
+        if (slideCooldown > 0) slideCooldown--;
+
         String key = Greenfoot.getKey();
-        if (key != null) {
+        if (key != null && slideCooldown == 0) {
+            
             if (key.equals("right")) {
-                // Wrap forward through the roster
+                slideOutCurrent(true); // slide out to the left
                 currentIndex = (currentIndex + 1) % roster.length;
-                updateScreen(world);
+                spawnNewCharacter(world, true, false); // spawn coming from right
+                slideCooldown = 15;
+                
             } else if (key.equals("left")) {
-                // Wrap backward through the roster
+                slideOutCurrent(false); // slide out to the right
                 currentIndex = (currentIndex - 1 + roster.length) % roster.length;
-                updateScreen(world);
+                spawnNewCharacter(world, false, false); // spawn coming from left
+                slideCooldown = 15;
+                
             } else if (key.equals("l")) {
-                // Enter the interactive tutorial overlay
                 GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
                 world.getGSM().pushState(new AbilityDisplayState());
+                
             } else if (key.equals("enter")) {
                 GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
+                AudioManager.stopAll();
                 world.getGSM().changeState(new PlayingState());
             }
         }
     }
 
-    /**
-     * Refreshes all dynamic UI to reflect the currently selected character:
-     *   1. Updates the name label.
-     *   2. Replaces the animated preview sprite.
-     *   3. Updates the ability list text.
-     */
-    private void updateScreen(MyWorld world) {
+    /** Tells the current portrait to exit the screen. */
+    private void slideOutCurrent(boolean toLeft) {
+        if (currentPreview != null) {
+            currentPreview.slideOut(toLeft);
+        }
+    }
+
+    /** Creates the new portrait, plays sound, and updates text. */
+    private void spawnNewCharacter(MyWorld world, boolean fromRight, boolean isInitial) {
         CharacterConfig selected = roster[currentIndex];
 
-        // 1. Name
-        nameDisplay.setText(selected.displayName);
-
-        // 2. Animated preview (remove old, add new)
-        if (currentPreview != null) {
-            world.removeObject(currentPreview);
+        // 1. Play Voice Line (Using a failsafe for both Voice Pool and Single Audio)
+        if (!isInitial) {
+            AudioManager.stopAllPools(); // Clean up previous character's voice
+            AudioManager.playPool(selected.selectSoundKey);
         }
-        currentPreview = new UI_Preview(selected);
-        world.addObject(currentPreview, world.getWidth() / 2, GameConfig.s(140));
-        // NOT added to uiElements — managed manually here and in exit()
 
-        // 3. Abilities (strip the "Ability_" prefix for cleaner display)
+        // 2. Spawn Sliding Preview Image
+        currentPreview = new UI_Preview(selected, fromRight, world.getWidth() / 2);
+        world.addObject(currentPreview, currentPreview.getStartX(), GameConfig.s(145));
+
+        // 3. Update UI Text Details
+        nameDisplay.setText(selected.displayName);
         String abilityText = "Abilities: ";
         for (String s : selected.abilityClassNames) {
             abilityText += s.replace("Ability_", "") + "  ";
@@ -2247,7 +2426,6 @@ public class CharacterSelectState implements GameState {
         uiElements.add(a);
     }
 }
-
 
 
 ==================================================
@@ -3135,6 +3313,8 @@ public class Train extends Obstacles implements Time_Snapshottable {
         this.state      = d.state;
         this.waitTimer  = d.waitTimer;
     }
+     @Override
+    public int getRadius() { return GameConfig.TRAIN_RADIUS; }
 }
 
 
@@ -3415,6 +3595,10 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
         isDead = true;
         setAnimation("Lose");
+        if (animations.containsKey("Lose")) {
+            animations.get("Lose").setLoop(false);
+        }
+
         AudioManager.playPool(config.deathSoundKey); // random death voice
         dieX = getX();
         dieY = getY();
@@ -3434,7 +3618,26 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     @Override
     protected void animationLogic() {
         if (getWorld() == null) return;
-        setImage(currentAnimator.getCurrentFrame()); // advance and display next frame
+        GreenfootImage frame = currentAnimator.getCurrentFrame();
+        
+        if (GameConfig.DEBUG_MODE) {
+            GreenfootImage debugImg = new GreenfootImage(frame);
+            debugImg.setColor(Color.RED);
+            
+            int r = GameConfig.PLAYER_RADIUS;
+            // Calculate drawing offset: (Current Hitbox Y - Actor Y)
+            int drawYOffset = getHitboxY() - getY();
+            
+            // Draw the circle shifted by the offset
+            debugImg.drawOval(
+                debugImg.getWidth()/2 - r, 
+                debugImg.getHeight()/2 - r + drawYOffset, // <--- Apply offset here
+                r*2, r*2
+            );
+            setImage(debugImg);
+        } else {
+            setImage(frame);
+        }
 
         // Check if any ability wants us hidden (Sticky Fingers underground)
         boolean hidden = false;
@@ -3461,19 +3664,17 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Custom circular hitbox: computes the Euclidean distance between the
-     * centres of this player and the attacker actor, then compares it to
-     * half the player's image width (scaled by the padding factor).
-     * A padding < 1 makes the hitbox smaller (more forgiving); > 1 makes it larger.
-     *
-     * @param attacker  The obstacle to check against.
-     * @param padding   Scale factor for the hitbox radius.
-     * @return          True if within hitting distance.
+     * Custom circular hitbox: Uses a FIXED radius from GameConfig so that
+     * tall or wide sprites don't have larger/smaller hitboxes than Dio.
      */
     @Override
     public boolean checkCustomHitbox(Actor attacker, double padding) {
-        double dist = Math.hypot(getX() - attacker.getX(), getY() - attacker.getY());
-        return dist < (getImage().getWidth() * 0.5 * padding);
+        int obstacleRadius = ((Obstacles)attacker).getRadius();
+        
+        // Calculate distance using the adjusted Y center
+        double dist = Math.hypot(getX() - attacker.getX(), getHitboxY() - attacker.getY());
+        
+        return dist < (GameConfig.PLAYER_RADIUS + obstacleRadius);
     }
 
     /** Shakes the player around the death position — visual feedback on death. */
@@ -3632,6 +3833,18 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     public void setDemoAbilityFilter(Class<? extends Ability> clazz) {
         this.demoAbilityFilter = clazz;
     }
+    
+        
+    private int getHitboxY() {
+        int offset = 0;
+        
+        // ADJUST INDIVIDUAL CHARACTERS HERE
+        String name = config.folderName;
+
+        if (name.equals("MoonKnight"))  offset = GameConfig.MOON_KNIGHT_HITBOX_OFFSET;  // Lower MoonKnight's hitbox by 5px
+        
+        return getY() + offset;
+    }
 }
 
 
@@ -3677,7 +3890,8 @@ import java.util.List;
 public class Time_FrameSnapshot {
 
     /** One memento per Time_Snapshottable actor that existed in this frame. */
-    public final List<Time_ActorMemento> actorStates;
+    
+    public final Time_ActorMemento[] actorStates;
 
     /** The player's score at this frame. */
     public final int score;
@@ -3713,7 +3927,7 @@ public class Time_FrameSnapshot {
      * @param rngState        The GameRNG seed value.
      */
     public Time_FrameSnapshot(
-            List<Time_ActorMemento> actorStates, int score,
+            Time_ActorMemento[] actorStates, int score,
             int spawnTimer, int difficultyTimer,
             int rRate, int tRate, long rngState) {
         this.actorStates     = actorStates;
@@ -3754,7 +3968,10 @@ FILE: ./GameConfig.java
 import greenfoot.*;
 
 public class GameConfig {
-
+    
+    //Section -1: Debug mode
+    public static final boolean DEBUG_MODE = false; // Set to false to hide hitboxes
+    
     // =========================================================================
     // SECTION 0 — GLOBAL SCALE
     // =========================================================================
@@ -3784,15 +4001,30 @@ public class GameConfig {
     // =========================================================================
     // SECTION 2 — PLAYER (DIO) SETTINGS
     // =========================================================================
+    
+    //CHARACTER 1: DIO
     /** How many pixels per frame Dio moves when an arrow key is held. */
+    
     public static final int DIO_MOVE_SPEED = s(5);
-
     /**
      * The scale factor applied to Dio's sprite images.
      * 0.8 × SCALE means the sprite is drawn at 80% of its source size,
      * then further scaled by the global SCALE multiplier.
      */
     public static final double DIO_BASE_SCALE = 0.8 * SCALE;
+    
+    //CHARACTER 2: MOONKNIGHT
+    
+    public static final int MOON_KNIGHT_MOVE_SPEED = s(6);
+    public static final int MOON_KNIGHT_HITBOX_OFFSET = s(8);
+    
+    //Set hitbox for all characaters
+    public static final int PLAYER_HITBOX_RADIUS = s(35);
+        
+    public static final int PLAYER_RADIUS     = s(22); 
+    public static final int ROADROLLER_RADIUS = s(22); 
+    public static final int TRAIN_RADIUS      = s(40);
+
 
     // =========================================================================
     // SECTION 3 — OBSTACLE DIMENSIONS
@@ -3869,7 +4101,7 @@ public class GameConfig {
     /** How long (seconds) the Stand remains active after summoning. */
     public static final double WORLD_PUNCH_DURATION = 3.5;
     /** How long (seconds) you must wait before summoning the Stand again. */
-    public static final double WORLD_PUNCH_COOLDOWN = 5.0;
+    public static final double WORLD_PUNCH_COOLDOWN = 3.0;
 
     // ── Sticky Fingers (portal + hide) ───────────────────────────────────────
     /** The keyboard key that activates Sticky Fingers (toggle hide). */
@@ -3892,7 +4124,7 @@ public class GameConfig {
      * Range is 0 (silent) to 200 (full).  Individual sounds have their own
      * base volumes in AudioManager; actual volume = (base × master) / 200.
      */
-    public static final int MASTER_VOLUME = 50;
+    public static final int MASTER_VOLUME = 100;
 
     // =========================================================================
     // SECTION 8 — KEY BINDINGS
@@ -3913,7 +4145,6 @@ public class GameConfig {
     public static final int ROAD_SCROLL_SPEED = s(5);
     /** Maximum scroll speed the road can reach after difficulty increases. */
     public static final int ROAD_MAX_SPEED    = s(5);
-
     /**
      * The Y-coordinates (centre of each lane) where obstacles can spawn.
      * Five lanes are evenly spread across the 400-design-pixel world height.
@@ -3964,6 +4195,21 @@ public class GameConfig {
      */
     public static int s(int pixels) {
         return Math.round(pixels * SCALE);
+    }
+    
+    public static Color getPathWarningColor(String roadImage) {
+        // If the road image name is red, use Cyan
+        if (roadImage.equals("red_road.png")) {
+            return new Color(0, 255, 255); // Cyan
+        }
+        
+        // If the road is white, maybe a deep Purple looks better
+        if (roadImage.equals("white_road.png")) {
+            return new Color(128, 0, 128); 
+        }
+    
+        // Default: The classic semi-transparent red
+        return new Color(255, 0, 0);
     }
 }
 
@@ -5584,7 +5830,7 @@ public class PathWarning extends Actor implements Time_Snapshottable {
 
     /** Remaining frames before this warning auto-removes itself.  60 frames = 1 second. */
     private int timer = 60;
-
+    private Color warningColor; 
     /**
      * Creates a semi-transparent red rectangle of the given size.
      * Width should match the world width; height should match the lane height.
@@ -5593,8 +5839,9 @@ public class PathWarning extends Actor implements Time_Snapshottable {
      * @param height  Height of the warning zone in pixels.
      */
     public PathWarning(int width, int height) {
+        this.warningColor = GameConfig.getPathWarningColor(GameConfig.ACTIVE_CHARACTER.roadImage);
         GreenfootImage img = new GreenfootImage(width, height);
-        img.setColor(new Color(255, 0, 0, 100)); // semi-transparent red
+        img.setColor(warningColor);
         img.fill();
         setImage(img);
     }
@@ -5889,6 +6136,8 @@ import java.util.List;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import greenfoot.*;
+import java.util.Set;        
+import java.util.HashSet;     
 
 public class Time_RewindManager {
 
@@ -5939,11 +6188,20 @@ public class Time_RewindManager {
     public void record(MyWorld world, SpawnManager spawnManager) {
         if (isRewinding) return; // never record during rewind
 
-        // Capture all snapshottable actors
-        List<Time_ActorMemento> mementos = new ArrayList<>();
-        for (Actor a : world.getObjects(Actor.class)) {
+        List<Actor> allActors = world.getObjects(Actor.class);
+        
+        // 1. Count snapshottables (creates zero garbage!)
+        int count = 0;
+        for (Actor a : allActors) {
+            if (a instanceof Time_Snapshottable) count++;
+        }
+
+        // 2. Pre-allocate exact array size (avoids ArrayList resizing overhead)
+        Time_ActorMemento[] mementos = new Time_ActorMemento[count];
+        int index = 0;
+        for (Actor a : allActors) {
             if (a instanceof Time_Snapshottable) {
-                mementos.add(((Time_Snapshottable) a).captureState());
+                mementos[index++] = ((Time_Snapshottable) a).captureState();
             }
         }
 
@@ -5955,7 +6213,7 @@ public class Time_RewindManager {
             spawnManager.getDifficultyTimer(),
             spawnManager.getRoadrollerRate(),
             spawnManager.getTrainRate(),
-            GameRNG.getState()      // RNG seed is crucial for replay correctness
+            GameRNG.getState()      
         ));
 
         // Trim history to the maximum allowed size
@@ -6042,7 +6300,7 @@ public class Time_RewindManager {
         GameRNG.restoreState(snap.rngState); // restore RNG seed for deterministic replay
 
         // ── STEP 2: Build "should exist" set ─────────────────────────────────
-        List<Actor> shouldExist = new ArrayList<>();
+        Set<Actor> shouldExist = new HashSet<>();
         for (Time_ActorMemento m : snap.actorStates) shouldExist.add(m.actor);
 
         // ── STEP 3: Remove actors spawned AFTER this snapshot ─────────────────
@@ -6054,7 +6312,7 @@ public class Time_RewindManager {
         }
 
         // ── STEP 4: Re-add actors that were alive then but are gone now ───────
-        List<Actor> currentActors = world.getObjects(null);
+        Set<Actor> currentActors = new HashSet<>(world.getObjects(null));
         for (Time_ActorMemento m : snap.actorStates) {
             if (!currentActors.contains(m.actor)) {
                 world.addObject(m.actor, m.x, m.y);
@@ -6777,44 +7035,23 @@ FILE: ./ScrollingRoad.java
  *   PlayingState (adds two instances), SpawnManager (calls increaseSpeed()),
  *   Time_RewindManager (snapshot for position)
  * ─────────────────────────────────────────────────────────────────────────────
- */
-import greenfoot.*;
+ */import greenfoot.*;
 
 public class ScrollingRoad extends Actor implements Time_Snapshottable {
 
-    /** Current scroll speed (pixels/frame). Static so both tiles stay in sync. */
-    private static int speed    = GameConfig.ROAD_SCROLL_SPEED;
-    /** Speed cap — road can never scroll faster than this. */
+    private static int speed = GameConfig.ROAD_SCROLL_SPEED;
     private static int maxSpeed = GameConfig.ROAD_MAX_SPEED;
-    /** Width of one road tile (equals the world width for seamless tiling). */
     private int width = GameConfig.WORLD_WIDTH;
 
-    public ScrollingRoad() {
-        speed = GameConfig.ROAD_SCROLL_SPEED; // reset static field on construction
-        drawPlaceholderRoad();
-    }
-
     /**
-     * Draws the road graphic procedurally — no external image file needed.
-     * A dark grey rectangle with yellow dashed lane dividers.
-     * Lane positions are taken from GameConfig.LANES.
+     * @param imagePath The filename of the image in the images/ folder.
      */
-    private void drawPlaceholderRoad() {
-        GreenfootImage img = new GreenfootImage(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
-
-        // Asphalt base
-        img.setColor(new Color(50, 50, 50));
-        img.fill();
-
-        // Yellow dashed lane dividers
-        img.setColor(Color.YELLOW);
-        for (int i = 1; i < GameConfig.LANES.length; i++) {
-            // Draw dividers midway between adjacent lane centres
-            int lineY = (GameConfig.LANES[i] + GameConfig.LANES[i - 1]) / 2;
-            for (int x = 0; x < width; x += GameConfig.s(40)) {
-                img.fillRect(x, lineY - 2, GameConfig.s(20), GameConfig.s(4));
-            }
-        }
+    public ScrollingRoad() {
+        speed = GameConfig.ROAD_SCROLL_SPEED; 
+        
+        // Load the image and force it to the world size for seamless tiling
+        GreenfootImage img = new GreenfootImage(GameConfig.ACTIVE_CHARACTER.roadImage);
+        img.scale(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
         setImage(img);
     }
 
@@ -6825,51 +7062,46 @@ public class ScrollingRoad extends Actor implements Time_Snapshottable {
 
         GameState state = world.getGSM().peekState();
         
-        // 1. Only act if we are in a "Live" state (Playing or Demo)
         if (state instanceof IActiveGameState) {
             IActiveGameState activeState = (IActiveGameState) state;
             
-            // 2. Only scroll if NOT rewinding and NOT frozen
-            if (!world.isRewinding() && !activeState.isGameFrozen()) {
+            // Check if player is dead
+            boolean playerDead = false;
+            java.util.List<GenericPlayer> players = world.getObjects(GenericPlayer.class);
+            if (!players.isEmpty() && players.get(0).isDead()) {
+                playerDead = true;
+            }
+
+            // ONLY scroll if: 
+            // 1. Not rewinding
+            // 2. Not frozen
+            // 3. Player is ALIVE <--- This is the fix
+            if (!world.isRewinding() && !activeState.isGameFrozen() && !playerDead) {
                 scroll();
             }
         }
     }
 
-    /**
-     * Moves the tile left and wraps it to the right when it goes off-screen.
-     * The wrap threshold of -(width/2) is when the tile's CENTRE reaches the left edge.
-     */
     private void scroll() {
         setLocation(getX() - speed, getY());
+        // Standard infinite loop math
         if (getX() <= -width / 2) {
-            setLocation(getX() + width * 2, getY()); // teleport to far right
+            setLocation(getX() + width * 2, getY());
         }
     }
 
-    /**
-     * Increases the scroll speed by the given amount, up to maxSpeed.
-     * Called by SpawnManager each difficulty increase so the road keeps pace.
-     */
     public static void increaseSpeed(int amount) {
         if (speed < maxSpeed) speed += amount;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // TIME MACHINE
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /** Only position matters; customData is null. */
     @Override
     public Time_ActorMemento captureState() {
         return new Time_ActorMemento(this, getX(), getY(), null);
     }
 
-    /** Position is restored by the rewind manager automatically. Nothing else to do. */
     @Override
     public void restoreState(Time_ActorMemento m) { }
 }
-
 
 
 ==================================================
@@ -7349,6 +7581,43 @@ public class Dio extends GenericPlayer {
     }
 }
 
+
+
+==================================================
+FILE: ./FX_MenuAmbulance.java
+==================================================
+
+import greenfoot.*;
+
+public class FX_MenuAmbulance extends Actor {
+    
+    private int speed;
+
+    public FX_MenuAmbulance() {
+        // Note: Spelling matches your Train.java file ("ambulence.png")
+        GreenfootImage img = new GreenfootImage("obstacles/ambulence.png");
+        
+        // Make it 2x larger than the normal Train size!
+        img.scale(GameConfig.TRAIN_WIDTH * 1, GameConfig.TRAIN_WIDTH * 1);
+        setImage(img);
+        
+        // Give it a random speed 
+        speed = GameConfig.s(5 + Greenfoot.getRandomNumber(5));
+    }
+
+    @Override
+    public void act() {
+        // Fly left across the screen
+        setLocation(getX() - speed, getY());
+
+        // Remove itself once it is safely off-screen to the left
+        if (getX() < -GameConfig.s(300)) {
+            if (getWorld() != null) {
+                getWorld().removeObject(this);
+            }
+        }
+    }
+}
 
 
 ==================================================
@@ -8235,7 +8504,8 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
     private void clearSandbox(MyWorld world) {
         isFrozen = false;
         playerDiedThisFrame = false;
-        
+        AudioManager.stopAllPools();
+        AudioManager.stopAllAbilities();
         world.removeObjects(world.getObjects(ScrollingRoad.class));
         world.removeObjects(world.getObjects(Obstacles.class));
         world.removeObjects(world.getObjects(Player.class));
@@ -8310,27 +8580,66 @@ FILE: ./UI_Preview.java
 import greenfoot.*;
 
 public class UI_Preview extends Actor {
-
     private Animator anim;
+    private GreenfootImage portrait;
+    
+    private double exactX;
+    private int targetX;
+    private boolean isRemoving = false;
+    private int startX;
 
-    /**
-     * Creates a preview for the given character, loading their default animation.
-     * @param config  The character whose preview to display.
-     */
-    public UI_Preview(CharacterConfig config) {
-        this.anim = new Animator(config.folderName, config.defaultAnim, config.scale);
+    public UI_Preview(CharacterConfig config, boolean fromRight, int targetX) {
+        this.targetX = targetX;
+        // Start one full screen-width off screen
+        this.startX = fromRight ? targetX + GameConfig.WORLD_WIDTH : targetX - GameConfig.WORLD_WIDTH;
+        this.exactX = startX;
+
+        try {
+            // 1. Try to load the big static Intro Portrait
+            if (config.portraitImage == null || config.portraitImage.isEmpty()) throw new Exception();
+            this.portrait = new GreenfootImage(config.portraitImage);
+            
+            // Scale the portrait to fit nicely in the top half of the screen
+            int h = GameConfig.s(220);
+            int w = (int)((double)portrait.getWidth() / portrait.getHeight() * h);
+            this.portrait.scale(w, h);
+            setImage(this.portrait);
+            
+        } catch (Exception e) {
+            // 2. Fallback to a scaled-up animated sprite if portrait is missing
+            this.anim = new Animator(config.folderName, config.defaultAnim, config.scale * 2.5);
+            if(anim.hasFrames()) setImage(anim.getCurrentFrame());
+        }
+    }
+
+    public int getStartX() { return startX; }
+
+    /** Tells the preview to animate off the screen and delete itself. */
+    public void slideOut(boolean toLeft) {
+        this.targetX = toLeft ? -GameConfig.s(300) : GameConfig.WORLD_WIDTH + GameConfig.s(300);
+        this.isRemoving = true;
     }
 
     @Override
     public void act() {
-        MyWorld world = (MyWorld) getWorld();
-        // Only animate if the Character Select screen is the active top state
-        if (world != null && world.getGSM().isState(CharacterSelectState.class)) {
-            setImage(anim.getCurrentFrame()); 
+        // Continue fallback animation if running
+        if (anim != null && portrait == null) {
+            setImage(anim.getCurrentFrame());
+        }
+        
+        // Smooth Slide interpolation
+        if (Math.abs(targetX - exactX) > 1) {
+            exactX += (targetX - exactX) * 0.2; // Ease-out speed
+            setLocation((int)exactX, getY());
+        } else {
+            // Snap to target and delete if sliding out
+            setLocation(targetX, getY());
+            if (isRemoving && getWorld() != null) {
+                getWorld().removeObject(this);
+            }
         }
     }
 }
-
 
 
 ==================================================
@@ -9083,6 +9392,8 @@ public class Animator {
 
     /** Frames-per-image delay (higher = slower). Can be changed at runtime. */
     private int speed;
+    
+    private boolean loop = true; //LOOP 
 
     // ─────────────────────────────────────────────────────────────────────────
     // CONSTRUCTORS
@@ -9171,19 +9482,28 @@ public class Animator {
      * Returns the current animation frame and advances the internal timer.
      * When the timer reaches 'speed', moves to the next frame (looping).
      * Call this once per act() to display the correct frame.
+     * Loop depending on whether is dying animation or not
      *
      * @return  The GreenfootImage for the current frame.
      */
-    public GreenfootImage getCurrentFrame() {
-        timer++;
-        if (timer >= speed) {
-            timer = 0;
-            if (frames.length > 0) {
-                currentFrame = (currentFrame + 1) % frames.length; // loop back to start
+       public GreenfootImage getCurrentFrame() {
+            timer++;
+            if (timer >= speed) {
+                timer = 0;
+                if (frames.length > 0) {
+                    if (loop) {
+                        // Standard looping logic
+                        currentFrame = (currentFrame + 1) % frames.length;
+                    } else {
+                        // STOP at the last frame if loop is false
+                        if (currentFrame < frames.length - 1) {
+                            currentFrame++;
+                        }
+                    }
+                }
             }
+            return frames[currentFrame];
         }
-        return frames[currentFrame];
-    }
 
     /**
      * Resets to frame 0 and clears the timer.
@@ -9207,6 +9527,10 @@ public class Animator {
     /** @return True if this animator has at least one frame loaded. */
     public boolean hasFrames() {
         return frames != null && frames.length > 0;
+    }
+    
+    public void setLoop(boolean loop) {
+        this.loop = loop;
     }
 }
 
@@ -10468,13 +10792,7 @@ FILE: ./AudioManager.java
  *   During rewind, all sounds are muted.  The BGM is paused (remembered),
  *   everything else is stopped (forgotten).  On resume, only the remembered
  *   BGM is restarted.
- *
- * ⚠ KNOWN ISSUE:
- *   setAllSoundsPaused() hardcodes "dio_bgm" instead of using
- *   GameConfig.ACTIVE_CHARACTER.bgmKey.  If a non-Dio character is active,
- *   the wrong BGM will be targeted.  Fix: replace "dio_bgm" with
- *   GameConfig.ACTIVE_CHARACTER.bgmKey in that method.
- *
+ *   
  * Interacts with:
  *   PlayingState (music start/stop, rewind audio control),
  *   Ability_MadeInHeaven (speed_up_time sound),
@@ -10506,7 +10824,17 @@ public class AudioManager {
 
     /** Global volume multiplier (0–200).  Set from GameConfig.MASTER_VOLUME. */
     private static int masterVolume = GameConfig.MASTER_VOLUME;
+    
+    private static final String[] ABILITY_SOUNDS = {
+        "muda_barrage", 
+        "speed_up_time", 
+        "summon_stand", 
+        "zipper", 
+        "rewind"
+        // "new_ability_sound", <-- Add new ones here!
+    };
 
+    
     // ─────────────────────────────────────────────────────────────────────────
     // INITIALISATION — called once from MyWorld constructor
     // ─────────────────────────────────────────────────────────────────────────
@@ -10526,8 +10854,8 @@ public class AudioManager {
         loadSound("summon_stand",  "summon_stand.mp3",            200);
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
         loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
-
-
+        
+        
         // ── Voice pools ───────────────────────────────────────────────────────
         loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 80);
         loadVoicePool("zipper",        new String[]{ "zipper1.mp3","zipper2.mp3","zipper3.mp3" }, 120);
@@ -10643,40 +10971,81 @@ public class AudioManager {
     /**
      * Pauses or resumes audio for the rewind system.
      *
-     * pause=true  : saves and pauses the BGM; stops all other sounds.
+     * pause=true  : saves and pauses the current character's BGM; stops all other sounds.
      * pause=false : resumes only the sounds that were playing before pause.
-     *
-     * ⚠ NOTE: "dio_bgm" is hardcoded here.  If using a non-Dio character,
-     * this should be GameConfig.ACTIVE_CHARACTER.bgmKey instead.
      */
     public static void setAllSoundsPaused(boolean pause) {
         if (pause) {
             activeBeforePause.clear();
-
-            // Pause the BGM and remember it for resume
-            if (sounds.get("dio_bgm").isPlaying()) {
-                activeBeforePause.add(sounds.get("dio_bgm"));
-                sounds.get("dio_bgm").pause();
+            
+            // List of possible background musics
+            String[] bgmKeys = { GameConfig.ACTIVE_CHARACTER.bgmKey, "menu_bgm" };
+    
+            for (String key : bgmKeys) {
+                if (sounds.containsKey(key) && sounds.get(key).isPlaying()) {
+                    activeBeforePause.add(sounds.get(key));
+                    sounds.get(key).pause();
+                }
             }
-
-            // Stop (do not pause) all other sounds so they don't echo during rewind
+    
+            // Stop (do not pause) all other sounds (SFX)
             for (String key : sounds.keySet()) {
-                if (!key.equals("dio_bgm") && sounds.get(key).isPlaying()) {
+                // If it's not one of our BGMs, stop it
+                boolean isBGM = false;
+                for(String bgm : bgmKeys) if(key.equals(bgm)) isBGM = true;
+                
+                if (!isBGM && sounds.get(key).isPlaying()) {
                     sounds.get(key).stop();
                 }
             }
-            for (List<GreenfootSound> pool : voicePools.values()) {
-                for (GreenfootSound s : pool) {
-                    if (s.isPlaying()) s.stop();
-                }
-            }
+            
+            // Stop all voice pools (cries, mudas, etc)
+            stopAllPools();
         } else {
-            // Resume only what was playing before the pause
-            for (GreenfootSound s : activeBeforePause) s.play();
+            // Resume whatever was saved in the list (could be menu_bgm or character_bgm)
+            for (GreenfootSound s : activeBeforePause) {
+                s.play(); // Use play() to resume from pause point
+            }
             activeBeforePause.clear();
         }
     }
+    
+    /** Helper to stop every sound in a specific pool */
+    public static void stopPool(String poolKey) {
+        if (voicePools.containsKey(poolKey)) {
+            for (GreenfootSound s : voicePools.get(poolKey)) {
+                if (s.isPlaying()) s.stop();
+            }
+        }
+    }
+
+    public static void stopAllPools() {
+        for (List<GreenfootSound> pool : voicePools.values()) {
+            for (GreenfootSound s : pool) {
+                if (s.isPlaying()) s.stop();
+            }
+        }
+    }
+    
+    /**
+     * STOPS ALL ABILITIES based on the manual list at the top of this class.
+     * It intelligently checks both single sounds and voice pools.
+     */
+    public static void stopAllAbilities() {
+        for (String key : ABILITY_SOUNDS) {
+            // Stop if it's a single sound
+            if (sounds.containsKey(key)) {
+                sounds.get(key).stop();
+            }
+            // Stop if it's a voice pool
+            if (voicePools.containsKey(key)) {
+                stopPool(key);
+            }
+        }
+    }
+    
 }
+
 
 
 

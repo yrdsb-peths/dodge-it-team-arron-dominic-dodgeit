@@ -153,7 +153,7 @@ public class GameConfig {
     /** How long (seconds) the Stand remains active after summoning. */
     public static final double WORLD_PUNCH_DURATION = 3.5;
     /** How long (seconds) you must wait before summoning the Stand again. */
-    public static final double WORLD_PUNCH_COOLDOWN = 5.0;
+    public static final double WORLD_PUNCH_COOLDOWN = 3.0;
 
     // ── Sticky Fingers (portal + hide) ───────────────────────────────────────
     /** The keyboard key that activates Sticky Fingers (toggle hide). */

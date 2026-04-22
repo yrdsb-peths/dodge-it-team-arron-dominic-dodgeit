@@ -87,8 +87,8 @@ public class CharacterSelectState implements GameState {
 
         // 1. Play Voice Line (Using a failsafe for both Voice Pool and Single Audio)
         if (!isInitial) {
+            AudioManager.stopAllPools(); // Clean up previous character's voice
             AudioManager.playPool(selected.selectSoundKey);
-            AudioManager.play(selected.selectSoundKey); 
         }
 
         // 2. Spawn Sliding Preview Image

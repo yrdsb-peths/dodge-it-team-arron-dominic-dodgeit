@@ -198,33 +198,39 @@ public class Time_RewindManager {
      * @param world         The game world.
      * @param spawnManager  The spawn manager.
      */
-    private void restoreSnapshot(Time_FrameSnapshot snap, MyWorld world,
-                                  SpawnManager spawnManager) {
+    private void restoreSnapshot(Time_FrameSnapshot snap, MyWorld world,SpawnManager spawnManager) {
         // ── STEP 1: Global state ──────────────────────────────────────────────
         ScoreManager.setScore(snap.score);
         spawnManager.restoreState(snap.spawnTimer, snap.roadrollerRate, snap.trainRate);
-        GameRNG.restoreState(snap.rngState); // restore RNG seed for deterministic replay
-
+        GameRNG.restoreState(snap.rngState);
+    
         // ── STEP 2: Build "should exist" set ─────────────────────────────────
-        Set<Actor> shouldExist = new HashSet<>();
+        Set<Actor> shouldExist = new HashSet<>(snap.actorStates.length * 2);
         for (Time_ActorMemento m : snap.actorStates) shouldExist.add(m.actor);
-
-        // ── STEP 3: Remove actors spawned AFTER this snapshot ─────────────────
-        // Only remove snapshottable actors — UI/FX actors manage themselves.
-        for (Actor a : world.getObjects(Actor.class)) {
+    
+        // ── STEPS 3 + 4 MERGED: ONE world scan does both jobs ────────────────
+        // Build currentActors AND collect removals in a single pass.
+        // This replaces two separate world.getObjects() calls with one.
+        List<Actor> allActors = world.getObjects(Actor.class);
+        Set<Actor>  currentActors = new HashSet<>(allActors.size() * 2);
+        List<Actor> toRemove = new ArrayList<>();
+    
+        for (Actor a : allActors) {
             if (a instanceof Time_Snapshottable && !shouldExist.contains(a)) {
-                world.removeObject(a);
+                toRemove.add(a);          // mark for batch removal
+            } else {
+                currentActors.add(a);     // still valid — track it for Step 4
             }
         }
-
+        world.removeObjects(toRemove);    // one batch call instead of N individual calls
+    
         // ── STEP 4: Re-add actors that were alive then but are gone now ───────
-        Set<Actor> currentActors = new HashSet<>(world.getObjects(null));
         for (Time_ActorMemento m : snap.actorStates) {
             if (!currentActors.contains(m.actor)) {
                 world.addObject(m.actor, m.x, m.y);
             }
         }
-
+    
         // ── STEP 5: Restore position and state for every actor ────────────────
         for (Time_ActorMemento m : snap.actorStates) {
             m.actor.setLocation(m.x, m.y);

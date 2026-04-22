@@ -29,13 +29,7 @@
  *   During rewind, all sounds are muted.  The BGM is paused (remembered),
  *   everything else is stopped (forgotten).  On resume, only the remembered
  *   BGM is restarted.
- *
- * ⚠ KNOWN ISSUE:
- *   setAllSoundsPaused() hardcodes "dio_bgm" instead of using
- *   GameConfig.ACTIVE_CHARACTER.bgmKey.  If a non-Dio character is active,
- *   the wrong BGM will be targeted.  Fix: replace "dio_bgm" with
- *   GameConfig.ACTIVE_CHARACTER.bgmKey in that method.
- *
+ *   
  * Interacts with:
  *   PlayingState (music start/stop, rewind audio control),
  *   Ability_MadeInHeaven (speed_up_time sound),
@@ -67,7 +61,17 @@ public class AudioManager {
 
     /** Global volume multiplier (0–200).  Set from GameConfig.MASTER_VOLUME. */
     private static int masterVolume = GameConfig.MASTER_VOLUME;
+    
+    private static final String[] ABILITY_SOUNDS = {
+        "muda_barrage", 
+        "speed_up_time", 
+        "summon_stand", 
+        "zipper", 
+        "rewind"
+        // "new_ability_sound", <-- Add new ones here!
+    };
 
+    
     // ─────────────────────────────────────────────────────────────────────────
     // INITIALISATION — called once from MyWorld constructor
     // ─────────────────────────────────────────────────────────────────────────
@@ -87,8 +91,8 @@ public class AudioManager {
         loadSound("summon_stand",  "summon_stand.mp3",            200);
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
         loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
-
-
+        
+        
         // ── Voice pools ───────────────────────────────────────────────────────
         loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 80);
         loadVoicePool("zipper",        new String[]{ "zipper1.mp3","zipper2.mp3","zipper3.mp3" }, 120);
@@ -211,32 +215,71 @@ public class AudioManager {
         if (pause) {
             activeBeforePause.clear();
             
-            // 1. Get the background music key for whoever the player is currently playing as
-            String activeBgmKey = GameConfig.ACTIVE_CHARACTER.bgmKey;
-
-            // 2. Pause their specific BGM and remember it for resume
-            if (sounds.containsKey(activeBgmKey) && sounds.get(activeBgmKey).isPlaying()) {
-                activeBeforePause.add(sounds.get(activeBgmKey));
-                sounds.get(activeBgmKey).pause();
+            // List of possible background musics
+            String[] bgmKeys = { GameConfig.ACTIVE_CHARACTER.bgmKey, "menu_bgm" };
+    
+            for (String key : bgmKeys) {
+                if (sounds.containsKey(key) && sounds.get(key).isPlaying()) {
+                    activeBeforePause.add(sounds.get(key));
+                    sounds.get(key).pause();
+                }
             }
-
-            // 3. Stop (do not pause) all other sounds so they don't echo during rewind
+    
+            // Stop (do not pause) all other sounds (SFX)
             for (String key : sounds.keySet()) {
-                if (!key.equals(activeBgmKey) && sounds.get(key).isPlaying()) {
+                // If it's not one of our BGMs, stop it
+                boolean isBGM = false;
+                for(String bgm : bgmKeys) if(key.equals(bgm)) isBGM = true;
+                
+                if (!isBGM && sounds.get(key).isPlaying()) {
                     sounds.get(key).stop();
                 }
             }
-            for (List<GreenfootSound> pool : voicePools.values()) {
-                for (GreenfootSound s : pool) {
-                    if (s.isPlaying()) s.stop();
-                }
-            }
+            
+            // Stop all voice pools (cries, mudas, etc)
+            stopAllPools();
         } else {
-            // 4. Resume only what was playing before the pause (the BGM)
+            // Resume whatever was saved in the list (could be menu_bgm or character_bgm)
             for (GreenfootSound s : activeBeforePause) {
-                s.play();
+                s.play(); // Use play() to resume from pause point
             }
             activeBeforePause.clear();
         }
     }
+    
+    /** Helper to stop every sound in a specific pool */
+    public static void stopPool(String poolKey) {
+        if (voicePools.containsKey(poolKey)) {
+            for (GreenfootSound s : voicePools.get(poolKey)) {
+                if (s.isPlaying()) s.stop();
+            }
+        }
+    }
+
+    public static void stopAllPools() {
+        for (List<GreenfootSound> pool : voicePools.values()) {
+            for (GreenfootSound s : pool) {
+                if (s.isPlaying()) s.stop();
+            }
+        }
+    }
+    
+    /**
+     * STOPS ALL ABILITIES based on the manual list at the top of this class.
+     * It intelligently checks both single sounds and voice pools.
+     */
+    public static void stopAllAbilities() {
+        for (String key : ABILITY_SOUNDS) {
+            // Stop if it's a single sound
+            if (sounds.containsKey(key)) {
+                sounds.get(key).stop();
+            }
+            // Stop if it's a voice pool
+            if (voicePools.containsKey(key)) {
+                stopPool(key);
+            }
+        }
+    }
+    
 }
+

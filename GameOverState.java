@@ -28,6 +28,7 @@ public class GameOverState implements GameState {
 
     @Override
     public void enter(MyWorld world) {
+        AudioManager.stopAllAbilities();//Stop ability sounds
         AudioManager.playLoop("lost_bgm"); // play the loss music
 
         // Freeze the scores before building the UI
@@ -57,6 +58,7 @@ public class GameOverState implements GameState {
         world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
         AudioManager.stop("lost_bgm");
         world.removeObjects(uiElements);
+        AudioManager.stopPool(GameConfig.ACTIVE_CHARACTER.deathSoundKey);
     }
 
     private void addUI(MyWorld world, Actor a, int x, int y) {

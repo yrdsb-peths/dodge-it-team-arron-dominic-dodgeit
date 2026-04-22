@@ -40,8 +40,8 @@ public enum CharacterConfig {
     // =========================================================================
     // CHARACTER: DIO BRANDO
     // =========================================================================
-    DIO(
-        "Dio Brando",                               // displayName  (shown in UI)
+    Testing_DIO(
+        "Omnipotent Dio",                               // displayName  (shown in UI)
         "Dio",                                      // folderName   (images/Dio/)
         "dio_full.jpg",                             //Portrait Image (new, for character select)
         "standard_road.png",                             //CUstomised road(new, for character select)
@@ -69,11 +69,11 @@ public enum CharacterConfig {
      * entries.  It is NOT a distinct character.  If you want a real second
      * character, replace this with proper data.
      */
-    Dio2(
+    DIO(
         "Dio Brando",
         "Dio",
         "dio_full.jpg",                             //Portrait Image (new, for character select)
-        "red_road.png",                             //CUstomised road(new, for character select)
+        "punk_road.png",                             //CUstomised road(new, for character select)
         new String[]{"Idle", "Wry", "Dash", "Lose"},
         "Dash",
         GameConfig.DIO_MOVE_SPEED,
@@ -82,11 +82,11 @@ public enum CharacterConfig {
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,
-        new String[]{"Ability_StandPunch","Ability_StickyFingers"} // fewer abilities than DIO
+        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} // fewer abilities than DIO
     ),
     
     MoonKnight(
-        "MoonKnight",
+        "Moon Knight",
         "MoonKnight",
         "moon_knight_full.png",                             //Portrait Image (new, for character select)
         "red_road.png",                             //CUstomised road(new, for character select)
