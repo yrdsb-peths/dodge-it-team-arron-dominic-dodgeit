@@ -44,6 +44,7 @@ public enum CharacterConfig {
         "Dio Brando",                               // displayName  (shown in UI)
         "Dio",                                      // folderName   (images/Dio/)
         "dio_full.jpg",                             //Portrait Image (new, for character select)
+        "red_road.png",                             //CUstomised road(new, for character select)
         new String[]{"Idle", "Wry", "Dash", "Lose"}, // animNames  (sub-folders)
         "Dash",                                     // defaultAnim  (starts here)
         GameConfig.DIO_MOVE_SPEED,                  // moveSpeed    (pixels/frame)
@@ -72,6 +73,7 @@ public enum CharacterConfig {
         "Dio Brando",
         "Dio",
         "dio_full.jpg",                             //Portrait Image (new, for character select)
+        "white_road.png",                             //CUstomised road(new, for character select)
         new String[]{"Idle", "Wry", "Dash", "Lose"},
         "Dash",
         GameConfig.DIO_MOVE_SPEED,
@@ -94,6 +96,8 @@ public enum CharacterConfig {
     
      /** Name of theportrait image sub-folder under images*/
     public final String portraitImage;  
+    
+    public final String roadImage;
     
     /** Names of the animation sub-folders to load (e.g., "Idle", "Dash"). */
     public final String[] animNames;
@@ -134,13 +138,15 @@ public enum CharacterConfig {
     // CONSTRUCTOR
     // =========================================================================
     private CharacterConfig(
-            String displayName, String folderName,String portraitImage, String[] animNames,
+            String displayName, String folderName,String portraitImage , String roadImage,
+            String[] animNames,
             String defaultAnim, int moveSpeed, double scale,
             String bgmKey, String deathSoundKey, String selectSoundKey,
             BossConfig bossConfig, String[] abilities) {
         this.displayName      = displayName;
         this.folderName       = folderName;
         this.portraitImage    = portraitImage;
+        this.roadImage = roadImage;
         this.animNames        = animNames;
         this.defaultAnim      = defaultAnim;
         this.moveSpeed        = moveSpeed;

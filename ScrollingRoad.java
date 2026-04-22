@@ -49,7 +49,7 @@ public class ScrollingRoad extends Actor implements Time_Snapshottable {
         speed = GameConfig.ROAD_SCROLL_SPEED; 
         
         // Load the image and force it to the world size for seamless tiling
-        GreenfootImage img = new GreenfootImage(GameConfig.ROAD_IMAGE);
+        GreenfootImage img = new GreenfootImage(GameConfig.ACTIVE_CHARACTER.roadImage);
         img.scale(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
         setImage(img);
     }
