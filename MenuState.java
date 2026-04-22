@@ -78,6 +78,7 @@ public class MenuState implements GameState {
         world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
         world.removeObjects(uiElements);
         uiElements.clear();
+        world.removeObjects(world.getObjects(FX_MenuAmbulance.class));//Remove the ambulance...
     }
 
     /**
