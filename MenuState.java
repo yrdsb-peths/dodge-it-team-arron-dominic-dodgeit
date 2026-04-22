@@ -30,6 +30,9 @@ public class MenuState implements GameState {
 
     @Override
     public void enter(MyWorld world) {
+        world.setBackground(new GreenfootImage("dodge_it.png")); 
+        world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
+        /*
         int middle = world.getWidth() / 2;
 
         // ── Title ─────────────────────────────────────────────────────────────
@@ -46,12 +49,15 @@ public class MenuState implements GameState {
         addUI(world, new UIText("Dodge the Road Rollers and Ambulances!", GameConfig.s(18), Color.ORANGE), middle, GameConfig.s(330));
 
         // ── Start prompt ──────────────────────────────────────────────────────
+
         addUI(world, new UIText("[ Press ENTER to Begin ]",               GameConfig.s(24), Color.CYAN),   middle, GameConfig.s(375));
+        */
     }
 
     /** Waits for ENTER, then transitions to the character select screen. */
     @Override
     public void update(MyWorld world) {
+   
         if ("enter".equals(Greenfoot.getKey())) {
             world.getGSM().changeState(new CharacterSelectState());
         }
@@ -60,6 +66,7 @@ public class MenuState implements GameState {
     /** Removes all text labels when leaving the menu. */
     @Override
     public void exit(MyWorld world) {
+        world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
         world.removeObjects(uiElements);
         uiElements.clear();
     }

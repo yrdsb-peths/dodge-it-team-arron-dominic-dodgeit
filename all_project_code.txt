@@ -811,13 +811,19 @@ public abstract class Obstacles extends Actor {
     @Override
     public void act() {
         MyWorld world = (MyWorld) getWorld();
-        // Safety check: if we are not in a world or not in PlayingState, do nothing.
-        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
-        IActiveGameState activeState = (IActiveGameState) world.getGSM().peekState();
+        if (world == null) return;
+
+        GameState state = world.getGSM().peekState();
+
+        // Safe check: If not a gameplay state, or we are paused/frozen, stop here.
+        if (!(state instanceof IActiveGameState)) return; 
+        
+        IActiveGameState activeState = (IActiveGameState) state;
         if (activeState.isGameFrozen()) return;
-        movementLogic();  // 1. Move
-        collisionLogic(); // 2. Check hits
-        checkRemove();    // 3. Remove if off-screen (MUST be last)
+
+        movementLogic();  
+        collisionLogic(); 
+        checkRemove();    
     }
 
     /**
@@ -1041,7 +1047,11 @@ public class TheWorldStand extends Actor implements Time_Snapshottable {
 
         // ── STEP 2: Standard game-state guard ────────────────────────────────
         // Only animate and fight obstacles while in PlayingState and not rewinding.
-       if (!world.getGSM().isState(IActiveGameState.class) || world.isRewinding()) return;
+        GameState state = world.getGSM().peekState();
+        if (!(state instanceof IActiveGameState) || world.isRewinding()) return;
+        
+        // If the gameplay state is currently frozen for instructions, don't animate/move
+        if (((IActiveGameState)state).isGameFrozen()) return;
 
         // Advance the punch animation
         setImage(punchAnim.getCurrentFrame());
@@ -5529,12 +5539,16 @@ public class Exclaimation extends Actor implements Time_Snapshottable {
     @Override
     public void act() {
         MyWorld world = (MyWorld) getWorld();
-        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
-        IActiveGameState activeState = (IActiveGameState) world.getGSM().peekState();
-        if (activeState.isGameFrozen()) return;
+        if (world == null) return;
+        
+        GameState state = world.getGSM().peekState();
+        if (!(state instanceof IActiveGameState)) return; // Stop if paused
+        
+        IActiveGameState activeState = (IActiveGameState) state;
+        if (activeState.isGameFrozen()) return; 
         
         setImage(exclaimAnim.getCurrentFrame());
-        lifeTimer.update((MyWorld) getWorld());
+        lifeTimer.update(world);
         if (lifeTimer.isExpired()) {
             getWorld().removeObject(this);
         }
@@ -5713,13 +5727,15 @@ public class PathWarning extends Actor implements Time_Snapshottable {
     @Override
     public void act() {
         MyWorld world = (MyWorld) getWorld();
-        // Standard guard: freeze during pause/menu/rewind (rewind restores timer)
-        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
-        IActiveGameState activeState = (IActiveGameState) world.getGSM().peekState();
-        if (activeState.isGameFrozen()) return;
+        if (world == null) return;
+        
+        GameState state = world.getGSM().peekState();
+        if (!(state instanceof IActiveGameState)) return; // Stop if paused
+        
+        IActiveGameState activeState = (IActiveGameState) state;
+        if (activeState.isGameFrozen()) return; // Stop if demo is waiting
 
         timer--;
-
         // Flicker: alternate between dim (40) and bright (140) every 5 frames
         getImage().setTransparency(timer % 10 < 5 ? 40 : 140);
 
@@ -6931,10 +6947,18 @@ public class ScrollingRoad extends Actor implements Time_Snapshottable {
     @Override
     public void act() {
         MyWorld world = (MyWorld) getWorld();
-        // Only scroll during active gameplay — freeze during menus, pause, and rewind.
-        IActiveGameState activeState = (IActiveGameState) world.getGSM().peekState();
-        if (world.getGSM().isState(IActiveGameState.class) && !world.isRewinding() && !activeState.isGameFrozen()) {
-            scroll();
+        if (world == null) return;
+
+        GameState state = world.getGSM().peekState();
+        
+        // 1. Only act if we are in a "Live" state (Playing or Demo)
+        if (state instanceof IActiveGameState) {
+            IActiveGameState activeState = (IActiveGameState) state;
+            
+            // 2. Only scroll if NOT rewinding and NOT frozen
+            if (!world.isRewinding() && !activeState.isGameFrozen()) {
+                scroll();
+            }
         }
     }
 

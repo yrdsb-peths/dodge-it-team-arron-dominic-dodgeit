@@ -76,13 +76,13 @@ public class GameConfig {
     // =========================================================================
     // SECTION 4 — DIFFICULTY / SPAWN SETTINGS
     // =========================================================================
-    /** How many frames between difficulty increases. 200 frames ≈ 3.3 seconds. */
-    public static final int LEVEL_UP_TIME = 200;
+    /** How many frames between difficulty increases. 100 frames ≈ 1.6 seconds. */
+    public static final int LEVEL_UP_TIME = 100;
 
     /** Starting interval (frames) between Roadroller spawns. Lower = more frequent. */
     public static final int ROADROLLER_RATE     = 30;
     /** Minimum interval: Roadrollers will never spawn faster than this. */
-    public static final int ROADROLLER_MIN_RATE = 17;
+    public static final int ROADROLLER_MIN_RATE = 15;
     /** Starting speed of a Roadroller in pixels/frame. */
     public static final int ROADROLLER_SPEED    = s(6);
     /** Maximum speed a Roadroller can reach after many difficulty increases. */
@@ -95,7 +95,7 @@ public class GameConfig {
     /** Starting speed of a Train in pixels/frame. Trains are much faster than Roadrollers. */
     public static final int TRAIN_SPEED    = s(25);
     /** Maximum speed a Train can reach after many difficulty increases. */
-    public static final int TRAIN_MAX_SPEED = s(50);
+    public static final int TRAIN_MAX_SPEED = s(40);
 
     // =========================================================================
     // SECTION 5 — TIME REWIND SETTINGS

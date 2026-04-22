@@ -48,7 +48,6 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         int uiHeight = worldH - splitY;
 
         int midX = world.getWidth() / 2;
-        addUI(world, new UI_MenuBackground("background_image.jpg"), midX, world.getHeight() / 2);
         addUI(world, new UI_Panel(world.getWidth(), uiHeight, new Color(30, 30, 30)), world.getWidth() / 2, splitY + (uiHeight / 2));
 
         if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) dummyPlayer = new Dio();
