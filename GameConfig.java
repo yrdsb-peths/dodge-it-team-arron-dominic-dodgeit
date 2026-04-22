@@ -20,7 +20,10 @@
 import greenfoot.*;
 
 public class GameConfig {
-
+    
+    //Section -1: Debug mode
+    public static final boolean DEBUG_MODE = false; // Set to false to hide hitboxes
+    
     // =========================================================================
     // SECTION 0 — GLOBAL SCALE
     // =========================================================================
@@ -50,15 +53,30 @@ public class GameConfig {
     // =========================================================================
     // SECTION 2 — PLAYER (DIO) SETTINGS
     // =========================================================================
+    
+    //CHARACTER 1: DIO
     /** How many pixels per frame Dio moves when an arrow key is held. */
+    
     public static final int DIO_MOVE_SPEED = s(5);
-    public static final int MOON_KNIGHT_MOVE_SPEED = s(6);
     /**
      * The scale factor applied to Dio's sprite images.
      * 0.8 × SCALE means the sprite is drawn at 80% of its source size,
      * then further scaled by the global SCALE multiplier.
      */
     public static final double DIO_BASE_SCALE = 0.8 * SCALE;
+    
+    //CHARACTER 2: MOONKNIGHT
+    
+    public static final int MOON_KNIGHT_MOVE_SPEED = s(6);
+    public static final int MOON_KNIGHT_HITBOX_OFFSET = s(8);
+    
+    //Set hitbox for all characaters
+    public static final int PLAYER_HITBOX_RADIUS = s(35);
+        
+    public static final int PLAYER_RADIUS     = s(22); 
+    public static final int ROADROLLER_RADIUS = s(22); 
+    public static final int TRAIN_RADIUS      = s(40);
+
 
     // =========================================================================
     // SECTION 3 — OBSTACLE DIMENSIONS
@@ -229,5 +247,20 @@ public class GameConfig {
      */
     public static int s(int pixels) {
         return Math.round(pixels * SCALE);
+    }
+    
+    public static Color getPathWarningColor(String roadImage) {
+        // If the road image name is red, use Cyan
+        if (roadImage.equals("red_road.png")) {
+            return new Color(0, 255, 255); // Cyan
+        }
+        
+        // If the road is white, maybe a deep Purple looks better
+        if (roadImage.equals("white_road.png")) {
+            return new Color(128, 0, 128); 
+        }
+    
+        // Default: The classic semi-transparent red
+        return new Color(255, 0, 0);
     }
 }

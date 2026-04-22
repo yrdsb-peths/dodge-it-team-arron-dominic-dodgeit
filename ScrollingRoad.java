@@ -61,10 +61,21 @@ public class ScrollingRoad extends Actor implements Time_Snapshottable {
 
         GameState state = world.getGSM().peekState();
         
-        // Only scroll during active gameplay
         if (state instanceof IActiveGameState) {
             IActiveGameState activeState = (IActiveGameState) state;
-            if (!world.isRewinding() && !activeState.isGameFrozen()) {
+            
+            // Check if player is dead
+            boolean playerDead = false;
+            java.util.List<GenericPlayer> players = world.getObjects(GenericPlayer.class);
+            if (!players.isEmpty() && players.get(0).isDead()) {
+                playerDead = true;
+            }
+
+            // ONLY scroll if: 
+            // 1. Not rewinding
+            // 2. Not frozen
+            // 3. Player is ALIVE <--- This is the fix
+            if (!world.isRewinding() && !activeState.isGameFrozen() && !playerDead) {
                 scroll();
             }
         }

@@ -161,4 +161,6 @@ public class Train extends Obstacles implements Time_Snapshottable {
         this.state      = d.state;
         this.waitTimer  = d.waitTimer;
     }
+     @Override
+    public int getRadius() { return GameConfig.TRAIN_RADIUS; }
 }

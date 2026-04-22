@@ -293,7 +293,26 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     @Override
     protected void animationLogic() {
         if (getWorld() == null) return;
-        setImage(currentAnimator.getCurrentFrame()); // advance and display next frame
+        GreenfootImage frame = currentAnimator.getCurrentFrame();
+        
+        if (GameConfig.DEBUG_MODE) {
+            GreenfootImage debugImg = new GreenfootImage(frame);
+            debugImg.setColor(Color.RED);
+            
+            int r = GameConfig.PLAYER_RADIUS;
+            // Calculate drawing offset: (Current Hitbox Y - Actor Y)
+            int drawYOffset = getHitboxY() - getY();
+            
+            // Draw the circle shifted by the offset
+            debugImg.drawOval(
+                debugImg.getWidth()/2 - r, 
+                debugImg.getHeight()/2 - r + drawYOffset, // <--- Apply offset here
+                r*2, r*2
+            );
+            setImage(debugImg);
+        } else {
+            setImage(frame);
+        }
 
         // Check if any ability wants us hidden (Sticky Fingers underground)
         boolean hidden = false;
@@ -320,19 +339,17 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Custom circular hitbox: computes the Euclidean distance between the
-     * centres of this player and the attacker actor, then compares it to
-     * half the player's image width (scaled by the padding factor).
-     * A padding < 1 makes the hitbox smaller (more forgiving); > 1 makes it larger.
-     *
-     * @param attacker  The obstacle to check against.
-     * @param padding   Scale factor for the hitbox radius.
-     * @return          True if within hitting distance.
+     * Custom circular hitbox: Uses a FIXED radius from GameConfig so that
+     * tall or wide sprites don't have larger/smaller hitboxes than Dio.
      */
     @Override
     public boolean checkCustomHitbox(Actor attacker, double padding) {
-        double dist = Math.hypot(getX() - attacker.getX(), getY() - attacker.getY());
-        return dist < (getImage().getWidth() * 0.5 * padding);
+        int obstacleRadius = ((Obstacles)attacker).getRadius();
+        
+        // Calculate distance using the adjusted Y center
+        double dist = Math.hypot(getX() - attacker.getX(), getHitboxY() - attacker.getY());
+        
+        return dist < (GameConfig.PLAYER_RADIUS + obstacleRadius);
     }
 
     /** Shakes the player around the death position — visual feedback on death. */
@@ -490,5 +507,17 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     //Special Setting for Demo
     public void setDemoAbilityFilter(Class<? extends Ability> clazz) {
         this.demoAbilityFilter = clazz;
+    }
+    
+        
+    private int getHitboxY() {
+        int offset = 0;
+        
+        // ADJUST INDIVIDUAL CHARACTERS HERE
+        String name = config.folderName;
+
+        if (name.equals("MoonKnight"))  offset = GameConfig.MOON_KNIGHT_HITBOX_OFFSET;  // Lower MoonKnight's hitbox by 5px
+        
+        return getY() + offset;
     }
 }

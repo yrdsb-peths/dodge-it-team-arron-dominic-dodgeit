@@ -98,7 +98,7 @@ public enum CharacterConfig {
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,
-        new String[]{"Ability_StandPunch","Ability_StickyFingers"} // fewer abilities than DIO
+        new String[]{"Ability_Mandom","Ability_MadeInHeaven"} // fewer abilities than DIO
     );
 
     // =========================================================================

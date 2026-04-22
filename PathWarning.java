@@ -28,7 +28,7 @@ public class PathWarning extends Actor implements Time_Snapshottable {
 
     /** Remaining frames before this warning auto-removes itself.  60 frames = 1 second. */
     private int timer = 60;
-
+    private Color warningColor; 
     /**
      * Creates a semi-transparent red rectangle of the given size.
      * Width should match the world width; height should match the lane height.
@@ -37,8 +37,9 @@ public class PathWarning extends Actor implements Time_Snapshottable {
      * @param height  Height of the warning zone in pixels.
      */
     public PathWarning(int width, int height) {
+        this.warningColor = GameConfig.getPathWarningColor(GameConfig.ACTIVE_CHARACTER.roadImage);
         GreenfootImage img = new GreenfootImage(width, height);
-        img.setColor(new Color(255, 0, 0, 100)); // semi-transparent red
+        img.setColor(warningColor);
         img.fill();
         setImage(img);
     }

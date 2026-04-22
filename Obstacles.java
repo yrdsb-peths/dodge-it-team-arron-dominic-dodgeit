@@ -36,6 +36,7 @@ public abstract class Obstacles extends Actor {
      * Protected so subclasses can read and write it directly.
      */
     protected int speed;
+    public abstract int getRadius();
 
     /**
      * Called by Greenfoot each frame.
@@ -45,15 +46,16 @@ public abstract class Obstacles extends Actor {
     @Override
     public void act() {
         MyWorld world = (MyWorld) getWorld();
-        if (world == null) return;
+        if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
 
-        GameState state = world.getGSM().peekState();
-
-        // Safe check: If not a gameplay state, or we are paused/frozen, stop here.
-        if (!(state instanceof IActiveGameState)) return; 
-        
-        IActiveGameState activeState = (IActiveGameState) state;
-        if (activeState.isGameFrozen()) return;
+        // --- ACCURATE DEBUG VISUAL ---
+        if (GameConfig.DEBUG_MODE) {
+            GreenfootImage img = getImage();
+            img.setColor(Color.CYAN);
+            int r = getRadius();
+            // Draw circle centered on the sprite center
+            img.drawOval(img.getWidth()/2 - r, img.getHeight()/2 - r, r*2, r*2);
+        }
 
         movementLogic();  
         collisionLogic(); 

@@ -160,4 +160,7 @@ public class Roadroller extends Obstacles implements Time_Snapshottable {
         this.speed      = d.speed;
         this.scoreToAdd = d.scoreToAdd;
     }
+    
+    @Override
+    public int getRadius() { return GameConfig.ROADROLLER_RADIUS; }
 }
