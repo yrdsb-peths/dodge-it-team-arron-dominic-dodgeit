@@ -204,25 +204,25 @@ public class AudioManager {
     /**
      * Pauses or resumes audio for the rewind system.
      *
-     * pause=true  : saves and pauses the BGM; stops all other sounds.
+     * pause=true  : saves and pauses the current character's BGM; stops all other sounds.
      * pause=false : resumes only the sounds that were playing before pause.
-     *
-     * ⚠ NOTE: "dio_bgm" is hardcoded here.  If using a non-Dio character,
-     * this should be GameConfig.ACTIVE_CHARACTER.bgmKey instead.
      */
     public static void setAllSoundsPaused(boolean pause) {
         if (pause) {
             activeBeforePause.clear();
+            
+            // 1. Get the background music key for whoever the player is currently playing as
+            String activeBgmKey = GameConfig.ACTIVE_CHARACTER.bgmKey;
 
-            // Pause the BGM and remember it for resume
-            if (sounds.get("dio_bgm").isPlaying()) {
-                activeBeforePause.add(sounds.get("dio_bgm"));
-                sounds.get("dio_bgm").pause();
+            // 2. Pause their specific BGM and remember it for resume
+            if (sounds.containsKey(activeBgmKey) && sounds.get(activeBgmKey).isPlaying()) {
+                activeBeforePause.add(sounds.get(activeBgmKey));
+                sounds.get(activeBgmKey).pause();
             }
 
-            // Stop (do not pause) all other sounds so they don't echo during rewind
+            // 3. Stop (do not pause) all other sounds so they don't echo during rewind
             for (String key : sounds.keySet()) {
-                if (!key.equals("dio_bgm") && sounds.get(key).isPlaying()) {
+                if (!key.equals(activeBgmKey) && sounds.get(key).isPlaying()) {
                     sounds.get(key).stop();
                 }
             }
@@ -232,8 +232,10 @@ public class AudioManager {
                 }
             }
         } else {
-            // Resume only what was playing before the pause
-            for (GreenfootSound s : activeBeforePause) s.play();
+            // 4. Resume only what was playing before the pause (the BGM)
+            for (GreenfootSound s : activeBeforePause) {
+                s.play();
+            }
             activeBeforePause.clear();
         }
     }
