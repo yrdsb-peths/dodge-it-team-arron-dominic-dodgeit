@@ -32,6 +32,7 @@ public class MenuState implements GameState {
     public void enter(MyWorld world) {
         world.setBackground(new GreenfootImage("dodge_it.png")); 
         world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
+        AudioManager.playLoop("menu_bgm"); 
         /*
         int middle = world.getWidth() / 2;
 

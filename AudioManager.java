@@ -86,6 +86,7 @@ public class AudioManager {
         loadSound("speed_up_time", "speed_up_time.mp3",          100);
         loadSound("summon_stand",  "summon_stand.mp3",            200);
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
+        loadSound("menu_bgm",  "soul_knight_menu.mp3",             120);
 
         // ── Voice pools ───────────────────────────────────────────────────────
         loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 60);

@@ -60,6 +60,7 @@ public class PlayingState implements GameState,IActiveGameState{
     @Override
     public void enter(MyWorld world) {
         world.removeObjects(world.getObjects(null)); // clear ALL existing actors
+        AudioManager.stop("menu_bgm");//Stop original music
 
         GameRNG.randomize();   // generate a new random seed for this session
         ScoreManager.reset();  // reset score to 0 (copies to highScore if higher)
