@@ -1,121 +1,102 @@
-/*
- * ─────────────────────────────────────────────────────────────────────────────
- * CharacterSelectState.java  —  CHARACTER SELECTION SCREEN
- * ─────────────────────────────────────────────────────────────────────────────
- * Role:
- *   Shows the roster of characters (from CharacterConfig.values()),
- *   lets the player browse with LEFT/RIGHT arrows, displays the character's
- *   name, abilities, and a spinning preview animation.
- *   Pressing ENTER sets GameConfig.ACTIVE_CHARACTER and starts PlayingState.
- *
- * How the roster is driven:
- *   CharacterConfig.values() returns all defined enum constants.
- *   currentIndex tracks which one is selected.  LEFT/RIGHT wrap around.
- *   updateScreen() refreshes the name display, ability list, and preview sprite.
- *
- * UI_Preview management:
- *   currentPreview is NOT in the uiElements list.  It is removed manually
- *   in updateScreen() each time the player switches characters (so it is
- *   replaced, not accumulated) and in exit() for final cleanup.
- *
- * Interacts with:
- *   CharacterConfig (roster data), GameConfig (sets ACTIVE_CHARACTER),
- *   PlayingState (next state), UIText, UI_Preview, GameStateManager
- * ─────────────────────────────────────────────────────────────────────────────
- */
 import greenfoot.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CharacterSelectState implements GameState {
 
-    /** All static UI actors — removed together in exit(). */
     private List<Actor> uiElements = new ArrayList<>();
-
-    /** Index into CharacterConfig.values() for the currently highlighted character. */
     private int currentIndex = 0;
-
-    /** The full roster of available characters. */
     private CharacterConfig[] roster = CharacterConfig.values();
 
-    /** Dynamic text label updated when the selection changes. */
     private UIText nameDisplay;
-    /** Dynamic text label listing the selected character's abilities. */
     private UIText abilitiesDisplay;
-
-    /**
-     * The animated sprite preview for the selected character.
-     * Managed separately from uiElements because it is replaced on every
-     * character switch, not just at exit.
-     */
     private UI_Preview currentPreview;
+
+    // Prevents spamming the arrow keys and breaking the slide animation
+    private int slideCooldown = 0;
 
     @Override
     public void enter(MyWorld world) {
         int midX = world.getWidth() / 2;
-        
-        world.setBackground(new GreenfootImage("background_image.jpg")); 
+
+        // 1. Menu Background
+        world.setBackground(new GreenfootImage("background_image.jpg"));
         world.getBackground().scale(GameConfig.WORLD_WIDTH+685, GameConfig.WORLD_HEIGHT+300);
         
-        addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(80));
-        addUI(world, new UIText("< LEFT ARROW       RIGHT ARROW >", GameConfig.s(20), Color.CYAN), midX, GameConfig.s(250));
-        addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(22), Color.GREEN), midX, GameConfig.s(320));
-        addUI(world, new UIText("[ ENTER : START GAME]", GameConfig.s(22), Color.RED), midX, GameConfig.s(360));
-        
-        // Name and ability labels start empty — updateScreen() fills them.
-        nameDisplay = new UIText("", GameConfig.s(45), Color.WHITE);
-        addUI(world, nameDisplay, midX, GameConfig.s(220));
+        // 2. Dark Panel for the bottom half text UI
+        addUI(world, new UI_Panel(world.getWidth(), GameConfig.s(160), new Color(0, 0, 0, 180)), midX, GameConfig.s(320));
 
-        abilitiesDisplay = new UIText("", GameConfig.s(18), Color.WHITE);
-        addUI(world, abilitiesDisplay, midX, GameConfig.s(280));
+        // 3. Static Text
+        addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(40));
+        addUI(world, new UIText("< LEFT ARROW               RIGHT ARROW >", GameConfig.s(18), Color.CYAN), midX, GameConfig.s(260));
+        addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(20), Color.GREEN), midX - GameConfig.s(130), GameConfig.s(370));
+        addUI(world, new UIText("[ ENTER : START GAME ]", GameConfig.s(20), Color.RED), midX + GameConfig.s(130), GameConfig.s(370));
 
-        updateScreen(world); // populate with the first character's data
+        // 4. Dynamic Text Elements
+        nameDisplay = new UIText("", GameConfig.s(40), Color.WHITE);
+        addUI(world, nameDisplay, midX, GameConfig.s(295));
+
+        abilitiesDisplay = new UIText("", GameConfig.s(16), Color.ORANGE);
+        addUI(world, abilitiesDisplay, midX, GameConfig.s(330));
+
+        // 5. Spawn the first character (no slide on initial load)
+        spawnNewCharacter(world, true, true);
     }
 
     @Override
     public void update(MyWorld world) {
+        if (slideCooldown > 0) slideCooldown--;
+
         String key = Greenfoot.getKey();
-        if (key != null) {
+        if (key != null && slideCooldown == 0) {
+            
             if (key.equals("right")) {
-                // Wrap forward through the roster
+                slideOutCurrent(true); // slide out to the left
                 currentIndex = (currentIndex + 1) % roster.length;
-                updateScreen(world);
+                spawnNewCharacter(world, true, false); // spawn coming from right
+                slideCooldown = 15;
+                
             } else if (key.equals("left")) {
-                // Wrap backward through the roster
+                slideOutCurrent(false); // slide out to the right
                 currentIndex = (currentIndex - 1 + roster.length) % roster.length;
-                updateScreen(world);
+                spawnNewCharacter(world, false, false); // spawn coming from left
+                slideCooldown = 15;
+                
             } else if (key.equals("l")) {
-                // Enter the interactive tutorial overlay
                 GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
                 world.getGSM().pushState(new AbilityDisplayState());
+                
             } else if (key.equals("enter")) {
                 GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
+                AudioManager.stopAll();
                 world.getGSM().changeState(new PlayingState());
             }
         }
     }
 
-    /**
-     * Refreshes all dynamic UI to reflect the currently selected character:
-     *   1. Updates the name label.
-     *   2. Replaces the animated preview sprite.
-     *   3. Updates the ability list text.
-     */
-    private void updateScreen(MyWorld world) {
+    /** Tells the current portrait to exit the screen. */
+    private void slideOutCurrent(boolean toLeft) {
+        if (currentPreview != null) {
+            currentPreview.slideOut(toLeft);
+        }
+    }
+
+    /** Creates the new portrait, plays sound, and updates text. */
+    private void spawnNewCharacter(MyWorld world, boolean fromRight, boolean isInitial) {
         CharacterConfig selected = roster[currentIndex];
 
-        // 1. Name
-        nameDisplay.setText(selected.displayName);
-
-        // 2. Animated preview (remove old, add new)
-        if (currentPreview != null) {
-            world.removeObject(currentPreview);
+        // 1. Play Voice Line (Using a failsafe for both Voice Pool and Single Audio)
+        if (!isInitial) {
+            AudioManager.playPool(selected.selectSoundKey);
+            AudioManager.play(selected.selectSoundKey); 
         }
-        currentPreview = new UI_Preview(selected);
-        world.addObject(currentPreview, world.getWidth() / 2, GameConfig.s(140));
-        // NOT added to uiElements — managed manually here and in exit()
 
-        // 3. Abilities (strip the "Ability_" prefix for cleaner display)
+        // 2. Spawn Sliding Preview Image
+        currentPreview = new UI_Preview(selected, fromRight, world.getWidth() / 2);
+        world.addObject(currentPreview, currentPreview.getStartX(), GameConfig.s(145));
+
+        // 3. Update UI Text Details
+        nameDisplay.setText(selected.displayName);
         String abilityText = "Abilities: ";
         for (String s : selected.abilityClassNames) {
             abilityText += s.replace("Ability_", "") + "  ";

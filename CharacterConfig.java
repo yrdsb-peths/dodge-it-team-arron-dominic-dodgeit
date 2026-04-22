@@ -43,12 +43,14 @@ public enum CharacterConfig {
     DIO(
         "Dio Brando",                               // displayName  (shown in UI)
         "Dio",                                      // folderName   (images/Dio/)
+        "dio_full.jpg",                             //Portrait Image (new, for character select)
         new String[]{"Idle", "Wry", "Dash", "Lose"}, // animNames  (sub-folders)
         "Dash",                                     // defaultAnim  (starts here)
         GameConfig.DIO_MOVE_SPEED,                  // moveSpeed    (pixels/frame)
         0.8 * GameConfig.SCALE,                     // scale        (sprite size)
         "dio_bgm",                                  // bgmKey       (AudioManager)
         "dioLostVoices",                            // deathSoundKey (voice pool)
+        "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,                             // bossConfig   (intro banner)
         new String[]{                               // abilityClassNames (loaded via Reflection)
             "Ability_StandPunch",   // E — summon TheWorldStand
@@ -69,12 +71,14 @@ public enum CharacterConfig {
     Dio2(
         "Dio Brando",
         "Dio",
+        "dio_full.jpg",                             //Portrait Image (new, for character select)
         new String[]{"Idle", "Wry", "Dash", "Lose"},
         "Dash",
         GameConfig.DIO_MOVE_SPEED,
         0.8 * GameConfig.SCALE,
         "dio_bgm",
         "dioLostVoices",
+        "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,
         new String[]{"Ability_StandPunch","Ability_StickyFingers"} // fewer abilities than DIO
     );
@@ -87,7 +91,10 @@ public enum CharacterConfig {
 
     /** Name of the sprite sub-folder under images/ (e.g., "Dio" → images/Dio/). */
     public final String folderName;
-
+    
+     /** Name of theportrait image sub-folder under images*/
+    public final String portraitImage;  
+    
     /** Names of the animation sub-folders to load (e.g., "Idle", "Dash"). */
     public final String[] animNames;
 
@@ -108,7 +115,9 @@ public enum CharacterConfig {
 
     /** AudioManager pool key played when the character dies. */
     public final String deathSoundKey;
-
+    
+    /** AudioManager pool key played when the character is selected. */    
+     public final String selectSoundKey;
     /**
      * The boss-intro banner configuration.  If null, no banner plays.
      * Dio uses BossConfig.DIO which defines the black banner with his image.
@@ -125,18 +134,20 @@ public enum CharacterConfig {
     // CONSTRUCTOR
     // =========================================================================
     private CharacterConfig(
-            String displayName, String folderName, String[] animNames,
+            String displayName, String folderName,String portraitImage, String[] animNames,
             String defaultAnim, int moveSpeed, double scale,
-            String bgmKey, String deathSoundKey,
+            String bgmKey, String deathSoundKey, String selectSoundKey,
             BossConfig bossConfig, String[] abilities) {
         this.displayName      = displayName;
         this.folderName       = folderName;
+        this.portraitImage    = portraitImage;
         this.animNames        = animNames;
         this.defaultAnim      = defaultAnim;
         this.moveSpeed        = moveSpeed;
         this.scale            = scale;
         this.bgmKey           = bgmKey;
         this.deathSoundKey    = deathSoundKey;
+        this.selectSoundKey   = selectSoundKey;
         this.bossConfig       = bossConfig;
         this.abilityClassNames = abilities;
     }
