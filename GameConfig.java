@@ -52,6 +52,7 @@ public class GameConfig {
     // =========================================================================
     /** How many pixels per frame Dio moves when an arrow key is held. */
     public static final int DIO_MOVE_SPEED = s(5);
+    public static final int MOONKNIGHT_MOVE_SPEED = s(5);
 
     /**
      * The scale factor applied to Dio's sprite images.

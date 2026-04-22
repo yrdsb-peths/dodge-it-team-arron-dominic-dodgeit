@@ -67,11 +67,11 @@ public enum CharacterConfig {
      * character, replace this with proper data.
      */
     Dio2(
-        "Dio Brando",
-        "Dio",
-        new String[]{"Idle", "Wry", "Dash", "Lose"},
+        "Night",
+        "MoonKnight",
+        new String[]{"Idle", "Dash", "Die"},
         "Dash",
-        GameConfig.DIO_MOVE_SPEED,
+        GameConfig.MOONKNIGHT_MOVE_SPEED,
         0.8 * GameConfig.SCALE,
         "dio_bgm",
         "dioLostVoices",
