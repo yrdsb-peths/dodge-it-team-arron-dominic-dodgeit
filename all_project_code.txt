@@ -307,11 +307,12 @@ public class GameOverState implements GameState {
         int bestScore  = ScoreManager.getHighScore();
 
         int midX = world.getWidth() / 2;
-
-        addUI(world, new UIText("RETIRED",                          GameConfig.s(80), Color.RED),   midX, GameConfig.s(150));
+        world.setBackground(new GreenfootImage("game_over.png")); 
+        world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
+        //addUI(world, new UIText("RETIRED",                          GameConfig.s(80), Color.RED),   midX, GameConfig.s(150));
         addUI(world, new UIText("Final Score: "   + finalScore,     GameConfig.s(30), Color.RED),   midX, GameConfig.s(200));
         addUI(world, new UIText("Best Survival: " + bestScore,      GameConfig.s(30), Color.RED),   midX, GameConfig.s(250));
-        addUI(world, new UIText("Press ENTER to Restart",           GameConfig.s(25), Color.BLACK), midX, GameConfig.s(300));
+        //addUI(world, new UIText("Press ENTER to Restart",           GameConfig.s(25), Color.BLACK), midX, GameConfig.s(300));
     }
 
     /** Waits for ENTER, then goes back to the main menu (full restart). */
@@ -324,6 +325,7 @@ public class GameOverState implements GameState {
 
     @Override
     public void exit(MyWorld world) {
+        world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
         AudioManager.stop("lost_bgm");
         world.removeObjects(uiElements);
     }
@@ -508,156 +510,6 @@ public class UI_RewindBar extends Actor {
         img.fillRect(markerX, barTop, GameConfig.s(2), h + padding * 2);
 
         setImage(img);
-    }
-}
-
-
-
-==================================================
-FILE: ./CharacterConfig.java
-==================================================
-
-/*
- * ─────────────────────────────────────────────────────────────────────────────
- * CharacterConfig.java  —  THE CHARACTER ROSTER (DATA-DRIVEN DESIGN)
- * ─────────────────────────────────────────────────────────────────────────────
- * Role:
- *   An enum that defines every playable character.  Each enum constant (DIO,
- *   Dio2, etc.) is a single object that holds all the data needed to build that
- *   character at runtime — sprites, speed, music, abilities, and more.
- *
- * Why an enum?
- *   Enums in Java are a fixed list of named constants, but unlike simple
- *   integers, each constant can carry rich data (via a constructor).
- *   CharacterConfig.values() returns all characters, which is how
- *   CharacterSelectState shows the roster without knowing each character by name.
- *
- * HOW TO ADD A NEW CHARACTER:
- *   1. Add a comma after the last entry (e.g., after Dio2's closing parenthesis).
- *   2. Write KIRA("Kira Yoshikage", "Kira", new String[]{"Walk", "Die"}, ...) etc.
- *   3. The new character immediately appears in the character-select screen.
- *      No other files need to change.
- *
- * Ability loading:
- *   Abilities are listed as class-name Strings (e.g., "Ability_StandPunch").
- *   GenericPlayer uses Java Reflection (Class.forName()) to instantiate them
- *   at runtime.  This means you add abilities by listing their class name here
- *   — you do NOT modify GenericPlayer.
- *
- * Interacts with:
- *   GenericPlayer (reads all fields), CharacterSelectState (iterates roster),
- *   PlayingState (reads ACTIVE_CHARACTER to spawn the right player),
- *   Animator (uses folderName + animNames to load sprites)
- * ─────────────────────────────────────────────────────────────────────────────
- */
-import greenfoot.*;
-import java.util.List;
-import java.util.ArrayList;
-
-public enum CharacterConfig {
-
-    // =========================================================================
-    // CHARACTER: DIO BRANDO
-    // =========================================================================
-    DIO(
-        "Dio Brando",                               // displayName  (shown in UI)
-        "Dio",                                      // folderName   (images/Dio/)
-        new String[]{"Idle", "Wry", "Dash", "Lose"}, // animNames  (sub-folders)
-        "Dash",                                     // defaultAnim  (starts here)
-        GameConfig.DIO_MOVE_SPEED,                  // moveSpeed    (pixels/frame)
-        0.8 * GameConfig.SCALE,                     // scale        (sprite size)
-        "dio_bgm",                                  // bgmKey       (AudioManager)
-        "dioLostVoices",                            // deathSoundKey (voice pool)
-        BossConfig.DIO,                             // bossConfig   (intro banner)
-        new String[]{                               // abilityClassNames (loaded via Reflection)
-            "Ability_StandPunch",   // E — summon TheWorldStand
-            "Ability_MadeInHeaven", // S — speed boost
-            "Ability_Mandom",       // R — time rewind (delegates to PlayingState)
-            "Ability_StickyFingers" // F — portal wrap + hide underground
-        }
-    ),
-
-    // =========================================================================
-    // CHARACTER: DIO2  (test/placeholder — duplicate of DIO with fewer abilities)
-    // =========================================================================
-    /*
-     * Dio2 exists only to verify that CharacterSelectState works with multiple
-     * entries.  It is NOT a distinct character.  If you want a real second
-     * character, replace this with proper data.
-     */
-    Dio2(
-        "Dio Brando",
-        "Dio",
-        new String[]{"Idle", "Wry", "Dash", "Lose"},
-        "Dash",
-        GameConfig.DIO_MOVE_SPEED,
-        0.8 * GameConfig.SCALE,
-        "dio_bgm",
-        "dioLostVoices",
-        BossConfig.DIO,
-        new String[]{"Ability_StandPunch","Ability_StickyFingers"} // fewer abilities than DIO
-    );
-
-    // =========================================================================
-    // FIELDS  (every character carries these values)
-    // =========================================================================
-    /** The name displayed on the character-select screen. */
-    public final String displayName;
-
-    /** Name of the sprite sub-folder under images/ (e.g., "Dio" → images/Dio/). */
-    public final String folderName;
-
-    /** Names of the animation sub-folders to load (e.g., "Idle", "Dash"). */
-    public final String[] animNames;
-
-    /** Which animation plays when the character is first created. */
-    public final String defaultAnim;
-
-    /** How many pixels per frame the character moves when an arrow key is held. */
-    public final int moveSpeed;
-
-    /**
-     * The scale factor applied to all sprite images for this character.
-     * Combines character-specific sizing with the global SCALE multiplier.
-     */
-    public final double scale;
-
-    /** AudioManager key for the character's background music. */
-    public final String bgmKey;
-
-    /** AudioManager pool key played when the character dies. */
-    public final String deathSoundKey;
-
-    /**
-     * The boss-intro banner configuration.  If null, no banner plays.
-     * Dio uses BossConfig.DIO which defines the black banner with his image.
-     */
-    public final BossConfig bossConfig;
-
-    /**
-     * Class name strings for each ability, loaded at runtime via Reflection.
-     * Order matters: abilities are displayed as icons in this order.
-     */
-    public final String[] abilityClassNames;
-
-    // =========================================================================
-    // CONSTRUCTOR
-    // =========================================================================
-    private CharacterConfig(
-            String displayName, String folderName, String[] animNames,
-            String defaultAnim, int moveSpeed, double scale,
-            String bgmKey, String deathSoundKey,
-            BossConfig bossConfig, String[] abilities) {
-        this.displayName      = displayName;
-        this.folderName       = folderName;
-        this.animNames        = animNames;
-        this.defaultAnim      = defaultAnim;
-        this.moveSpeed        = moveSpeed;
-        this.scale            = scale;
-        this.bgmKey           = bgmKey;
-        this.deathSoundKey    = deathSoundKey;
-        this.bossConfig       = bossConfig;
-        this.abilityClassNames = abilities;
     }
 }
 
@@ -1686,6 +1538,10 @@ public class MenuState implements GameState {
 
     @Override
     public void enter(MyWorld world) {
+        world.setBackground(new GreenfootImage("dodge_it.png")); 
+        world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
+        AudioManager.playLoop("menu_bgm"); 
+        /*
         int middle = world.getWidth() / 2;
 
         // ── Title ─────────────────────────────────────────────────────────────
@@ -1702,12 +1558,15 @@ public class MenuState implements GameState {
         addUI(world, new UIText("Dodge the Road Rollers and Ambulances!", GameConfig.s(18), Color.ORANGE), middle, GameConfig.s(330));
 
         // ── Start prompt ──────────────────────────────────────────────────────
+
         addUI(world, new UIText("[ Press ENTER to Begin ]",               GameConfig.s(24), Color.CYAN),   middle, GameConfig.s(375));
+        */
     }
 
     /** Waits for ENTER, then transitions to the character select screen. */
     @Override
     public void update(MyWorld world) {
+        AudioManager.playLoop("menu_bgm"); 
         if ("enter".equals(Greenfoot.getKey())) {
             world.getGSM().changeState(new CharacterSelectState());
         }
@@ -1716,6 +1575,7 @@ public class MenuState implements GameState {
     /** Removes all text labels when leaving the menu. */
     @Override
     public void exit(MyWorld world) {
+        world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
         world.removeObjects(uiElements);
         uiElements.clear();
     }
@@ -2305,9 +2165,12 @@ public class CharacterSelectState implements GameState {
     @Override
     public void enter(MyWorld world) {
         int midX = world.getWidth() / 2;
-
+        
+        world.setBackground(new GreenfootImage("background_image.jpg")); 
+        world.getBackground().scale(GameConfig.WORLD_WIDTH+685, GameConfig.WORLD_HEIGHT+300);
+        
         addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(80));
-        addUI(world, new UIText("< LEFT ARROW       RIGHT ARROW >", GameConfig.s(20), Color.CYAN), midX, GameConfig.s(240));
+        addUI(world, new UIText("< LEFT ARROW       RIGHT ARROW >", GameConfig.s(20), Color.CYAN), midX, GameConfig.s(250));
         addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(22), Color.GREEN), midX, GameConfig.s(320));
         addUI(world, new UIText("[ ENTER : START GAME]", GameConfig.s(22), Color.RED), midX, GameConfig.s(360));
         
@@ -2315,8 +2178,8 @@ public class CharacterSelectState implements GameState {
         nameDisplay = new UIText("", GameConfig.s(45), Color.WHITE);
         addUI(world, nameDisplay, midX, GameConfig.s(220));
 
-        abilitiesDisplay = new UIText("", GameConfig.s(18), Color.ORANGE);
-        addUI(world, abilitiesDisplay, midX, GameConfig.s(260));
+        abilitiesDisplay = new UIText("", GameConfig.s(18), Color.WHITE);
+        addUI(world, abilitiesDisplay, midX, GameConfig.s(280));
 
         updateScreen(world); // populate with the first character's data
     }
@@ -3490,7 +3353,6 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
                 }
             }
         } else {
-            // REPLACE handleStandardMovement(); WITH THIS:
             if (!((MyWorld) getWorld()).isRewinding()) {
                 handleStandardMovement();
             }
@@ -3507,7 +3369,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
         // Check if any ability is doubling the movement speed (Made in Heaven).
         for (Ability a : abilities) {
-            if (a instanceof Ability_MadeInHeaven && a.isActive()) speed *= 2;
+            if (a instanceof Ability_MadeInHeaven && a.isActive()) speed *= a.getMovementMultiplier();;
         }
 
         int nextX = getX();
@@ -3954,7 +3816,7 @@ public class GameConfig {
     /** Starting interval (frames) between Roadroller spawns. Lower = more frequent. */
     public static final int ROADROLLER_RATE     = 30;
     /** Minimum interval: Roadrollers will never spawn faster than this. */
-    public static final int ROADROLLER_MIN_RATE = 17;
+    public static final int ROADROLLER_MIN_RATE = 18;
     /** Starting speed of a Roadroller in pixels/frame. */
     public static final int ROADROLLER_SPEED    = s(6);
     /** Maximum speed a Roadroller can reach after many difficulty increases. */
@@ -3963,11 +3825,11 @@ public class GameConfig {
     /** Starting interval (frames) between Train spawns. ~3.3 seconds. */
     public static final int TRAIN_RATE     = 200;
     /** Minimum interval: Trains will never spawn faster than this. */
-    public static final int TRAIN_MIN_RATE = 36;
+    public static final int TRAIN_MIN_RATE = 50;
     /** Starting speed of a Train in pixels/frame. Trains are much faster than Roadrollers. */
     public static final int TRAIN_SPEED    = s(25);
     /** Maximum speed a Train can reach after many difficulty increases. */
-    public static final int TRAIN_MAX_SPEED = s(50);
+    public static final int TRAIN_MAX_SPEED = s(40);
 
     // =========================================================================
     // SECTION 5 — TIME REWIND SETTINGS
@@ -3977,6 +3839,8 @@ public class GameConfig {
      * 360 frames at 60fps = 6 seconds of rewindable history.
      */
     public static final int MAX_REWIND_TIME = 360;
+    public static final int REWIND_SPEED = 3;
+    public static final int REWIND_MAX_SPEED = 5;
 
     /**
      * How many frames of history each rewind use consumes.
@@ -3995,6 +3859,7 @@ public class GameConfig {
      * while Dio's per-frame movement stays the same = Dio moves faster relatively.
      */
     public static final int MIH_TICK_SPEED    = 48;
+    public static final int MIH_TICK_SPEED_MAX = 44;
     /** Normal Greenfoot tick speed used outside of any speed ability. */
     public static final int NORMAL_TICK_SPEED = 50;
     /** How long (seconds) the MiH cooldown lasts after use. */
@@ -4234,6 +4099,13 @@ public interface Ability {
      * Ability_StickyFingers uses this for the portal warp cooldown.
      */
     default double getSecondaryCooldownPercent() { return 0.0; }
+    
+    /*
+     * Default speedmovement multiplier to be overwriten by MIH
+     */
+    default double getMovementMultiplier() {
+        return 1.0;
+    }
 }
 
 
@@ -4652,7 +4524,8 @@ public class Ability_StickyFingers implements Ability {
             // Spawn the zipper graphic at the player's feet
             zipperGround = new FX_ZipperGround();
             world.addObject(zipperGround, p.getX(), p.getY());
-
+            
+            AudioManager.playPool("zipper"); //Play sound
         } else if (hidden) {
             // ── POP BACK OUT ────────────────────────────────────────────────
             hidden = false;
@@ -4670,6 +4543,8 @@ public class Ability_StickyFingers implements Ability {
             // Start the cooldown before hiding again
             hideCooldown.reset();
             hideCooldown.start();
+            
+            AudioManager.playPool("zipper");// Play sound
         }
     }
 
@@ -4757,7 +4632,7 @@ public class Ability_StickyFingers implements Ability {
             : GameConfig.PORTAL_MARGIN + GameConfig.s(5);              // bottom→top
 
         p.setLocation(p.getX(), exitY);
-
+        AudioManager.playPool("zipper"); //Play sound
         // Grant i-frames and start cooldown
         p.startIFrame(GameConfig.PORTAL_IFRAME_DURATION);
         portalCooldown.reset();
@@ -6031,7 +5906,6 @@ public class Time_RewindManager {
      * How many snapshots are popped per frame during rewind.
      * 3 = rewind plays at 3× real-time speed.
      */
-    private static final int REWIND_SPEED = 3;
 
     // ─────────────────────────────────────────────────────────────────────────
     // STATE
@@ -6118,11 +5992,11 @@ public class Time_RewindManager {
      * @param spawnManager  The spawn manager (for state restoration).
      * @return              True if the rewind is still in progress; false if done.
      */
-    public boolean rewindStep(MyWorld world, SpawnManager spawnManager) {
+    public boolean rewindStep(MyWorld world, SpawnManager spawnManager, int speed) {
         if (!isRewinding) return false;
 
         // Pop multiple snapshots per frame to create the fast-rewind effect
-        for (int i = 0; i < REWIND_SPEED; i++) {
+        for (int i = 0; i < speed; i++) {
             if (framesRewound >= REWIND_COST_FRAMES || history.isEmpty()) {
                 stopRewinding();
                 return false; // rewind is complete
@@ -8177,7 +8051,6 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         int uiHeight = worldH - splitY;
 
         int midX = world.getWidth() / 2;
-        addUI(world, new UI_MenuBackground("background_image.jpg"), midX, world.getHeight() / 2);
         addUI(world, new UI_Panel(world.getWidth(), uiHeight, new Color(30, 30, 30)), world.getWidth() / 2, splitY + (uiHeight / 2));
 
         if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) dummyPlayer = new Dio();
@@ -8295,7 +8168,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
                 dimOverlay = null;
             }
 
-            boolean stillGoing = rewindManager.rewindStep(world, demoSpawnManager);
+            boolean stillGoing = rewindManager.rewindStep(world, demoSpawnManager,GameConfig.REWIND_SPEED);
             if (!stillGoing) {
                 if (rewindOverlay != null && rewindOverlay.getWorld() != null) world.removeObject(rewindOverlay);
                 rewindOverlay = null;
@@ -8922,6 +8795,7 @@ public class PlayingState implements GameState,IActiveGameState{
     @Override
     public void enter(MyWorld world) {
         world.removeObjects(world.getObjects(null)); // clear ALL existing actors
+        AudioManager.stop("menu_bgm");//Stop original music
 
         GameRNG.randomize();   // generate a new random seed for this session
         ScoreManager.reset();  // reset score to 0 (copies to highScore if higher)
@@ -9005,7 +8879,9 @@ public class PlayingState implements GameState,IActiveGameState{
          */
         if (rewindManager.isRewinding()) {
             // Step backward through history; returns false when rewind finishes.
-            boolean stillGoing = rewindManager.rewindStep(world, spawnManager);
+            int rRate = spawnManager.getRoadrollerRate();
+            int rewindSpeed = (rRate <= GameConfig.ROADROLLER_MIN_RATE) ? GameConfig.REWIND_MAX_SPEED : GameConfig.REWIND_SPEED;
+            boolean stillGoing = rewindManager.rewindStep(world, spawnManager,rewindSpeed);
 
             if (!stillGoing && rewindOverlay != null) {
                 // Rewind just finished — clean up the visual overlay
@@ -10425,7 +10301,7 @@ public class Ability_MadeInHeaven implements Ability {
     private int afterimageCounter = 0;
 
     /** How much faster Dio moves during MiH (applied in GenericPlayer.handleStandardMovement). */
-    private final double speedMultiplier = 2;
+    private double speedMultiplier = 2;
 
     /** Tick speed while MiH is active — slower global tick rate. */
     private final int ACCELERATED_TICK_SPEED = GameConfig.MIH_TICK_SPEED;
@@ -10442,14 +10318,21 @@ public class Ability_MadeInHeaven implements Ability {
     /**
      * Starts MiH if no duration or cooldown is currently running.
      * Slows the global tick rate and plays the speed-up sound.
-     */
+     */ 
     @Override
     public void activate(Player p, MyWorld world) {
         boolean notRunning = !durationTimer.isActive() || durationTimer.isExpired();
         if (notRunning && !cooldownTimer.isActive()) {
-            durationTimer.reset();
-            durationTimer.start();
-            Greenfoot.setSpeed(ACCELERATED_TICK_SPEED); // slow global tick = "faster" Dio
+            boolean isMax = false;
+            // Only check SpawnManager if we are in the actual PlayingState
+            if (world.getGSM().peekState() instanceof PlayingState) {
+                PlayingState ps = (PlayingState) world.getGSM().peekState();
+                isMax = ps.getSpawnManager().getRoadrollerRate() <= GameConfig.ROADROLLER_MIN_RATE;
+            }
+            durationTimer.setDuration(isMax ? 2.5 : 4.8); // 2.5s if Max, 4.8s if Normal
+            durationTimer.start(); 
+            speedMultiplier = (isMax ? 3 : 2);
+            Greenfoot.setSpeed(isMax ? GameConfig.MIH_TICK_SPEED_MAX: GameConfig.MIH_TICK_SPEED); // World is even slower at Max diff
             AudioManager.play("speed_up_time");
         }
     }
@@ -10481,6 +10364,7 @@ public class Ability_MadeInHeaven implements Ability {
         if (durationTimer.isExpired()) {
             durationTimer.stop();
             Greenfoot.setSpeed(NORMAL_TICK_SPEED); // restore normal game speed
+            p.startIFrame(0.8);//Grant 0.8 seconds of iframe
             cooldownTimer.reset();
             cooldownTimer.start();
         }
@@ -10542,6 +10426,9 @@ public class Ability_MadeInHeaven implements Ability {
     public void    setRemainingFrames(int f) { durationTimer.setRemainingFrames(f); }
     public void    startTimer()           { durationTimer.start(); }
     public void    stopTimer()            { durationTimer.stop(); }
+    public double getMovementMultiplier() {
+        return (durationTimer.isActive() && !durationTimer.isExpired()) ? speedMultiplier : 1.0;
+    }
 }
 
 
@@ -10638,10 +10525,13 @@ public class AudioManager {
         loadSound("speed_up_time", "speed_up_time.mp3",          100);
         loadSound("summon_stand",  "summon_stand.mp3",            200);
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
+        loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
+
 
         // ── Voice pools ───────────────────────────────────────────────────────
-        loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 60);
-        loadVoicePool("dioLostVoices", new String[]{ "dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3" }, 60);
+        loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 80);
+        loadVoicePool("zipper",        new String[]{ "zipper1.mp3","zipper2.mp3","zipper3.mp3" }, 120);
+        loadVoicePool("dioLostVoices", new String[]{ "dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3" }, 80);
         loadVoicePool("dioBattleCry",  new String[]{
             "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3",
             "dio_voiceline/muda_muda.mp3", "dio_voiceline/Voicy_Timestop DiegoBrando.mp3"

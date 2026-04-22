@@ -35,7 +35,8 @@ import java.util.List;
 public class Time_FrameSnapshot {
 
     /** One memento per Time_Snapshottable actor that existed in this frame. */
-    public final List<Time_ActorMemento> actorStates;
+    
+    public final Time_ActorMemento[] actorStates;
 
     /** The player's score at this frame. */
     public final int score;
@@ -71,7 +72,7 @@ public class Time_FrameSnapshot {
      * @param rngState        The GameRNG seed value.
      */
     public Time_FrameSnapshot(
-            List<Time_ActorMemento> actorStates, int score,
+            Time_ActorMemento[] actorStates, int score,
             int spawnTimer, int difficultyTimer,
             int rRate, int tRate, long rngState) {
         this.actorStates     = actorStates;

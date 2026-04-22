@@ -32,7 +32,6 @@ public class MenuState implements GameState {
     public void enter(MyWorld world) {
         world.setBackground(new GreenfootImage("dodge_it.png")); 
         world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
-        AudioManager.playLoop("menu_bgm"); 
         /*
         int middle = world.getWidth() / 2;
 
@@ -58,6 +57,15 @@ public class MenuState implements GameState {
     /** Waits for ENTER, then transitions to the character select screen. */
     @Override
     public void update(MyWorld world) {
+        
+        if (Greenfoot.getRandomNumber(120) == 0) {
+            
+            // Start way off-screen to the right
+            int startX = world.getWidth() + GameConfig.s(300);
+            
+            world.addObject(new FX_MenuAmbulance(), startX, GameConfig.s(290));
+        }
+
         AudioManager.playLoop("menu_bgm"); 
         if ("enter".equals(Greenfoot.getKey())) {
             world.getGSM().changeState(new CharacterSelectState());

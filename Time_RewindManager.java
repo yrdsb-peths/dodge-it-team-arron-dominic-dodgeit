@@ -42,6 +42,8 @@ import java.util.List;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import greenfoot.*;
+import java.util.Set;        
+import java.util.HashSet;     
 
 public class Time_RewindManager {
 
@@ -92,11 +94,20 @@ public class Time_RewindManager {
     public void record(MyWorld world, SpawnManager spawnManager) {
         if (isRewinding) return; // never record during rewind
 
-        // Capture all snapshottable actors
-        List<Time_ActorMemento> mementos = new ArrayList<>();
-        for (Actor a : world.getObjects(Actor.class)) {
+        List<Actor> allActors = world.getObjects(Actor.class);
+        
+        // 1. Count snapshottables (creates zero garbage!)
+        int count = 0;
+        for (Actor a : allActors) {
+            if (a instanceof Time_Snapshottable) count++;
+        }
+
+        // 2. Pre-allocate exact array size (avoids ArrayList resizing overhead)
+        Time_ActorMemento[] mementos = new Time_ActorMemento[count];
+        int index = 0;
+        for (Actor a : allActors) {
             if (a instanceof Time_Snapshottable) {
-                mementos.add(((Time_Snapshottable) a).captureState());
+                mementos[index++] = ((Time_Snapshottable) a).captureState();
             }
         }
 
@@ -108,7 +119,7 @@ public class Time_RewindManager {
             spawnManager.getDifficultyTimer(),
             spawnManager.getRoadrollerRate(),
             spawnManager.getTrainRate(),
-            GameRNG.getState()      // RNG seed is crucial for replay correctness
+            GameRNG.getState()      
         ));
 
         // Trim history to the maximum allowed size
@@ -195,7 +206,7 @@ public class Time_RewindManager {
         GameRNG.restoreState(snap.rngState); // restore RNG seed for deterministic replay
 
         // ── STEP 2: Build "should exist" set ─────────────────────────────────
-        List<Actor> shouldExist = new ArrayList<>();
+        Set<Actor> shouldExist = new HashSet<>();
         for (Time_ActorMemento m : snap.actorStates) shouldExist.add(m.actor);
 
         // ── STEP 3: Remove actors spawned AFTER this snapshot ─────────────────
@@ -207,7 +218,7 @@ public class Time_RewindManager {
         }
 
         // ── STEP 4: Re-add actors that were alive then but are gone now ───────
-        List<Actor> currentActors = world.getObjects(null);
+        Set<Actor> currentActors = new HashSet<>(world.getObjects(null));
         for (Time_ActorMemento m : snap.actorStates) {
             if (!currentActors.contains(m.actor)) {
                 world.addObject(m.actor, m.x, m.y);
