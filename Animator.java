@@ -53,6 +53,8 @@ public class Animator {
 
     /** Frames-per-image delay (higher = slower). Can be changed at runtime. */
     private int speed;
+    
+    private boolean loop = true; //LOOP 
 
     // ─────────────────────────────────────────────────────────────────────────
     // CONSTRUCTORS
@@ -141,19 +143,28 @@ public class Animator {
      * Returns the current animation frame and advances the internal timer.
      * When the timer reaches 'speed', moves to the next frame (looping).
      * Call this once per act() to display the correct frame.
+     * Loop depending on whether is dying animation or not
      *
      * @return  The GreenfootImage for the current frame.
      */
-    public GreenfootImage getCurrentFrame() {
-        timer++;
-        if (timer >= speed) {
-            timer = 0;
-            if (frames.length > 0) {
-                currentFrame = (currentFrame + 1) % frames.length; // loop back to start
+       public GreenfootImage getCurrentFrame() {
+            timer++;
+            if (timer >= speed) {
+                timer = 0;
+                if (frames.length > 0) {
+                    if (loop) {
+                        // Standard looping logic
+                        currentFrame = (currentFrame + 1) % frames.length;
+                    } else {
+                        // STOP at the last frame if loop is false
+                        if (currentFrame < frames.length - 1) {
+                            currentFrame++;
+                        }
+                    }
+                }
             }
+            return frames[currentFrame];
         }
-        return frames[currentFrame];
-    }
 
     /**
      * Resets to frame 0 and clears the timer.
@@ -177,5 +188,9 @@ public class Animator {
     /** @return True if this animator has at least one frame loaded. */
     public boolean hasFrames() {
         return frames != null && frames.length > 0;
+    }
+    
+    public void setLoop(boolean loop) {
+        this.loop = loop;
     }
 }

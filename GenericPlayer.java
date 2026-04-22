@@ -270,6 +270,10 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
         isDead = true;
         setAnimation("Lose");
+        if (animations.containsKey("Lose")) {
+            animations.get("Lose").setLoop(false);
+        }
+
         AudioManager.playPool(config.deathSoundKey); // random death voice
         dieX = getX();
         dieY = getY();

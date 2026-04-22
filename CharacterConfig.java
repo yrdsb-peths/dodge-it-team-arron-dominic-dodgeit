@@ -44,7 +44,7 @@ public enum CharacterConfig {
         "Dio Brando",                               // displayName  (shown in UI)
         "Dio",                                      // folderName   (images/Dio/)
         "dio_full.jpg",                             //Portrait Image (new, for character select)
-        "red_road.png",                             //CUstomised road(new, for character select)
+        "standard_road.png",                             //CUstomised road(new, for character select)
         new String[]{"Idle", "Wry", "Dash", "Lose"}, // animNames  (sub-folders)
         "Dash",                                     // defaultAnim  (starts here)
         GameConfig.DIO_MOVE_SPEED,                  // moveSpeed    (pixels/frame)
@@ -73,11 +73,27 @@ public enum CharacterConfig {
         "Dio Brando",
         "Dio",
         "dio_full.jpg",                             //Portrait Image (new, for character select)
-        "white_road.png",                             //CUstomised road(new, for character select)
+        "red_road.png",                             //CUstomised road(new, for character select)
         new String[]{"Idle", "Wry", "Dash", "Lose"},
         "Dash",
         GameConfig.DIO_MOVE_SPEED,
         0.8 * GameConfig.SCALE,
+        "dio_bgm",
+        "dioLostVoices",
+        "dioBattleCry",                             //Select sound key (new, for character select)
+        BossConfig.DIO,
+        new String[]{"Ability_StandPunch","Ability_StickyFingers"} // fewer abilities than DIO
+    ),
+    
+    MoonKnight(
+        "MoonKnight",
+        "MoonKnight",
+        "moon_knight_full.png",                             //Portrait Image (new, for character select)
+        "red_road.png",                             //CUstomised road(new, for character select)
+        new String[]{"Idle", "Dash", "Lose"},
+        "Dash",
+        GameConfig.MOON_KNIGHT_MOVE_SPEED,
+        1.2 * GameConfig.SCALE,
         "dio_bgm",
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
