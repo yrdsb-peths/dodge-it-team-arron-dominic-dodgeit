@@ -36,11 +36,12 @@ public class GameOverState implements GameState {
         int bestScore  = ScoreManager.getHighScore();
 
         int midX = world.getWidth() / 2;
-
-        addUI(world, new UIText("RETIRED",                          GameConfig.s(80), Color.RED),   midX, GameConfig.s(150));
+        world.setBackground(new GreenfootImage("game_over.png")); 
+        world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
+        //addUI(world, new UIText("RETIRED",                          GameConfig.s(80), Color.RED),   midX, GameConfig.s(150));
         addUI(world, new UIText("Final Score: "   + finalScore,     GameConfig.s(30), Color.RED),   midX, GameConfig.s(200));
         addUI(world, new UIText("Best Survival: " + bestScore,      GameConfig.s(30), Color.RED),   midX, GameConfig.s(250));
-        addUI(world, new UIText("Press ENTER to Restart",           GameConfig.s(25), Color.BLACK), midX, GameConfig.s(300));
+        //addUI(world, new UIText("Press ENTER to Restart",           GameConfig.s(25), Color.BLACK), midX, GameConfig.s(300));
     }
 
     /** Waits for ENTER, then goes back to the main menu (full restart). */
@@ -53,6 +54,7 @@ public class GameOverState implements GameState {
 
     @Override
     public void exit(MyWorld world) {
+        world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
         AudioManager.stop("lost_bgm");
         world.removeObjects(uiElements);
     }

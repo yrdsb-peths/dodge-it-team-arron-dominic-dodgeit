@@ -86,11 +86,11 @@ public class AudioManager {
         loadSound("speed_up_time", "speed_up_time.mp3",          100);
         loadSound("summon_stand",  "summon_stand.mp3",            200);
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
-        loadSound("menu_bgm",  "soul_knight_menu.mp3",             120);
+        loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
 
         // ── Voice pools ───────────────────────────────────────────────────────
-        loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 60);
-        loadVoicePool("dioLostVoices", new String[]{ "dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3" }, 60);
+        loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 80);
+        loadVoicePool("dioLostVoices", new String[]{ "dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3" }, 80);
         loadVoicePool("dioBattleCry",  new String[]{
             "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3",
             "dio_voiceline/muda_muda.mp3", "dio_voiceline/Voicy_Timestop DiegoBrando.mp3"

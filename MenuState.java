@@ -58,7 +58,7 @@ public class MenuState implements GameState {
     /** Waits for ENTER, then transitions to the character select screen. */
     @Override
     public void update(MyWorld world) {
-   
+        AudioManager.playLoop("menu_bgm"); 
         if ("enter".equals(Greenfoot.getKey())) {
             world.getGSM().changeState(new CharacterSelectState());
         }
