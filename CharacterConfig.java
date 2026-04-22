@@ -72,7 +72,7 @@ public enum CharacterConfig {
         new String[]{"Idle", "Wry", "Dash", "Lose"},
         "Idle",
         GameConfig.AGUY_MOVE_SPEED,
-        0.8 * GameConfig.SCALE,
+        0.4 * GameConfig.SCALE,
         "gothicbgm",
         "dioLostVoices",
         BossConfig.DIO,
