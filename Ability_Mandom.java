@@ -44,9 +44,10 @@ public class Ability_Mandom implements Ability {
      */
     @Override
     public void activate(Player p, MyWorld world) {
-        if (world.getGSM().peekState() instanceof PlayingState) {
-            PlayingState ps = (PlayingState) world.getGSM().peekState();
-            ps.triggerRewind(world);
+        // Change from PlayingState to IActiveGameState so it works in the demo
+        if (world.getGSM().peekState() instanceof IActiveGameState) {
+            IActiveGameState state = (IActiveGameState) world.getGSM().peekState();
+            state.triggerRewind(world);
         }
     }
 

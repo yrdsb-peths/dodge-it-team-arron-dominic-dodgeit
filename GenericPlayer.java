@@ -73,7 +73,9 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     private int dieX;
     /** The Y position where the player died, used as the centre of the death shake. */
     private int dieY;
-
+    
+    //Special filter setting for demo
+    private Class<? extends Ability> demoAbilityFilter = null;
     // ─────────────────────────────────────────────────────────────────────────
     // CONSTRUCTOR
     // ─────────────────────────────────────────────────────────────────────────
@@ -167,7 +169,13 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
         // ── Ability update + activation ───────────────────────────────────────
         for (Ability a : abilities) {
-            // Always update the ability so its timers run.
+            
+            //Do not use ability if in demo and not demo-ing current ability
+            if (demoAbilityFilter != null && !demoAbilityFilter.isInstance(a)) {
+                continue;
+            }
+            
+             // Always update the ability so its timers run.
             // But if the player is hidden, skip updates for abilities that
             // would move the visible player (shouldHidePlayer = true means they
             // already know about the hide state).
@@ -188,13 +196,21 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         if (isDead) {
             deathTimer.update((MyWorld) getWorld());
             if (!deathTimer.isExpired()) {
-                shake(); // vibrate around the death position until timer expires
+                shake(); 
             } else if (!((MyWorld) getWorld()).isRewinding()) {
-                // Timer expired and we're not being rewound → go to GameOverState.
-                ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
+                GameState currentState = ((MyWorld) getWorld()).getGSM().peekState();
+                if (currentState instanceof AbilityDisplayState) {
+                // Tell the demo state we died so it can restart the demo
+                ((AbilityDisplayState) currentState).notifyPlayerDied();
+                } else {
+                    // Otherwise, proceed to the real Game Over screen
+                    ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
+                }
             }
         } else {
-            handleStandardMovement();
+            if (!((MyWorld) getWorld()).isRewinding()) {
+                handleStandardMovement();
+            }
         }
     }
 
@@ -208,7 +224,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
         // Check if any ability is doubling the movement speed (Made in Heaven).
         for (Ability a : abilities) {
-            if (a instanceof Ability_MadeInHeaven && a.isActive()) speed *= 2;
+            if (a instanceof Ability_MadeInHeaven && a.isActive()) speed *= a.getMovementMultiplier();;
         }
 
         int nextX = getX();
@@ -217,11 +233,13 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         if (Greenfoot.isKeyDown("up"))   nextY -= speed;
         if (Greenfoot.isKeyDown("down")) nextY += speed;
 
+        
         // Clamp: keep the player at least 'padding' pixels from any edge.
         int padding = GameConfig.s(30);
+        int bottomBound = ((MyWorld) getWorld()).getBottomBound();
         nextX = Math.max(padding, Math.min(getWorld().getWidth()  - padding, nextX));
-        nextY = Math.max(padding, Math.min(getWorld().getHeight() - padding, nextY));
-
+        nextY = Math.max(padding, Math.min(bottomBound - padding, nextY));
+        
         setLocation(nextX, nextY);
     }
 
@@ -439,5 +457,34 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             }
         }
         return false;
+    }
+    
+    /**
+     * Checks if a specific ability class is currently active.
+     * Used by the Demo Engine to know when the player followed instructions.
+     */
+    public boolean isAbilityActive(Class<? extends Ability> clazz) {
+        for (Ability a : abilities) {
+            if (clazz.isInstance(a) && a.isActive()) return true;
+        }
+        return false;
+    }
+    
+    /**Gets a list of all abilities*/
+    public List<Ability> getAllAbilities() {
+        return abilities;
+    }
+    
+    /** Gets a specific ability so the Demo Engine can check its status. */
+    public Ability getAbility(Class<? extends Ability> clazz) {
+        for (Ability a : abilities) {
+            if (clazz.isInstance(a)) return a;
+        }
+        return null;
+    }
+        
+    //Special Setting for Demo
+    public void setDemoAbilityFilter(Class<? extends Ability> clazz) {
+        this.demoAbilityFilter = clazz;
     }
 }

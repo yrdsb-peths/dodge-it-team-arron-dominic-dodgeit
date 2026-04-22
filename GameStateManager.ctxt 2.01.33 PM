@@ -1,0 +1,24 @@
+#BlueJ class context
+comment0.target=GameStateManager
+comment1.params=world
+comment1.target=GameStateManager(MyWorld)
+comment1.text=\n\ Creates\ a\ new\ GameStateManager\ for\ the\ given\ world.\n\ @param\ world\ \ The\ MyWorld\ instance\ this\ manager\ belongs\ to.\n
+comment2.params=state
+comment2.target=void\ pushState(GameState)
+comment2.text=\n\ Pushes\ a\ new\ state\ onto\ the\ top\ of\ the\ stack\ and\ enters\ it.\n\ The\ previous\ state\ stays\ in\ the\ stack\ \u2014\ it\ just\ stops\ updating.\n\ Use\ this\ for\ overlaying\ states\ (e.g.,\ Pause\ over\ Playing).\n\n\ @param\ state\ \ The\ new\ state\ to\ activate.\n
+comment3.params=
+comment3.target=void\ popState()
+comment3.text=\n\ Removes\ the\ top\ state\ from\ the\ stack\ and\ exits\ it.\n\ The\ state\ below\ it\ becomes\ active\ again\ automatically.\n\ Use\ this\ to\ "dismiss"\ an\ overlay\ (e.g.,\ un-pause).\n
+comment4.params=state
+comment4.target=void\ changeState(GameState)
+comment4.text=\n\ Replaces\ the\ current\ top\ state\ with\ a\ new\ one.\n\ Exits\ the\ old\ state\ before\ entering\ the\ new\ one.\n\ Use\ this\ for\ clean\ transitions\ (Menu\ \u2192\ CharacterSelect\ \u2192\ Playing\ \u2192\ GameOver).\n\n\ @param\ state\ \ The\ new\ state\ to\ switch\ to.\n
+comment5.params=
+comment5.target=void\ update()
+comment5.text=\n\ Called\ once\ per\ frame\ by\ MyWorld.act().\n\ Only\ the\ state\ on\ TOP\ of\ the\ stack\ gets\ updated\ \u2014\ all\ others\ are\ frozen.\n
+comment6.params=stateClass
+comment6.target=boolean\ isState(java.lang.Class)
+comment6.text=\n\ Returns\ true\ if\ the\ top\ state\ is\ an\ instance\ of\ the\ given\ class.\n\ This\ is\ the\ standard\ guard\ used\ at\ the\ top\ of\ every\ actor's\ act()\:\n\ \ \ if\ (\!world.getGSM().isState(PlayingState.class))\ return;\n\n\ @param\ stateClass\ \ The\ class\ to\ check\ against\ (e.g.,\ PlayingState.class).\n\ @return\ \ \ \ \ \ \ \ \ \ \ \ True\ if\ the\ top\ state\ is\ of\ that\ type.\n
+comment7.params=
+comment7.target=GameState\ peekState()
+comment7.text=\n\ Returns\ the\ current\ top\ state\ without\ removing\ it.\n\ Returns\ null\ if\ the\ stack\ is\ empty.\n\ Useful\ when\ you\ need\ to\ call\ a\ method\ specific\ to\ a\ known\ state\ type.\n
+numComments=8

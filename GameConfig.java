@@ -52,7 +52,7 @@ public class GameConfig {
     // =========================================================================
     /** How many pixels per frame Dio moves when an arrow key is held. */
     public static final int DIO_MOVE_SPEED = s(5);
-    public static final int AGUY_MOVE_SPEED = s(9); // aguy's move speed
+
     /**
      * The scale factor applied to Dio's sprite images.
      * 0.8 × SCALE means the sprite is drawn at 80% of its source size,
@@ -82,7 +82,7 @@ public class GameConfig {
     /** Starting interval (frames) between Roadroller spawns. Lower = more frequent. */
     public static final int ROADROLLER_RATE     = 30;
     /** Minimum interval: Roadrollers will never spawn faster than this. */
-    public static final int ROADROLLER_MIN_RATE = 17;
+    public static final int ROADROLLER_MIN_RATE = 18;
     /** Starting speed of a Roadroller in pixels/frame. */
     public static final int ROADROLLER_SPEED    = s(6);
     /** Maximum speed a Roadroller can reach after many difficulty increases. */
@@ -91,11 +91,11 @@ public class GameConfig {
     /** Starting interval (frames) between Train spawns. ~3.3 seconds. */
     public static final int TRAIN_RATE     = 200;
     /** Minimum interval: Trains will never spawn faster than this. */
-    public static final int TRAIN_MIN_RATE = 36;
+    public static final int TRAIN_MIN_RATE = 50;
     /** Starting speed of a Train in pixels/frame. Trains are much faster than Roadrollers. */
     public static final int TRAIN_SPEED    = s(25);
     /** Maximum speed a Train can reach after many difficulty increases. */
-    public static final int TRAIN_MAX_SPEED = s(50);
+    public static final int TRAIN_MAX_SPEED = s(40);
 
     // =========================================================================
     // SECTION 5 — TIME REWIND SETTINGS
@@ -105,6 +105,8 @@ public class GameConfig {
      * 360 frames at 60fps = 6 seconds of rewindable history.
      */
     public static final int MAX_REWIND_TIME = 360;
+    public static final int REWIND_SPEED = 3;
+    public static final int REWIND_MAX_SPEED = 5;
 
     /**
      * How many frames of history each rewind use consumes.
@@ -123,6 +125,7 @@ public class GameConfig {
      * while Dio's per-frame movement stays the same = Dio moves faster relatively.
      */
     public static final int MIH_TICK_SPEED    = 48;
+    public static final int MIH_TICK_SPEED_MAX = 44;
     /** Normal Greenfoot tick speed used outside of any speed ability. */
     public static final int NORMAL_TICK_SPEED = 50;
     /** How long (seconds) the MiH cooldown lasts after use. */
@@ -201,6 +204,16 @@ public class GameConfig {
      * pushing PlayingState, and PlayingState reads it when spawning the player.
      */
     public static CharacterConfig ACTIVE_CHARACTER = CharacterConfig.DIO;
+    
+    
+    // =========================================================================
+    // SECTION 12 — DEMO SANDBOX SETTINGS
+    // =========================================================================
+    /** 
+     * The Y-coordinate where the sandbox floor ends. 
+     * Tweak this! s(280) makes the UI deck exactly 30% of the screen.
+     */
+    public static final int DEMO_BOTTOM_BOUND = s(290);
 
     // =========================================================================
     // THE SCALING HELPER — the most important method in this file

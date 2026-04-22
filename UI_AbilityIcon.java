@@ -44,7 +44,7 @@ public class UI_AbilityIcon extends Actor {
 
     private Player player;
     /** Which position in the player's visible-ability list this icon represents. */
-    private int    slotIndex;
+    private Ability ability;
     /** Pixel size of the circular icon (width and height). */
     private int    size;
 
@@ -52,9 +52,9 @@ public class UI_AbilityIcon extends Actor {
      * @param player     The player whose ability this icon tracks.
      * @param slotIndex  Index into player.getVisibleAbilities().
      */
-    public UI_AbilityIcon(Player player, int slotIndex) {
+    public UI_AbilityIcon(Player player, Ability ability) {
         this.player    = player;
-        this.slotIndex = slotIndex;
+        this.ability = ability;
         this.size      = GameConfig.s(50);
         updateImage();
     }
@@ -69,17 +69,6 @@ public class UI_AbilityIcon extends Actor {
      * Called every frame.
      */
     private void updateImage() {
-        // ── Resolve the ability for this slot ────────────────────────────────
-        Ability ability = null;
-        if (player instanceof GenericPlayer) {
-            List<Ability> visible = ((GenericPlayer) player).getVisibleAbilities();
-            if (slotIndex >= visible.size()) {
-                // The ability list shrank — remove this icon from the world
-                if (getWorld() != null) getWorld().removeObject(this);
-                return;
-            }
-            ability = visible.get(slotIndex);
-        }
         if (ability == null) return;
 
         // ── Build the icon image ──────────────────────────────────────────────

@@ -1,0 +1,11 @@
+#BlueJ class context
+comment0.target=UI_RewindBar
+comment1.params=rewindManager
+comment1.target=UI_RewindBar(Time_RewindManager)
+comment1.text=\n\ @param\ rewindManager\ \ The\ manager\ to\ read\ fill\ level\ and\ state\ from.\n
+comment2.params=
+comment2.target=void\ act()
+comment3.params=
+comment3.target=void\ redraw()
+comment3.text=\n\ Redraws\ the\ entire\ bar\ image\ each\ frame.\n\ Reads\ the\ current\ history\ size\ and\ rewind\ state\ from\ the\ manager.\n
+numComments=4

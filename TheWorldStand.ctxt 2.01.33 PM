@@ -1,0 +1,14 @@
+#BlueJ class context
+comment0.target=TheWorldStand
+comment1.params=ability
+comment1.target=TheWorldStand(Ability_StandPunch)
+comment1.text=\n\ Creates\ the\ Stand,\ loads\ its\ animation,\ and\ plays\ the\ summon\ sound.\n\n\ @param\ ability\ \ The\ Ability_StandPunch\ instance\ that\ created\ this\ Stand.\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ We\ hold\ a\ reference\ to\ check\ isActive()\ each\ frame.\n
+comment2.params=
+comment2.target=void\ act()
+comment3.params=
+comment3.target=Time_ActorMemento\ captureState()
+comment3.text=The\ Stand\ only\ needs\ its\ position\ saved\ \u2014\ the\ ability\ timer\ is\ stored\ elsewhere.
+comment4.params=m
+comment4.target=void\ restoreState(Time_ActorMemento)
+comment4.text=Nothing\ to\ restore\ beyond\ position\ (handled\ by\ the\ rewind\ manager).
+numComments=5

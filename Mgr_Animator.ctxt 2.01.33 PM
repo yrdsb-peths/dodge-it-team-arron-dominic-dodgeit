@@ -1,0 +1,25 @@
+#BlueJ class context
+comment0.target=Mgr_Animator
+comment0.text=\n\ ANIMATION\ LIST\ FOR\ DIO\n\ ---------------------\n\ Dash\ \ \ \ \ \ \ \ \ -\ Runs\n\ High\ \ \ \ \ \ \ \ \ -\ brain\ massage\n\ Idle\ \ \ \ \ \ \ \ \ -\ Standing\ still\n\ Intro\ \ \ \ \ \ \ \ -\ Cool\ intro\n\ Lose\ \ \ \ \ \ \ \ \ -\ Defeat\ state\n\ Roll\ \ \ \ \ \ \ \ \ -\ Dodge\ move\n\ Scratch\ \ \ \ \ \ \ -\ Brain\ massag\ +\ wry\n\ Up\ \ \ \ \ \ \ \ \ \ \ -\ Up\ slash\n\ WalkLeft\ \ \ \ \ -\ Moving\ left\n\ WalkRight\ \ \ \ -\ Moving\ right\n\ Wry\ \ \ \ \ \ \ \ \ \ -\ WRYYYYYYY\n\ \n\ (special\:\ to\ be\ implemented\ later)\n\ Description\:\ Dio\ teleports\ backwards\ as\ his\ Stand\ appears\ to\ punch.\n\ Requires\ two\ animations\ play\ simultaneously,\ and\ locatio\ change.\n\ WorldPunch\ \ \ -\ Special\ attack\n\ Teleport\ \ \ \ \ -\ pairs\ with\ WorldPunch\n\ \n
+comment1.params=baseFolder\ folderName\ prefix\ frameCount\ speed\ scaleFactor
+comment1.target=Mgr_Animator(java.lang.String,\ java.lang.String,\ java.lang.String,\ int,\ int,\ double)
+comment1.text=\n\ The\ more\ detailed\ constructor\ for\ animator\ that\ takes\ in\ more\ parameters\ \n\ to\ help\ with\ debugging\ and\ customizability.\ \n
+comment2.params=baseFolder\ folderName\ scaleFactor
+comment2.target=Mgr_Animator(java.lang.String,\ java.lang.String,\ double)
+comment2.text=\n\ The\ more\ general\ constructor\ for\ animator\ that\ only\ takes\ in\ folder\ name\n\ Easy\ to\ call\n
+comment3.params=baseFolder\ folderName\ speed\ scaleFactor
+comment3.target=Mgr_Animator(java.lang.String,\ java.lang.String,\ int,\ double)
+comment3.text=\n\ The\ more\ general\ constructor\ for\ animator\ that\ only\ takes\ in\ folder\ name\ AND\ SPEED\n\ Easy\ to\ call\n
+comment4.params=baseFolder\ folderName
+comment4.target=int\ countFrames(java.lang.String,\ java.lang.String)
+comment4.text=\n\ Counts\ the\ number\ of\ frames\ in\ the\ folder\ for\ easy\ registration\n\ HASDS\ NOTHING\ TO\ DO\ WITH\ ANIMATION\n
+comment5.params=
+comment5.target=greenfoot.GreenfootImage\ getCurrentFrame()
+comment5.text=\n\ Find\ the\ current\ image\ given\ the\ current\ time.\n
+comment6.params=
+comment6.target=void\ reset()
+comment6.text=\n\ Resets\ timer\ and\ frame.\ \n
+comment7.params=speed
+comment7.target=void\ setSpeed(int)
+comment7.text=\n\ adjust\ speed\ upon\ request\n
+numComments=8

@@ -1,0 +1,13 @@
+#BlueJ class context
+comment0.target=FX_RewindOverlay
+comment1.params=
+comment1.target=FX_RewindOverlay()
+comment2.params=
+comment2.target=void\ act()
+comment3.params=scanlineOffset
+comment3.target=greenfoot.GreenfootImage\ createOverlay(boolean)
+comment3.text=\n\ Draws\ one\ version\ of\ the\ overlay\ image.\n\ A\ semi-transparent\ blue\ tint\ with\ dark\ horizontal\ scanlines.\n\n\ @param\ scanlineOffset\ \ If\ true,\ scanlines\ start\ 2px\ lower\ for\ the\ alternate\ frame.\n
+comment4.params=
+comment4.target=void\ preLoad()
+comment4.text=\n\ Pre-draws\ both\ overlay\ images\ into\ static\ memory.\n\ Call\ this\ from\ PlayingState.enter()\ so\ the\ images\ exist\ before\n\ the\ first\ rewind\ \u2014\ prevents\ a\ lag\ spike\ on\ first\ R\ press.\n
+numComments=5

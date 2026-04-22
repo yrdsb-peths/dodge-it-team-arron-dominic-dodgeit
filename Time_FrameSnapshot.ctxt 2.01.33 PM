@@ -1,0 +1,6 @@
+#BlueJ class context
+comment0.target=Time_FrameSnapshot
+comment1.params=actorStates\ score\ spawnTimer\ difficultyTimer\ rRate\ tRate\ rngState
+comment1.target=Time_FrameSnapshot(java.util.List,\ int,\ int,\ int,\ int,\ int,\ long)
+comment1.text=\n\ Creates\ a\ complete\ frame\ snapshot.\n\n\ @param\ actorStates\ \ \ \ \ Mementos\ of\ every\ snapshottable\ actor.\n\ @param\ score\ \ \ \ \ \ \ \ \ \ \ The\ score\ at\ this\ frame.\n\ @param\ spawnTimer\ \ \ \ \ \ SpawnManager's\ frame\ counter.\n\ @param\ difficultyTimer\ SpawnManager's\ level-up\ interval.\n\ @param\ rRate\ \ \ \ \ \ \ \ \ \ \ Current\ roadroller\ spawn\ interval.\n\ @param\ tRate\ \ \ \ \ \ \ \ \ \ \ Current\ train\ spawn\ interval.\n\ @param\ rngState\ \ \ \ \ \ \ \ The\ GameRNG\ seed\ value.\n
+numComments=2

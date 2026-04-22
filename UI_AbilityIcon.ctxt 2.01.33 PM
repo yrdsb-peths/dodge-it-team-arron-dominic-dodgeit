@@ -1,0 +1,11 @@
+#BlueJ class context
+comment0.target=UI_AbilityIcon
+comment1.params=player\ slotIndex
+comment1.target=UI_AbilityIcon(Player,\ int)
+comment1.text=\n\ @param\ player\ \ \ \ \ The\ player\ whose\ ability\ this\ icon\ tracks.\n\ @param\ slotIndex\ \ Index\ into\ player.getVisibleAbilities().\n
+comment2.params=
+comment2.target=void\ act()
+comment3.params=
+comment3.target=void\ updateImage()
+comment3.text=\n\ Redraws\ the\ icon\ based\ on\ the\ current\ ability\ state.\n\ Called\ every\ frame.\n
+numComments=4

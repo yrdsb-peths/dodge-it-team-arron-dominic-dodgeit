@@ -1,0 +1,11 @@
+#BlueJ class context
+comment0.target=State_Playing
+comment1.params=world
+comment1.target=void\ enter(MyWorld)
+comment2.params=world
+comment2.target=void\ update(MyWorld)
+comment3.params=world
+comment3.target=void\ exit(MyWorld)
+comment4.params=
+comment4.target=Mgr_Spawn\ getSpawnManager()
+numComments=5

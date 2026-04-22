@@ -45,12 +45,19 @@ public abstract class Obstacles extends Actor {
     @Override
     public void act() {
         MyWorld world = (MyWorld) getWorld();
-        // Safety check: if we are not in a world or not in PlayingState, do nothing.
-        if (world == null || !world.getGSM().isState(PlayingState.class)) return;
+        if (world == null) return;
 
-        movementLogic();  // 1. Move
-        collisionLogic(); // 2. Check hits
-        checkRemove();    // 3. Remove if off-screen (MUST be last)
+        GameState state = world.getGSM().peekState();
+
+        // Safe check: If not a gameplay state, or we are paused/frozen, stop here.
+        if (!(state instanceof IActiveGameState)) return; 
+        
+        IActiveGameState activeState = (IActiveGameState) state;
+        if (activeState.isGameFrozen()) return;
+
+        movementLogic();  
+        collisionLogic(); 
+        checkRemove();    
     }
 
     /**
@@ -71,4 +78,5 @@ public abstract class Obstacles extends Actor {
      * Must call world.removeObject(this) at the END of this method — never before.
      */
     protected abstract void checkRemove();
+    
 }

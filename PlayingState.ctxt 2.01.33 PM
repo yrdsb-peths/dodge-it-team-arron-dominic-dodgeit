@@ -1,0 +1,20 @@
+#BlueJ class context
+comment0.target=PlayingState
+comment1.params=world
+comment1.target=void\ enter(MyWorld)
+comment1.text=\n\ Sets\ up\ the\ entire\ game\ world\ for\ a\ new\ play\ session.\n\ Called\ once\ when\ this\ state\ becomes\ active\ (either\ first\ run\ or\ restart).\n
+comment2.params=world
+comment2.target=void\ update(MyWorld)
+comment2.text=\n\ The\ main\ game\ loop\ \u2014\ called\ every\ frame\ while\ this\ state\ is\ active.\n\n\ IMPORTANT\:\ Greenfoot.getKey()\ clears\ the\ key\ buffer\ on\ first\ call.\n\ Store\ it\ in\ a\ local\ variable\ before\ comparing\ it\ multiple\ times.\n
+comment3.params=world
+comment3.target=void\ exit(MyWorld)
+comment3.text=\n\ Cleans\ up\ when\ PlayingState\ ends.\n\ Note\:\ PlayingState\ is\ normally\ never\ "exited"\ \u2014\ other\ states\ are\ pushed\n\ ON\ TOP\ of\ it\ (Pause,\ then\ popped).\ \ exit()\ is\ only\ called\ when\ the\ player\n\ truly\ loses\ (GameOverState.update\ \u2192\ changeState).\n
+comment4.params=world
+comment4.target=void\ triggerRewind(MyWorld)
+comment4.text=\n\ Starts\ a\ rewind\ if\ the\ manager\ has\ enough\ history.\n\ Also\ mutes\ audio,\ plays\ the\ rewind\ SFX,\ and\ adds\ the\ blue\ overlay.\n\ Called\ by\ Ability_Mandom,\ not\ triggered\ directly\ from\ update().\n\n\ @param\ world\ \ The\ game\ world.\n
+comment5.params=
+comment5.target=SpawnManager\ getSpawnManager()
+comment6.params=
+comment6.target=boolean\ isRewinding()
+comment6.text=@return\ True\ while\ the\ rewind\ manager\ is\ actively\ rewinding.
+numComments=7

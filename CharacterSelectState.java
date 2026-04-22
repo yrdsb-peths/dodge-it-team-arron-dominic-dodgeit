@@ -53,16 +53,21 @@ public class CharacterSelectState implements GameState {
     @Override
     public void enter(MyWorld world) {
         int midX = world.getWidth() / 2;
-
+        
+        world.setBackground(new GreenfootImage("background_image.jpg")); 
+        world.getBackground().scale(GameConfig.WORLD_WIDTH+685, GameConfig.WORLD_HEIGHT+300);
+        
         addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(80));
-        addUI(world, new UIText("< LEFT ARROW       RIGHT ARROW >", GameConfig.s(20), Color.CYAN), midX, GameConfig.s(240));
-
+        addUI(world, new UIText("< LEFT ARROW       RIGHT ARROW >", GameConfig.s(20), Color.CYAN), midX, GameConfig.s(250));
+        addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(22), Color.GREEN), midX, GameConfig.s(320));
+        addUI(world, new UIText("[ ENTER : START GAME]", GameConfig.s(22), Color.RED), midX, GameConfig.s(360));
+        
         // Name and ability labels start empty — updateScreen() fills them.
         nameDisplay = new UIText("", GameConfig.s(45), Color.WHITE);
         addUI(world, nameDisplay, midX, GameConfig.s(220));
 
-        abilitiesDisplay = new UIText("", GameConfig.s(18), Color.ORANGE);
-        addUI(world, abilitiesDisplay, midX, GameConfig.s(260));
+        abilitiesDisplay = new UIText("", GameConfig.s(18), Color.WHITE);
+        addUI(world, abilitiesDisplay, midX, GameConfig.s(280));
 
         updateScreen(world); // populate with the first character's data
     }
@@ -79,8 +84,11 @@ public class CharacterSelectState implements GameState {
                 // Wrap backward through the roster
                 currentIndex = (currentIndex - 1 + roster.length) % roster.length;
                 updateScreen(world);
+            } else if (key.equals("l")) {
+                // Enter the interactive tutorial overlay
+                GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
+                world.getGSM().pushState(new AbilityDisplayState());
             } else if (key.equals("enter")) {
-                // Confirm selection and start the game
                 GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
                 world.getGSM().changeState(new PlayingState());
             }

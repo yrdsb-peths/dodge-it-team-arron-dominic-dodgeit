@@ -66,7 +66,11 @@ public class TheWorldStand extends Actor implements Time_Snapshottable {
 
         // ── STEP 2: Standard game-state guard ────────────────────────────────
         // Only animate and fight obstacles while in PlayingState and not rewinding.
-        if (!world.getGSM().isState(PlayingState.class) || world.isRewinding()) return;
+        GameState state = world.getGSM().peekState();
+        if (!(state instanceof IActiveGameState) || world.isRewinding()) return;
+        
+        // If the gameplay state is currently frozen for instructions, don't animate/move
+        if (((IActiveGameState)state).isGameFrozen()) return;
 
         // Advance the punch animation
         setImage(punchAnim.getCurrentFrame());

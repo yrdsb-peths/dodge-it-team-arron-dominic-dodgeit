@@ -1,0 +1,9 @@
+#BlueJ class context
+comment0.target=Dio
+comment1.params=
+comment1.target=Dio()
+comment1.text=\n\ Creates\ Dio\ using\ CharacterConfig.DIO\ as\ his\ data\ source.\n\ All\ animations,\ abilities,\ speed,\ and\ sounds\ are\ defined\ there.\n
+comment2.params=world
+comment2.target=void\ onPauseUpdate(MyWorld)
+comment2.text=\n\ Called\ by\ Player.act()\ once\ per\ frame\ while\ PausedState\ is\ active.\n\ (Normal\ PlayingState\ frames\ call\ movementLogic/animationLogic\ instead.)\n\n\ Behaviour\ during\ time-stop\:\n\ \ \ 1.\ Spawns\ the\ boss\ intro\ Banner\ (once,\ tracked\ by\ bannerSpawned).\n\ \ \ 2.\ Calls\ movementLogic()\ and\ animationLogic()\ so\ Dio\ plays\ his\n\ \ \ \ \ \ "Wry"\ animation\ and\ any\ active\ abilities\ continue\ updating.\n
+numComments=3

@@ -44,7 +44,7 @@ public class Ability_MadeInHeaven implements Ability {
     private int afterimageCounter = 0;
 
     /** How much faster Dio moves during MiH (applied in GenericPlayer.handleStandardMovement). */
-    private final double speedMultiplier = 2;
+    private double speedMultiplier = 2;
 
     /** Tick speed while MiH is active — slower global tick rate. */
     private final int ACCELERATED_TICK_SPEED = GameConfig.MIH_TICK_SPEED;
@@ -66,9 +66,12 @@ public class Ability_MadeInHeaven implements Ability {
     public void activate(Player p, MyWorld world) {
         boolean notRunning = !durationTimer.isActive() || durationTimer.isExpired();
         if (notRunning && !cooldownTimer.isActive()) {
-            durationTimer.reset();
-            durationTimer.start();
-            Greenfoot.setSpeed(ACCELERATED_TICK_SPEED); // slow global tick = "faster" Dio
+            SpawnManager sm = ((PlayingState)world.getGSM().peekState()).getSpawnManager();
+            boolean isMax = sm.getRoadrollerRate() <= GameConfig.ROADROLLER_MIN_RATE;
+            durationTimer.setDuration(isMax ? 2.5 : 4.8); // 2.5s if Max, 4.8s if Normal
+            durationTimer.start(); 
+            speedMultiplier = (isMax ? 3 : 2);
+            Greenfoot.setSpeed(isMax ? GameConfig.MIH_TICK_SPEED_MAX: GameConfig.MIH_TICK_SPEED); // World is even slower at Max diff
             AudioManager.play("speed_up_time");
         }
     }
@@ -100,6 +103,7 @@ public class Ability_MadeInHeaven implements Ability {
         if (durationTimer.isExpired()) {
             durationTimer.stop();
             Greenfoot.setSpeed(NORMAL_TICK_SPEED); // restore normal game speed
+            p.startIFrame(0.8);//Grant 0.8 seconds of iframe
             cooldownTimer.reset();
             cooldownTimer.start();
         }
@@ -161,4 +165,7 @@ public class Ability_MadeInHeaven implements Ability {
     public void    setRemainingFrames(int f) { durationTimer.setRemainingFrames(f); }
     public void    startTimer()           { durationTimer.start(); }
     public void    stopTimer()            { durationTimer.stop(); }
+    public double getMovementMultiplier() {
+        return (durationTimer.isActive() && !durationTimer.isExpired()) ? speedMultiplier : 1.0;
+    }
 }
