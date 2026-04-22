@@ -179,7 +179,7 @@ public class GameConfig {
     public static final int ROAD_SCROLL_SPEED = s(5);
     /** Maximum scroll speed the road can reach after difficulty increases. */
     public static final int ROAD_MAX_SPEED    = s(5);
-
+    public static final String ROAD_IMAGE = "white_road.png";
     /**
      * The Y-coordinates (centre of each lane) where obstacles can spawn.
      * Five lanes are evenly spread across the 400-design-pixel world height.
