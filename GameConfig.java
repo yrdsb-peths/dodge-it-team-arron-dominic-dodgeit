@@ -76,13 +76,13 @@ public class GameConfig {
     // =========================================================================
     // SECTION 4 — DIFFICULTY / SPAWN SETTINGS
     // =========================================================================
-    /** How many frames between difficulty increases. 100 frames ≈ 1.6 seconds. */
-    public static final int LEVEL_UP_TIME = 100;
+    /** How many frames between difficulty increases. 200 frames ≈ 3.3 seconds. */
+    public static final int LEVEL_UP_TIME = 200;
 
     /** Starting interval (frames) between Roadroller spawns. Lower = more frequent. */
     public static final int ROADROLLER_RATE     = 30;
     /** Minimum interval: Roadrollers will never spawn faster than this. */
-    public static final int ROADROLLER_MIN_RATE = 15;
+    public static final int ROADROLLER_MIN_RATE = 18;
     /** Starting speed of a Roadroller in pixels/frame. */
     public static final int ROADROLLER_SPEED    = s(6);
     /** Maximum speed a Roadroller can reach after many difficulty increases. */
@@ -91,7 +91,7 @@ public class GameConfig {
     /** Starting interval (frames) between Train spawns. ~3.3 seconds. */
     public static final int TRAIN_RATE     = 200;
     /** Minimum interval: Trains will never spawn faster than this. */
-    public static final int TRAIN_MIN_RATE = 36;
+    public static final int TRAIN_MIN_RATE = 50;
     /** Starting speed of a Train in pixels/frame. Trains are much faster than Roadrollers. */
     public static final int TRAIN_SPEED    = s(25);
     /** Maximum speed a Train can reach after many difficulty increases. */
@@ -123,6 +123,7 @@ public class GameConfig {
      * while Dio's per-frame movement stays the same = Dio moves faster relatively.
      */
     public static final int MIH_TICK_SPEED    = 48;
+    public static final int MIH_TICK_SPEED_MAX = 44;
     /** Normal Greenfoot tick speed used outside of any speed ability. */
     public static final int NORMAL_TICK_SPEED = 50;
     /** How long (seconds) the MiH cooldown lasts after use. */

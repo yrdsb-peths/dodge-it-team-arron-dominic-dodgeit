@@ -208,7 +208,6 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
                 }
             }
         } else {
-            // REPLACE handleStandardMovement(); WITH THIS:
             if (!((MyWorld) getWorld()).isRewinding()) {
                 handleStandardMovement();
             }
@@ -225,7 +224,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 
         // Check if any ability is doubling the movement speed (Made in Heaven).
         for (Ability a : abilities) {
-            if (a instanceof Ability_MadeInHeaven && a.isActive()) speed *= 2;
+            if (a instanceof Ability_MadeInHeaven && a.isActive()) speed *= a.getMovementMultiplier();;
         }
 
         int nextX = getX();

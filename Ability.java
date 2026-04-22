@@ -124,4 +124,11 @@ public interface Ability {
      * Ability_StickyFingers uses this for the portal warp cooldown.
      */
     default double getSecondaryCooldownPercent() { return 0.0; }
+    
+    /*
+     * Default speedmovement multiplier to be overwriten by MIH
+     */
+    default double getMovementMultiplier() {
+        return 1.0;
+    }
 }
