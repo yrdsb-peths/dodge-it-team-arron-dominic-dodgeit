@@ -61,7 +61,7 @@ public class Ability_MadeInHeaven implements Ability {
     /**
      * Starts MiH if no duration or cooldown is currently running.
      * Slows the global tick rate and plays the speed-up sound.
-     */
+     */ 
     @Override
     public void activate(Player p, MyWorld world) {
         boolean notRunning = !durationTimer.isActive() || durationTimer.isExpired();

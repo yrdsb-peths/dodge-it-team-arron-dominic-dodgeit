@@ -127,7 +127,8 @@ public class Ability_StickyFingers implements Ability {
             // Spawn the zipper graphic at the player's feet
             zipperGround = new FX_ZipperGround();
             world.addObject(zipperGround, p.getX(), p.getY());
-
+            
+            AudioManager.playPool("zipper"); //Play sound
         } else if (hidden) {
             // ── POP BACK OUT ────────────────────────────────────────────────
             hidden = false;
@@ -145,6 +146,8 @@ public class Ability_StickyFingers implements Ability {
             // Start the cooldown before hiding again
             hideCooldown.reset();
             hideCooldown.start();
+            
+            AudioManager.playPool("zipper");// Play sound
         }
     }
 
@@ -232,7 +235,7 @@ public class Ability_StickyFingers implements Ability {
             : GameConfig.PORTAL_MARGIN + GameConfig.s(5);              // bottom→top
 
         p.setLocation(p.getX(), exitY);
-
+        AudioManager.playPool("zipper"); //Play sound
         // Grant i-frames and start cooldown
         p.startIFrame(GameConfig.PORTAL_IFRAME_DURATION);
         portalCooldown.reset();

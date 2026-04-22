@@ -88,8 +88,10 @@ public class AudioManager {
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
         loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
 
+
         // ── Voice pools ───────────────────────────────────────────────────────
         loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 80);
+        loadVoicePool("zipper",        new String[]{ "zipper1.mp3","zipper2.mp3","zipper3.mp3" }, 120);
         loadVoicePool("dioLostVoices", new String[]{ "dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3" }, 80);
         loadVoicePool("dioBattleCry",  new String[]{
             "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3",
