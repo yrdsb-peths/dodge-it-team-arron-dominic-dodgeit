@@ -105,6 +105,8 @@ public class GameConfig {
      * 360 frames at 60fps = 6 seconds of rewindable history.
      */
     public static final int MAX_REWIND_TIME = 360;
+    public static final int REWIND_SPEED = 3;
+    public static final int REWIND_MAX_SPEED = 5;
 
     /**
      * How many frames of history each rewind use consumes.

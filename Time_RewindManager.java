@@ -59,7 +59,6 @@ public class Time_RewindManager {
      * How many snapshots are popped per frame during rewind.
      * 3 = rewind plays at 3× real-time speed.
      */
-    private static final int REWIND_SPEED = 3;
 
     // ─────────────────────────────────────────────────────────────────────────
     // STATE
@@ -146,11 +145,11 @@ public class Time_RewindManager {
      * @param spawnManager  The spawn manager (for state restoration).
      * @return              True if the rewind is still in progress; false if done.
      */
-    public boolean rewindStep(MyWorld world, SpawnManager spawnManager) {
+    public boolean rewindStep(MyWorld world, SpawnManager spawnManager, int speed) {
         if (!isRewinding) return false;
 
         // Pop multiple snapshots per frame to create the fast-rewind effect
-        for (int i = 0; i < REWIND_SPEED; i++) {
+        for (int i = 0; i < speed; i++) {
             if (framesRewound >= REWIND_COST_FRAMES || history.isEmpty()) {
                 stopRewinding();
                 return false; // rewind is complete

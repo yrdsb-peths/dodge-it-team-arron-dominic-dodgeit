@@ -143,7 +143,9 @@ public class PlayingState implements GameState,IActiveGameState{
          */
         if (rewindManager.isRewinding()) {
             // Step backward through history; returns false when rewind finishes.
-            boolean stillGoing = rewindManager.rewindStep(world, spawnManager);
+            int rRate = spawnManager.getRoadrollerRate();
+            int rewindSpeed = (rRate <= GameConfig.ROADROLLER_MIN_RATE) ? GameConfig.REWIND_MAX_SPEED : GameConfig.REWIND_SPEED;
+            boolean stillGoing = rewindManager.rewindStep(world, spawnManager,rewindSpeed);
 
             if (!stillGoing && rewindOverlay != null) {
                 // Rewind just finished — clean up the visual overlay

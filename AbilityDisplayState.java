@@ -165,7 +165,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
                 dimOverlay = null;
             }
 
-            boolean stillGoing = rewindManager.rewindStep(world, demoSpawnManager);
+            boolean stillGoing = rewindManager.rewindStep(world, demoSpawnManager,GameConfig.REWIND_SPEED);
             if (!stillGoing) {
                 if (rewindOverlay != null && rewindOverlay.getWorld() != null) world.removeObject(rewindOverlay);
                 rewindOverlay = null;
