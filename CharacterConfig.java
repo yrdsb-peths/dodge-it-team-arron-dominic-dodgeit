@@ -69,7 +69,7 @@ public enum CharacterConfig {
     Dio2(
         "Night",
         "MoonKnight",
-        new String[]{"Idle", "Dash", "Die"},
+        new String[]{"Idle", "Dash", "Lose"},
         "Dash",
         GameConfig.MOONKNIGHT_MOVE_SPEED,
         0.8 * GameConfig.SCALE,
