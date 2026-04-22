@@ -66,8 +66,12 @@ public class Ability_MadeInHeaven implements Ability {
     public void activate(Player p, MyWorld world) {
         boolean notRunning = !durationTimer.isActive() || durationTimer.isExpired();
         if (notRunning && !cooldownTimer.isActive()) {
-            SpawnManager sm = ((PlayingState)world.getGSM().peekState()).getSpawnManager();
-            boolean isMax = sm.getRoadrollerRate() <= GameConfig.ROADROLLER_MIN_RATE;
+            boolean isMax = false;
+            // Only check SpawnManager if we are in the actual PlayingState
+            if (world.getGSM().peekState() instanceof PlayingState) {
+                PlayingState ps = (PlayingState) world.getGSM().peekState();
+                isMax = ps.getSpawnManager().getRoadrollerRate() <= GameConfig.ROADROLLER_MIN_RATE;
+            }
             durationTimer.setDuration(isMax ? 2.5 : 4.8); // 2.5s if Max, 4.8s if Normal
             durationTimer.start(); 
             speedMultiplier = (isMax ? 3 : 2);
