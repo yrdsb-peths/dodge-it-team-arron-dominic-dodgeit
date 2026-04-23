@@ -58,12 +58,12 @@ public enum CharacterConfig {
     // =========================================================================
     // CHARACTER: DIO BRANDO
     // =========================================================================
-    Testing_DIO(
+    omnipotent_DIO(
         "Omnipotent Dio",                               // displayName  (shown in UI)
         "Dio",                                      // folderName   (images/Dio/)
-        "dio_full.jpg",                             //Portrait Image (new, for character select)
+        "omnipotent_dio_full.png",                             //Portrait Image (new, for character select)
         "standard_road.png",                             //CUstomised road(new, for character select)
-        new String[]{"Idle", "Wry", "Dash", "Lose"}, // animNames  (sub-folders)
+        new String[]{"Idle", "Wry", "Dash", "Lose", "DarkSpell_01", "DarkSpell_02"}, // animNames  (sub-folders)
         "Dash",                                     // defaultAnim  (starts here)
         GameConfig.DIO_MOVE_SPEED,                  // moveSpeed    (pixels/frame)
         0.8 * GameConfig.SCALE,                     // scale        (sprite size)
@@ -76,6 +76,9 @@ public enum CharacterConfig {
             "Ability_MadeInHeaven", // S — speed boost
             "Ability_Mandom",       // R — time rewind (delegates to PlayingState)
             "Ability_StickyFingers" // F — portal wrap + hide underground
+            ,"Ability_DarkSpell01", // V - destroys all obstacles
+            "Ability_DarkSpell02",
+            "Ability_KingCrimson"
         }
     ),
 

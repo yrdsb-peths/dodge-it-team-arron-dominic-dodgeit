@@ -315,18 +315,18 @@ public class GameOverState implements GameState {
 
         // ── SCORE BLOCK ──
         Color scoreColor = (finalScore >= allTimeBest) ? Color.YELLOW : Color.WHITE;
-        addUI(world, new UIText("FINAL SCORE: " + finalScore, GameConfig.s(30), scoreColor), midX, topY + GameConfig.s(55));
+        addUI(world, new UIText("FINAL SCORE: " + finalScore, GameConfig.s(20), scoreColor), midX, topY + GameConfig.s(45));
         
         String bestText = (finalScore >= allTimeBest) ? "NEW ALL-TIME RECORD!" : "ALL-TIME BEST: " + allTimeBest;
-        addUI(world, new UIText(bestText, GameConfig.s(20), Color.CYAN), midX, topY + GameConfig.s(85));
+        addUI(world, new UIText(bestText, GameConfig.s(20), Color.CYAN), midX, topY + GameConfig.s(65));
         
         // Lowered these Y values so they don't bunch up
-        addUI(world, new UIText("Favorite Character: " + fav, 20, Color.WHITE), midX, topY + GameConfig.s(115));
-        addUI(world, new UIText("Total Playtime: " + totalTime + " mins", 20, Color.CYAN), midX, topY + GameConfig.s(140));
+        addUI(world, new UIText("Favorite Character: " + fav, 20, Color.WHITE), midX, topY + GameConfig.s(85));
+        addUI(world, new UIText("Total Playtime: " + totalTime + " mins", 20, Color.CYAN), midX, topY + GameConfig.s(105));
         
         // ── THE OBITUARY (The Flavor) ──
         // Pushed the obituary lower (to s(170)) so it doesn't hit the text above it
-        addWrappedText(world, "\"" + obituary + "\"", GameConfig.s(16), Color.LIGHT_GRAY, midX, topY + GameConfig.s(170), 60);
+        addWrappedText(world, "\"" + obituary + "\"", GameConfig.s(16), Color.LIGHT_GRAY, midX, topY + GameConfig.s(130), 100);
     }
 
     @Override
@@ -648,12 +648,12 @@ public enum CharacterConfig {
     // =========================================================================
     // CHARACTER: DIO BRANDO
     // =========================================================================
-    Testing_DIO(
+    omnipotent_DIO(
         "Omnipotent Dio",                               // displayName  (shown in UI)
         "Dio",                                      // folderName   (images/Dio/)
-        "dio_full.jpg",                             //Portrait Image (new, for character select)
+        "omnipotent_dio_full.png",                             //Portrait Image (new, for character select)
         "standard_road.png",                             //CUstomised road(new, for character select)
-        new String[]{"Idle", "Wry", "Dash", "Lose"}, // animNames  (sub-folders)
+        new String[]{"Idle", "Wry", "Dash", "Lose", "DarkSpell_01", "DarkSpell_02"}, // animNames  (sub-folders)
         "Dash",                                     // defaultAnim  (starts here)
         GameConfig.DIO_MOVE_SPEED,                  // moveSpeed    (pixels/frame)
         0.8 * GameConfig.SCALE,                     // scale        (sprite size)
@@ -666,6 +666,9 @@ public enum CharacterConfig {
             "Ability_MadeInHeaven", // S — speed boost
             "Ability_Mandom",       // R — time rewind (delegates to PlayingState)
             "Ability_StickyFingers" // F — portal wrap + hide underground
+            ,"Ability_DarkSpell01", // V - destroys all obstacles
+            "Ability_DarkSpell02",
+            "Ability_KingCrimson"
         }
     ),
 
@@ -692,11 +695,11 @@ public enum CharacterConfig {
         BossConfig.DIO,
         new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} // fewer abilities than DIO
     ),
-     Ringo(
+    Ringo(
         "Ringo Roadagain",
         "Dio",
-        "dio_full.jpg",                             //Portrait Image (new, for character select)
-        "punk_road.png",                             //CUstomised road(new, for character select)
+        "ringo_full.jpg",                             //Portrait Image (new, for character select)
+        "standard_road.png",                             //CUstomised road(new, for character select)
         new String[]{"Idle","Dash", "Lose"},
         "Dash",
         GameConfig.DIO_MOVE_SPEED,
@@ -736,7 +739,7 @@ public enum CharacterConfig {
         GameConfig.DIO_MOVE_SPEED,
         0.8 * GameConfig.SCALE,
         "dio_bgm", 
-        "dioLostVoices",
+        "diavoloLoseLines",
         "diavoloLines", 
         BossConfig.DIO, 
         new String[]{"Ability_KingCrimson"});
@@ -2758,7 +2761,7 @@ public class CharacterSelectState implements GameState {
         addUI(world, new UI_Panel(world.getWidth(), GameConfig.s(160), new Color(0, 0, 0, 180)), midX, GameConfig.s(320));
 
         // 3. Static Text
-        addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(40));
+        addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.BLACK), midX, GameConfig.s(40));
         addUI(world, new UIText("< LEFT ARROW               RIGHT ARROW >", GameConfig.s(18), Color.CYAN), midX, GameConfig.s(260));
         addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(20), Color.GREEN), midX - GameConfig.s(130), GameConfig.s(370));
         addUI(world, new UIText("[ ENTER : START GAME ]", GameConfig.s(20), Color.RED), midX + GameConfig.s(130), GameConfig.s(370));
@@ -4683,7 +4686,7 @@ public class GameConfig {
      * base volumes in AudioManager; actual volume = (base × master) / 200.
      */
 
-    public static final int MASTER_VOLUME = 100;
+    public static final int MASTER_VOLUME = 0;
 
     
     // =========================================================================
@@ -6219,6 +6222,10 @@ public class ScoreManager {
      * for clarity.
      */
    public static void updateHighScore() {
+       if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.omnipotent_DIO) {
+            System.out.println("Omnipotent Dio score ignored for leaderboard.");
+            return; 
+        }
         if (score > highScore) highScore = score;
         
         // PERSISTENCE: Check against the permanent record
@@ -6882,6 +6889,8 @@ public class Time_RewindManager {
      * During rewind, snapshots are pop()ped from the front (most recent first).
      */
     private ArrayDeque<Time_FrameSnapshot> history = new ArrayDeque<>();
+    
+    private Time_ActorMemento[] mementoBuffer = new Time_ActorMemento[64];  
 
     /** True while rewind is in progress. Checked by world.isRewinding(). */
     private boolean isRewinding = false;
@@ -6901,26 +6910,25 @@ public class Time_RewindManager {
      * @param spawnManager  The spawn manager (to save timer/rate state).
      */
     public void record(MyWorld world, SpawnManager spawnManager) {
-        if (isRewinding) return; // never record during rewind
-
-        List<Actor> allActors = world.getObjects(Actor.class);
-        
-        // 1. Count snapshottables (creates zero garbage!)
+        if (isRewinding) return;
+    
+        List<Actor> allActors = world.getObjects(Actor.class); // one call, reused twice
+    
+        // Pass 1: count how many are snapshottable
         int count = 0;
         for (Actor a : allActors) {
             if (a instanceof Time_Snapshottable) count++;
         }
-
-        // 2. Pre-allocate exact array size (avoids ArrayList resizing overhead)
+    
+        // Pass 2: fill the array — correct target, correct counter
         Time_ActorMemento[] mementos = new Time_ActorMemento[count];
         int index = 0;
-        for (Actor a : allActors) {
+        for (Actor a : allActors) {                           // ✓ reuse allActors
             if (a instanceof Time_Snapshottable) {
-                mementos[index++] = ((Time_Snapshottable) a).captureState();
+                mementos[index++] = ((Time_Snapshottable) a).captureState(); // ✓ mementos, ✓ index
             }
         }
-
-        // Bundle with global state into one frame snapshot
+    
         history.push(new Time_FrameSnapshot(
             mementos,
             ScoreManager.getScore(),
@@ -6928,10 +6936,9 @@ public class Time_RewindManager {
             spawnManager.getDifficultyTimer(),
             spawnManager.getRoadrollerRate(),
             spawnManager.getTrainRate(),
-            GameRNG.getState()      
+            GameRNG.getState()
         ));
-
-        // Trim history to the maximum allowed size
+    
         if (history.size() > MAX_HISTORY) history.pollLast();
     }
 
@@ -10482,12 +10489,16 @@ public class PlayingState implements GameState,IActiveGameState{
     @Override
     public void exit(MyWorld world) {
         long sessionTime = (System.currentTimeMillis() - sessionStartTime) / 1000;
-        // Add to total playtime
-        DataManager.addInt("total_seconds_played", (int)sessionTime);
-        
-        // Character specific playtime
-        String charKey = "time_played_" + GameConfig.ACTIVE_CHARACTER.name();
-        DataManager.save();
+    
+        // Write everything to ONE system (SaveManager)
+        SaveManager.addInt("total_playtime", (int)sessionTime);
+    
+        // Now charKey is actually used, and matches getFavoriteCharacter()'s "time_" prefix
+        String charKey = "time_" + GameConfig.ACTIVE_CHARACTER.name();
+        SaveManager.addInt(charKey, (int)sessionTime);
+    
+        SaveManager.save();
+    
         AudioManager.stop(GameConfig.ACTIVE_CHARACTER.bgmKey);
         world.removeObjects(world.getObjects(null));
         Greenfoot.setSpeed(50);
@@ -12204,7 +12215,7 @@ public class AudioManager {
         
         loadVoicePool("skipTime",  new String[]{"skip_time1.mp3","skip_time2.mp3"}, 140);
         loadVoicePool("diavoloLines", new String[]{ "diavolo_voiceline/diavolo1.mp3","diavolo_voiceline/diavolo2.mp3","diavolo_voiceline/kono_diavolo.mp3" }, 70);
-        
+        loadVoicePool("diavoloLoseLines",        new String[]{"diavolo_voiceline/diavolo_lose.mp3"}, 50);
         updateAllVolumes(); // apply master volume to everything at startup
     }
 

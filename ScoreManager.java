@@ -73,6 +73,10 @@ public class ScoreManager {
      * for clarity.
      */
    public static void updateHighScore() {
+       if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.omnipotent_DIO) {
+            System.out.println("Omnipotent Dio score ignored for leaderboard.");
+            return; 
+        }
         if (score > highScore) highScore = score;
         
         // PERSISTENCE: Check against the permanent record
