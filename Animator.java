@@ -193,4 +193,11 @@ public class Animator {
     public void setLoop(boolean loop) {
         this.loop = loop;
     }
+    
+    public void scaleAllFrames(int w, int h) {
+        for (int i = 0; i < frames.length; i++) {
+            frames[i].scale(w, h);
+        }
+    }
+
 }

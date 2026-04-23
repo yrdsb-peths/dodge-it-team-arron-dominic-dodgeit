@@ -81,14 +81,13 @@ public class MyWorld extends World {
          */
         setPaintOrder(
             Banner.class, UIText.class, UI_HighlightBox.class, UI_AbilityIcon.class, UI_RewindBar.class,
-            FX_ErasureSnap.class, FX_ShatteredGlass.class,    
+            FX_ErasureSnap.class, FX_ShatteredGlass.class,  FX_DarkLane.class,FX_DimOverlay.class,
             TheWorldStand.class,GenericPlayer.class,FX_KingCrimsonOverlay.class,          
             UI_Panel.class,FX_RewindOverlay.class,
             Exclaimation.class, PathWarning.class,
             FX_Portal.class, FX_ZipperGround.class,
             FX_Afterimage.class, Obstacles.class, 
-            ScrollingRoad.class,
-            FX_DimOverlay.class
+            ScrollingRoad.class
         );
 
         // Pre-create a PlayingState (stored but not used yet — see field note above).
