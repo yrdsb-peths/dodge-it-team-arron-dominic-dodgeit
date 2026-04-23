@@ -28,6 +28,8 @@ public class Ability_DarkSpell02 implements Ability {
         if ( p instanceof GenericPlayer) {
             ((GenericPlayer) p).setAnimation("DarkSpell_02");
         }
+        
+        AudioManager.play("night_spell2");
 
         // Freeze all obstacles currently on screen
         java.util.List<Obstacles> obstacles =

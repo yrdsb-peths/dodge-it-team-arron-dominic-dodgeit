@@ -93,6 +93,7 @@ public class AudioManager {
         loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
         loadSound("gothic_bgm",  "gothicbgm.mp3",             90);
         loadSound("night_spell1", "nightspell1.mp3",          80);
+        loadSound("night_spell2", "nightspell.mp3",           80);
         loadSound("kingCrimsonDuration",  "KingCrimson_Duration.mp3",             180);
 
 
