@@ -167,6 +167,10 @@ public class GameConfig {
     public static final double PORTAL_IFRAME_DURATION = 1;
     /** Seconds before the portal can fire again after a warp. */
     public static final double PORTAL_COOLDOWN_DURATION = 4;
+    //---KING CRIMSON (SKIPS TIME)
+    public static final String KC_BUTTON = "q";
+    public static final double KC_DURATION = 2.0; // How long time is frozen
+    public static final double KC_COOLDOWN = 10.0;
 
     // =========================================================================
     // SECTION 7 — AUDIO

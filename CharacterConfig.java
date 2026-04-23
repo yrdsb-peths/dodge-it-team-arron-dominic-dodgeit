@@ -98,8 +98,22 @@ public enum CharacterConfig {
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,
-        new String[]{"Ability_Mandom"} // fewer abilities than DIO
-    );
+        new String[]{"Ability_Mandom"} // fewer abilities than DIO，
+    ),
+    DIAVOLO(
+        "Diavolo",
+        "Dio",           // Reusing Dio's folder for now until you have Diavolo sprites
+        "diavolo_full.jpg", // Add this to your images folder later
+        "standard_road.png", 
+        new String[]{"Idle", "Dash", "Lose"},
+        "Dash",
+        GameConfig.DIO_MOVE_SPEED,
+        0.8 * GameConfig.SCALE,
+        "dio_bgm", 
+        "dioLostVoices",
+        "dioBattleCry", 
+        BossConfig.DIO, 
+        new String[]{"Ability_KingCrimson"});
 
     // =========================================================================
     // FIELDS  (every character carries these values)
