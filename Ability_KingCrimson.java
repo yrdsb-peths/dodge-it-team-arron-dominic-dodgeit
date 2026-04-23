@@ -178,7 +178,7 @@ public class Ability_KingCrimson implements Ability {
     @Override public double getActivePercent() { return ERASING ? (1.0 - durationTimer.getPercentComplete()) : 0.0; }
     @Override public double getCooldownPercent() { return cooldownTimer.isActive() ? cooldownTimer.getPercentComplete() : 0.0; }
     @Override public String getKeybind() { return "right"; }
-    @Override public String getDisplayLabel() { return "->/Q"; } // Custom UI Label
+    @Override public String getDisplayLabel() { return "->"; } // Custom UI Label
     @Override public boolean shouldShowIcon() { return true; }
 
     @Override public Object captureState() { return new int[]{ durationTimer.getRemainingFrames(), cooldownTimer.getRemainingFrames(), durationTimer.isActive() ? 1 : 0, cooldownTimer.isActive() ? 1 : 0, ERASING ? 1 : 0 }; }
