@@ -67,7 +67,8 @@ public class AudioManager {
         "speed_up_time", 
         "summon_stand", 
         "zipper", 
-        "rewind"
+        "rewind",
+        "kingCrimsonDuration"
         // "new_ability_sound", <-- Add new ones here!
     };
 

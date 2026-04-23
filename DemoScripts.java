@@ -54,6 +54,27 @@ public class DemoScripts {
                 );
         }
         
+        if (clazz == Ability_KingCrimson.class) {
+            return new DemoStage("King Crimson: HOLD [RIGHT] to see the future.\nPRESS [Q] to skip to the future you want!")
+                // Spawn an inescapable wall across ALL 5 lanes
+                .spawnRoadrollerAt(20, 0)
+                .spawnRoadrollerAt(20, 1)
+                .spawnRoadrollerAt(20, 2)
+                .spawnRoadrollerAt(20, 3)
+                .spawnRoadrollerAt(20, 4)
+                
+                // Freeze the game right before the wall hits
+                .addWaitPoint(80, 
+                    (player, world) -> player.isAbilityActive(Ability_KingCrimson.class), 
+                    "An unavoidable wall! HOLD [RIGHT ARROW] to fast-forward into the future."
+                );
+                
+                // NO SECOND WAIT POINT! 
+                // Once they hold Right, the game unfreezes and lets them play it out.
+                // If they let go of Right too early, they snap back to the past and die.
+                // If they wait for the overlap and press Q, they shatter the cars and win!
+        }
+        
         // Fallback for missing/future abilities
         return new DemoStage("Try out the ability in the sandbox!");
     }

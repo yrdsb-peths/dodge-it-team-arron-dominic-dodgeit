@@ -1,6 +1,20 @@
 import greenfoot.*;
 import java.util.List;
 
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Ability_KingCrimson.java — THE EMPEROR OF TIME
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 1. HOLD [RIGHT ARROW] to use EPITAPH: The world fast-forwards 400%. 
+ *    You are a ghost; move to reposition.
+ * 2. RELEASE [RIGHT] to REVERT: The world snaps back to the present, 
+ *    but you keep your new physical position.
+ * 3. PRESS [Q] during vision to ERASE: Commit to the future timeline.
+ * 
+ * SHIREN: Standing inside cars during the vision awards points and shatters reality.
+ * SAFETY: Player pulses red if standing in a death zone when the skip ends.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 public class Ability_KingCrimson implements Ability {
 
     public static boolean ERASING = false;
@@ -8,37 +22,36 @@ public class Ability_KingCrimson implements Ability {
     
     private boolean standingInDanger = false;
 
-    // The Preview (Epitaph) can last up to 1.5 real-time seconds (which equals 6 seconds of future)
+    // The Preview (Epitaph) can last up to 1.5 real-time seconds (6 seconds of future)
     private GameTimer durationTimer = new GameTimer(1.5, false);
     private GameTimer cooldownTimer = new GameTimer(GameConfig.KC_COOLDOWN, false);
     
     private int slowMoTimer = 0;
     private int holdFrames = 0;
-    private static final int HOLD_THRESHOLD = 8; // Very quick windup for the Right Arrow
+    private static final int HOLD_THRESHOLD = 8; 
     
     private FX_KingCrimsonOverlay overlay = null;
-    private Time_FrameSnapshot savedReality = null; // Stores the present before we fast-forward
+    private Time_FrameSnapshot savedReality = null; 
 
     @Override
-    public void activate(Player p, MyWorld world) { }
+    public void activate(Player p, MyWorld world) { /* Logic handled in update */ }
 
     @Override
     public void update(Player p, MyWorld world) {
+        // 1. Tick Cooldown
         if (cooldownTimer.isActive()) cooldownTimer.update(world);
 
-        // --- SLOW-MO RECOVERY LOGIC ---
+        // 2. Handle Reflex Window (Slow-Mo) recovery
         if (slowMoTimer > 0) {
             slowMoTimer--;
-            if (slowMoTimer == 0) Greenfoot.setSpeed(50); // Restore normal speed
+            if (slowMoTimer == 0) Greenfoot.setSpeed(50); 
         }
 
-        // INPUTS
+        // 3. Activation Check
         boolean rightDown = Greenfoot.isKeyDown("right");
         boolean qDown = Greenfoot.isKeyDown(GameConfig.KC_BUTTON);
-        
         boolean canActivate = !ERASING && !durationTimer.isActive() && !cooldownTimer.isActive() && !world.isRewinding();
 
-        // RIGHT ARROW starts the future preview
         if (rightDown && canActivate) {
             holdFrames++;
             if (holdFrames >= HOLD_THRESHOLD) {
@@ -49,30 +62,31 @@ public class Ability_KingCrimson implements Ability {
             holdFrames = 0; 
         }
 
-        // --- THE FUTURE SIMULATION (EPITAPH) ---
+        // 4. Active Vision Logic
         if (ERASING && durationTimer.isActive()) {
             durationTimer.update(world);
             erasurePercent = durationTimer.getPercentComplete();
+            p.getImage().setTransparency(180); // Look ghostly
 
-            // IF Q PRESSED -> COMMIT TO THE FUTURE (KING CRIMSON)
+            // --- INPUT HANDLING ---
             if (qDown) {
-                endErasure(world, p, true);
+                endErasure(world, p, true); // COMMIT (King Crimson)
                 return;
             }
-
-            // IF RIGHT RELEASED OR TIMER EXPIRED -> REVERT TO PRESENT
             if (!rightDown || durationTimer.isExpired()) {
-                endErasure(world, p, false);
+                endErasure(world, p, false); // REVERT (Epitaph)
                 return;
             }
 
+            // --- THE FUTURE SIMULATION ---
             standingInDanger = false;
             GameState state = world.getGSM().peekState();
-            if (state instanceof PlayingState) {
-                PlayingState ps = (PlayingState) state;
-                SpawnManager sm = ps.getSpawnManager();
+            
+            if (state instanceof IActiveGameState) {
+                IActiveGameState activeState = (IActiveGameState) state;
+                SpawnManager sm = activeState.getSpawnManager();
                 
-                // Fast forward 3 ticks per actual frame
+                // Fast forward 3 extra ticks per actual frame (4x Speed)
                 for (int i = 0; i < 3; i++) {
                     sm.update(world);
                     for(ScrollingRoad road : world.getObjects(ScrollingRoad.class)) road.act();
@@ -81,7 +95,7 @@ public class Ability_KingCrimson implements Ability {
                     for (Obstacles obs : obstacles) {
                         obs.fastForwardMove();
                         
-                        // EPITAPH DANGER CHECK
+                        // DANGER CHECK & SHIREN REWARD
                         if (p.checkCustomHitbox(obs, 1.0)) {
                             standingInDanger = true; 
                             if (Greenfoot.getRandomNumber(100) < 15) {
@@ -93,13 +107,11 @@ public class Ability_KingCrimson implements Ability {
                 }
             }
 
-            // VISUAL FEEDBACK: Pulse red if standing in a future death zone
+            // --- EPITAPH VISUAL FEEDBACK ---
             if (standingInDanger) {
-                p.getImage().setColor(new Color(255, 0, 0));
-                if (durationTimer.getRemainingFrames() % 4 < 2) p.getImage().setTransparency(100);
-                else p.getImage().setTransparency(255);
-            } else {
-                p.getImage().setTransparency(255);
+                // Pulse bright red to warn the player
+                if (durationTimer.getRemainingFrames() % 4 < 2) p.getImage().setTransparency(50);
+                else p.getImage().setTransparency(220);
             }
         }
     }
@@ -110,56 +122,53 @@ public class Ability_KingCrimson implements Ability {
         durationTimer.reset();
         durationTimer.start();
         
-        // SAVE THE CURRENT REALITY
+        // Use IActiveGameState to support both PlayingState and AbilityDemo
         GameState state = world.getGSM().peekState();
-        if (state instanceof PlayingState) {
-            PlayingState ps = (PlayingState) state;
-            // Force record the exact frame we started holding right arrow
-            ps.getRewindManager().record(world, ps.getSpawnManager());
-            savedReality = ps.getRewindManager().getLastSnapshot();
+        if (state instanceof IActiveGameState) {
+            IActiveGameState activeState = (IActiveGameState) state;
+            activeState.getRewindManager().record(world, activeState.getSpawnManager());
+            savedReality = activeState.getRewindManager().getLastSnapshot();
         }
 
         overlay = new FX_KingCrimsonOverlay();
         world.addObject(overlay, world.getWidth() / 2, world.getHeight() / 2);
-        AudioManager.play("kingCrimsonDuration");
+        
+        AudioManager.playLoop("kingCrimsonDuration"); // The vision hum
     }
 
     private void endErasure(MyWorld world, Player p, boolean commit) {
-        AudioManager.stop("kingCrimsonDuration"); 
+        AudioManager.stop("kingCrimsonDuration"); // Stop the vision hum immediately
+        
         ERASING = false;
         erasurePercent = 0.0;
         durationTimer.stop();
+        if (overlay != null && overlay.getWorld() != null) world.removeObject(overlay);
         overlay = null; 
         p.getImage().setTransparency(255);
 
         if (commit) {
-            // --- KING CRIMSON COMMIT ---
-            // SFX: Play a heavy, bass-boosted "skip" sound here
+            // --- COMMIT (Future remains) ---
             AudioManager.playPool("skipTime"); 
-            
             world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
         } else {
-            // --- EPITAPH REVERT ---
+            // --- REVERT (Snap back to present) ---
             if (savedReality != null) {
-                int finalX = p.getX();
-                int finalY = p.getY();
+                int currentX = p.getX();
+                int currentY = p.getY();
                 
                 GameState state = world.getGSM().peekState();
-                if (state instanceof PlayingState) {
-                    PlayingState ps = (PlayingState) state;
-                    ps.getRewindManager().forceRestore(savedReality, world, ps.getSpawnManager());
+                if (state instanceof IActiveGameState) {
+                    IActiveGameState activeState = (IActiveGameState) state;
+                    activeState.getRewindManager().forceRestore(savedReality, world, activeState.getSpawnManager());
                 }
-                p.setLocation(finalX, finalY);
                 
-                // SFX: Play a "rewind" or "zipper" sound here
-                //AudioManager.play("epitaph_revert"); 
+                p.setLocation(currentX, currentY); // Keep new physical position
                 
-                // Use the new Cyan visual for reverting!
                 world.addObject(new FX_EpitaphRevert(), world.getWidth() / 2, world.getHeight() / 2);
             }
         }
 
-        // SLOW MO
+        // TRIGGER REFLEX WINDOW (Slow-mo)
         Greenfoot.setSpeed(35);
         slowMoTimer = 5; 
 
@@ -168,25 +177,37 @@ public class Ability_KingCrimson implements Ability {
         savedReality = null;
     }
 
-    // Standard methods...
     @Override public void cancel() { 
+        AudioManager.stop("kingCrimsonDuration");
         if (ERASING) { ERASING = false; Greenfoot.setSpeed(50); } 
         cooldownTimer.stop(); 
     }
+
     @Override public boolean isActive() { return ERASING; }
     @Override public boolean isCooldownActive() { return cooldownTimer.isActive(); }
     @Override public double getActivePercent() { return ERASING ? (1.0 - durationTimer.getPercentComplete()) : 0.0; }
     @Override public double getCooldownPercent() { return cooldownTimer.isActive() ? cooldownTimer.getPercentComplete() : 0.0; }
     @Override public String getKeybind() { return "right"; }
-    @Override public String getDisplayLabel() { return "->"; } // Custom UI Label
+    @Override public String getDisplayLabel() { return "->"; }
     @Override public boolean shouldShowIcon() { return true; }
 
-    @Override public Object captureState() { return new int[]{ durationTimer.getRemainingFrames(), cooldownTimer.getRemainingFrames(), durationTimer.isActive() ? 1 : 0, cooldownTimer.isActive() ? 1 : 0, ERASING ? 1 : 0 }; }
+    @Override public Object captureState() { 
+        return new int[]{ 
+            durationTimer.getRemainingFrames(), 
+            cooldownTimer.getRemainingFrames(), 
+            durationTimer.isActive() ? 1 : 0, 
+            cooldownTimer.isActive() ? 1 : 0, 
+            ERASING ? 1 : 0 
+        }; 
+    }
     
     @Override public void restoreState(Object state) { 
-        int[] d = (int[]) state; durationTimer.setRemainingFrames(d[0]); cooldownTimer.setRemainingFrames(d[1]);
+        int[] d = (int[]) state; 
+        durationTimer.setRemainingFrames(d[0]); 
+        cooldownTimer.setRemainingFrames(d[1]);
         if (d[2] == 1) durationTimer.start(); else durationTimer.stop();
         if (d[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
-        ERASING = (d[4] == 1); erasurePercent = ERASING ? durationTimer.getPercentComplete() : 0.0; overlay = null;
+        ERASING = (d[4] == 1); 
+        overlay = null;
     }
 }

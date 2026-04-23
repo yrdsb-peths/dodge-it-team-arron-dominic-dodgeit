@@ -232,7 +232,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
     private void clearSandbox(MyWorld world) {
         isFrozen = false;
         playerDiedThisFrame = false;
-        
+        AudioManager.stopAllAbilities();
         world.removeObjects(world.getObjects(ScrollingRoad.class));
         world.removeObjects(world.getObjects(Obstacles.class));
         world.removeObjects(world.getObjects(Player.class));
@@ -245,6 +245,8 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         if (activeRewindBar != null && activeRewindBar.getWorld() != null) world.removeObject(activeRewindBar);
         if (rewindOverlay != null && rewindOverlay.getWorld() != null) world.removeObject(rewindOverlay);
         dimOverlay = null;
+        world.removeObjects(world.getObjects(FX_KingCrimsonOverlay.class));
+        world.removeObjects(world.getObjects(FX_EpitaphRevert.class));
         rewindOverlay = null;
         activeRewindBar = null;
     }
@@ -278,4 +280,11 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         world.addObject(a, x, y);
         uiElements.add(a);
     }
+    
+     @Override
+    public SpawnManager getSpawnManager() { return demoSpawnManager; }
+
+    @Override
+    public Time_RewindManager getRewindManager() { return rewindManager; }
+
 }

@@ -261,14 +261,24 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     @Override
     public void die() {
         if (iFrameTimer.isActive() || isDead) return;
-
+        //Just to play safe: no dying during king crimson, not in demo
+        if (Ability_KingCrimson.ERASING) return; 
+        if (iFrameTimer.isActive() || isDead) return;
         // Check ability-based invincibility
         for (Ability a : abilities) {
-            if (a.isActive() && a instanceof Ability_StandPunch) return; // invincible while punching
-            if (a.shouldHidePlayer()) return;                             // underground = invincible
+            if (a.isActive() && a instanceof Ability_StandPunch) return; 
+            if (a.shouldHidePlayer()) return;                             
         }
-
+        
         isDead = true;
+        
+        // --- NEW: Cancel all abilities so effects (like KC red screen) stop! ---
+        for (Ability a : abilities) {
+            a.cancel();
+        }
+        
+        AudioManager.stopAllAbilities();
+
         setAnimation("Lose");
         if (animations.containsKey("Lose")) {
             animations.get("Lose").setLoop(false);
