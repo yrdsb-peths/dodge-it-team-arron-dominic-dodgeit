@@ -617,7 +617,7 @@ public enum CharacterConfig {
         "Dash",
         GameConfig.MOON_KNIGHT_MOVE_SPEED,
         1.2 * GameConfig.SCALE,
-        "dio_bgm",
+        "gothic_bgm",
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,
@@ -1776,6 +1776,7 @@ public class MenuState implements GameState {
         world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
         world.removeObjects(uiElements);
         uiElements.clear();
+        world.removeObjects(world.getObjects(FX_MenuAmbulance.class));//Remove the ambulance...
     }
 
     /**
@@ -6292,33 +6293,39 @@ public class Time_RewindManager {
      * @param world         The game world.
      * @param spawnManager  The spawn manager.
      */
-    private void restoreSnapshot(Time_FrameSnapshot snap, MyWorld world,
-                                  SpawnManager spawnManager) {
+    private void restoreSnapshot(Time_FrameSnapshot snap, MyWorld world,SpawnManager spawnManager) {
         // ── STEP 1: Global state ──────────────────────────────────────────────
         ScoreManager.setScore(snap.score);
         spawnManager.restoreState(snap.spawnTimer, snap.roadrollerRate, snap.trainRate);
-        GameRNG.restoreState(snap.rngState); // restore RNG seed for deterministic replay
-
+        GameRNG.restoreState(snap.rngState);
+    
         // ── STEP 2: Build "should exist" set ─────────────────────────────────
-        Set<Actor> shouldExist = new HashSet<>();
+        Set<Actor> shouldExist = new HashSet<>(snap.actorStates.length * 2);
         for (Time_ActorMemento m : snap.actorStates) shouldExist.add(m.actor);
-
-        // ── STEP 3: Remove actors spawned AFTER this snapshot ─────────────────
-        // Only remove snapshottable actors — UI/FX actors manage themselves.
-        for (Actor a : world.getObjects(Actor.class)) {
+    
+        // ── STEPS 3 + 4 MERGED: ONE world scan does both jobs ────────────────
+        // Build currentActors AND collect removals in a single pass.
+        // This replaces two separate world.getObjects() calls with one.
+        List<Actor> allActors = world.getObjects(Actor.class);
+        Set<Actor>  currentActors = new HashSet<>(allActors.size() * 2);
+        List<Actor> toRemove = new ArrayList<>();
+    
+        for (Actor a : allActors) {
             if (a instanceof Time_Snapshottable && !shouldExist.contains(a)) {
-                world.removeObject(a);
+                toRemove.add(a);          // mark for batch removal
+            } else {
+                currentActors.add(a);     // still valid — track it for Step 4
             }
         }
-
+        world.removeObjects(toRemove);    // one batch call instead of N individual calls
+    
         // ── STEP 4: Re-add actors that were alive then but are gone now ───────
-        Set<Actor> currentActors = new HashSet<>(world.getObjects(null));
         for (Time_ActorMemento m : snap.actorStates) {
             if (!currentActors.contains(m.actor)) {
                 world.addObject(m.actor, m.x, m.y);
             }
         }
-
+    
         // ── STEP 5: Restore position and state for every actor ────────────────
         for (Time_ActorMemento m : snap.actorStates) {
             m.actor.setLocation(m.x, m.y);
@@ -10850,20 +10857,21 @@ public class AudioManager {
         loadSound("dio_bgm",       "eye_of_heaven_dio_bgm.mp3",  60);
         loadSound("lost_bgm",      "brawl_stars_lost_bgm.mp3",   50);
         loadSound("car_crash",     "car_crash.mp3",               70);
-        loadSound("speed_up_time", "speed_up_time.mp3",          100);
+        loadSound("speed_up_time", "speed_up_time.mp3",          80);
         loadSound("summon_stand",  "summon_stand.mp3",            200);
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
         loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
+        loadSound("gothic_bgm",  "gothicbgm.mp3",             90);
         
         
         // ── Voice pools ───────────────────────────────────────────────────────
         loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 80);
         loadVoicePool("zipper",        new String[]{ "zipper1.mp3","zipper2.mp3","zipper3.mp3" }, 120);
-        loadVoicePool("dioLostVoices", new String[]{ "dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3" }, 80);
+        loadVoicePool("dioLostVoices", new String[]{ "dio_voiceline/dio_lost.mp3", "dio_voiceline/dio_lost2.mp3" }, 60);
         loadVoicePool("dioBattleCry",  new String[]{
             "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3",
             "dio_voiceline/muda_muda.mp3", "dio_voiceline/Voicy_Timestop DiegoBrando.mp3"
-        }, 100);
+        }, 70);
 
         updateAllVolumes(); // apply master volume to everything at startup
     }
