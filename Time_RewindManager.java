@@ -73,6 +73,8 @@ public class Time_RewindManager {
      * During rewind, snapshots are pop()ped from the front (most recent first).
      */
     private ArrayDeque<Time_FrameSnapshot> history = new ArrayDeque<>();
+    
+    private Time_ActorMemento[] mementoBuffer = new Time_ActorMemento[64];  
 
     /** True while rewind is in progress. Checked by world.isRewinding(). */
     private boolean isRewinding = false;
@@ -92,26 +94,25 @@ public class Time_RewindManager {
      * @param spawnManager  The spawn manager (to save timer/rate state).
      */
     public void record(MyWorld world, SpawnManager spawnManager) {
-        if (isRewinding) return; // never record during rewind
-
-        List<Actor> allActors = world.getObjects(Actor.class);
-        
-        // 1. Count snapshottables (creates zero garbage!)
+        if (isRewinding) return;
+    
+        List<Actor> allActors = world.getObjects(Actor.class); // one call, reused twice
+    
+        // Pass 1: count how many are snapshottable
         int count = 0;
         for (Actor a : allActors) {
             if (a instanceof Time_Snapshottable) count++;
         }
-
-        // 2. Pre-allocate exact array size (avoids ArrayList resizing overhead)
+    
+        // Pass 2: fill the array — correct target, correct counter
         Time_ActorMemento[] mementos = new Time_ActorMemento[count];
         int index = 0;
-        for (Actor a : allActors) {
+        for (Actor a : allActors) {                           // ✓ reuse allActors
             if (a instanceof Time_Snapshottable) {
-                mementos[index++] = ((Time_Snapshottable) a).captureState();
+                mementos[index++] = ((Time_Snapshottable) a).captureState(); // ✓ mementos, ✓ index
             }
         }
-
-        // Bundle with global state into one frame snapshot
+    
         history.push(new Time_FrameSnapshot(
             mementos,
             ScoreManager.getScore(),
@@ -119,10 +120,9 @@ public class Time_RewindManager {
             spawnManager.getDifficultyTimer(),
             spawnManager.getRoadrollerRate(),
             spawnManager.getTrainRate(),
-            GameRNG.getState()      
+            GameRNG.getState()
         ));
-
-        // Trim history to the maximum allowed size
+    
         if (history.size() > MAX_HISTORY) history.pollLast();
     }
 

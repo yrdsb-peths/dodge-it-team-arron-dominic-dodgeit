@@ -44,18 +44,18 @@ public class GameOverState implements GameState {
 
         // ── SCORE BLOCK ──
         Color scoreColor = (finalScore >= allTimeBest) ? Color.YELLOW : Color.WHITE;
-        addUI(world, new UIText("FINAL SCORE: " + finalScore, GameConfig.s(30), scoreColor), midX, topY + GameConfig.s(55));
+        addUI(world, new UIText("FINAL SCORE: " + finalScore, GameConfig.s(20), scoreColor), midX, topY + GameConfig.s(45));
         
         String bestText = (finalScore >= allTimeBest) ? "NEW ALL-TIME RECORD!" : "ALL-TIME BEST: " + allTimeBest;
-        addUI(world, new UIText(bestText, GameConfig.s(20), Color.CYAN), midX, topY + GameConfig.s(85));
+        addUI(world, new UIText(bestText, GameConfig.s(20), Color.CYAN), midX, topY + GameConfig.s(65));
         
         // Lowered these Y values so they don't bunch up
-        addUI(world, new UIText("Favorite Character: " + fav, 20, Color.WHITE), midX, topY + GameConfig.s(115));
-        addUI(world, new UIText("Total Playtime: " + totalTime + " mins", 20, Color.CYAN), midX, topY + GameConfig.s(140));
+        addUI(world, new UIText("Favorite Character: " + fav, 20, Color.WHITE), midX, topY + GameConfig.s(85));
+        addUI(world, new UIText("Total Playtime: " + totalTime + " mins", 20, Color.CYAN), midX, topY + GameConfig.s(105));
         
         // ── THE OBITUARY (The Flavor) ──
         // Pushed the obituary lower (to s(170)) so it doesn't hit the text above it
-        addWrappedText(world, "\"" + obituary + "\"", GameConfig.s(16), Color.LIGHT_GRAY, midX, topY + GameConfig.s(170), 60);
+        addWrappedText(world, "\"" + obituary + "\"", GameConfig.s(16), Color.LIGHT_GRAY, midX, topY + GameConfig.s(130), 100);
     }
 
     @Override

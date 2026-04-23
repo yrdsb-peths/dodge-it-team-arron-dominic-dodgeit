@@ -102,6 +102,22 @@ public enum CharacterConfig {
         BossConfig.DIO,
         new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} // fewer abilities than DIO
     ),
+     Ringo(
+        "Ringo Roadagain",
+        "Dio",
+        "dio_full.jpg",                             //Portrait Image (new, for character select)
+        "punk_road.png",                             //CUstomised road(new, for character select)
+        new String[]{"Idle","Dash", "Lose"},
+        "Dash",
+        GameConfig.DIO_MOVE_SPEED,
+        0.8 * GameConfig.SCALE,
+        "dio_bgm",
+        "ringoLoseLines",
+        "ringoLines",                             //Select sound key (new, for character select)
+        BossConfig.DIO,
+        new String[]{"Ability_Mandom"} // fewer abilities than DIO
+    ),
+    
     
     MoonKnight2(
         "Moon Knight",

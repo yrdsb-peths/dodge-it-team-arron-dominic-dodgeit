@@ -190,12 +190,16 @@ public class PlayingState implements GameState,IActiveGameState{
     @Override
     public void exit(MyWorld world) {
         long sessionTime = (System.currentTimeMillis() - sessionStartTime) / 1000;
-        // Add to total playtime
-        DataManager.addInt("total_seconds_played", (int)sessionTime);
-        
-        // Character specific playtime
-        String charKey = "time_played_" + GameConfig.ACTIVE_CHARACTER.name();
-        DataManager.save();
+    
+        // Write everything to ONE system (SaveManager)
+        SaveManager.addInt("total_playtime", (int)sessionTime);
+    
+        // Now charKey is actually used, and matches getFavoriteCharacter()'s "time_" prefix
+        String charKey = "time_" + GameConfig.ACTIVE_CHARACTER.name();
+        SaveManager.addInt(charKey, (int)sessionTime);
+    
+        SaveManager.save();
+    
         AudioManager.stop(GameConfig.ACTIVE_CHARACTER.bgmKey);
         world.removeObjects(world.getObjects(null));
         Greenfoot.setSpeed(50);
