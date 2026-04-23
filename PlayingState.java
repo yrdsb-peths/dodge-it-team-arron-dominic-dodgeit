@@ -45,7 +45,7 @@ public class PlayingState implements GameState,IActiveGameState{
     private UIText scoreDisplay;
     private Time_RewindManager rewindManager;
     private UI_RewindBar rewindBar;
-
+    private long sessionStartTime;//Count playtime
     /** The blue scanline overlay shown while rewinding. Null when not rewinding. */
     private FX_RewindOverlay rewindOverlay;
 
@@ -59,6 +59,7 @@ public class PlayingState implements GameState,IActiveGameState{
      */
     @Override
     public void enter(MyWorld world) {
+        sessionStartTime = System.currentTimeMillis();//COUNT PLAY TIME
         world.removeObjects(world.getObjects(null)); // clear ALL existing actors
         AudioManager.stop("menu_bgm");//Stop original music
 
@@ -188,6 +189,13 @@ public class PlayingState implements GameState,IActiveGameState{
      */
     @Override
     public void exit(MyWorld world) {
+        long sessionTime = (System.currentTimeMillis() - sessionStartTime) / 1000;
+        // Add to total playtime
+        DataManager.addInt("total_seconds_played", (int)sessionTime);
+        
+        // Character specific playtime
+        String charKey = "time_played_" + GameConfig.ACTIVE_CHARACTER.name();
+        DataManager.save();
         AudioManager.stop(GameConfig.ACTIVE_CHARACTER.bgmKey);
         world.removeObjects(world.getObjects(null));
         Greenfoot.setSpeed(50);

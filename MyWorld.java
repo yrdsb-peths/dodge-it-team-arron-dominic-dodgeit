@@ -51,7 +51,7 @@ public class MyWorld extends World {
          *                    obstacles entering from the right edge.
          */
         super(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT, 1, false);
-
+        SaveManager.load(); //Load saved information
         // Create the game state manager, passing ourselves so states can
         // add/remove actors from this world.
         gsm = new GameStateManager(this);

@@ -1,0 +1,4 @@
+#DIO-DGE IT Persistent Stats
+#Thu Apr 23 16:08:50 EDT 2026
+all_time_high=5
+total_seconds_played=35

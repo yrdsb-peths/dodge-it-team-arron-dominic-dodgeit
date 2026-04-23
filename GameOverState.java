@@ -1,66 +1,66 @@
-/*
- * ─────────────────────────────────────────────────────────────────────────────
- * GameOverState.java  —  THE DEATH / GAME OVER SCREEN
- * ─────────────────────────────────────────────────────────────────────────────
- * Role:
- *   Entered via changeState() when the player's death timer expires
- *   (in GenericPlayer.movementLogic()).
- *   Shows: "RETIRED", final score, best score, restart prompt.
- *   Pressing ENTER returns to the MenuState (NOT PlayingState — fully restart).
- *
- * Score display:
- *   updateHighScore() is called first so the high score reflects this run.
- *   Both finalScore and bestScore are captured before any UI is built.
- *
- * Interacts with:
- *   ScoreManager (reads scores), AudioManager (plays/stops music),
- *   GameStateManager (changeState to MenuState), UIText (labels)
- * ─────────────────────────────────────────────────────────────────────────────
- */
 import greenfoot.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * GameOverState.java — THE FINAL JUDGMENT
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Displays the results of the run, the obituary, and persistent records.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 public class GameOverState implements GameState {
 
-    /** All actors created by this state — removed in exit(). */
     private List<Actor> uiElements = new ArrayList<>();
 
     @Override
     public void enter(MyWorld world) {
-        AudioManager.stopAllAbilities();//Stop ability sounds
-        AudioManager.playLoop("lost_bgm"); // play the loss music
+        // 1. AUDIO CLEANUP
+        AudioManager.stopAllAbilities();
+        AudioManager.stop(GameConfig.ACTIVE_CHARACTER.bgmKey);
+        AudioManager.playLoop("lost_bgm");
 
-        // Freeze the scores before building the UI
+        // 2. DATA GATHERING
         ScoreManager.updateHighScore();
-        int finalScore = ScoreManager.getScore();
-        int bestScore  = ScoreManager.getHighScore();
-
-        int midX = world.getWidth() / 2;
-        String text = ObituaryManager.getRandomObituary(GameConfig.ACTIVE_CHARACTER);
-    
-        // FETCH WIDTH: Use almost the whole screen width, leaving some padding
-        int wrapAt = world.getWidth() - GameConfig.s(100); 
-    
-        // Create the text WITH the maxWidth parameter
-        UIText obituaryLabel = new UIText(text, GameConfig.s(20), Color.BLACK, wrapAt);
+        int finalScore    = ScoreManager.getScore();
+        int sessionBest   = ScoreManager.getHighScore();
+        int allTimeBest   = DataManager.getInt("all_time_high");
+        String obituary   = ObituaryManager.getRandomObituary(GameConfig.ACTIVE_CHARACTER);
+        String fav = SaveManager.getFavoriteCharacter();
+        int totalTime = SaveManager.getInt("total_playtime") / 60; 
         
-        // Add it to the screen
-        addUI(world, obituaryLabel, midX, GameConfig.s(290));
-            
+        // 3. BACKGROUND SETUP
         world.setBackground(new GreenfootImage("game_over.png")); 
-        world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
-        //addUI(world, new UIText("RETIRED",                          GameConfig.s(80), Color.RED),   midX, GameConfig.s(150));
-        addUI(world, new UIText("Final Score: "   + finalScore,     GameConfig.s(30), Color.RED),   midX, GameConfig.s(180));
-        addUI(world, new UIText("Best Survival: " + bestScore,      GameConfig.s(30), Color.RED),   midX, GameConfig.s(220));
-        //addUI(world, new UIText("Press ENTER to Restart",           GameConfig.s(25), Color.BLACK), midX, GameConfig.s(300));
-    
+        world.getBackground().scale(GameConfig.WORLD_WIDTH + 200, GameConfig.WORLD_HEIGHT);
 
+        // 4. UI CONSTRUCTION
+        int midX = world.getWidth() / 2;
+        int topY = GameConfig.s(140);
+
+        // ── DARK BACKDROP PANEL (Makes text readable) ──
+        addUI(world, new UI_Panel(world.getWidth() - 100, GameConfig.s(160), new Color(0, 0, 0, 160)), midX, GameConfig.s(240));
+
+        // ── RESULTS TITLE ──
+
+        // ── SCORE BLOCK ──
+        Color scoreColor = (finalScore >= allTimeBest) ? Color.YELLOW : Color.WHITE;
+        addUI(world, new UIText("FINAL SCORE: " + finalScore, GameConfig.s(30), scoreColor), midX, topY + GameConfig.s(55));
+        
+        String bestText = (finalScore >= allTimeBest) ? "NEW ALL-TIME RECORD!" : "ALL-TIME BEST: " + allTimeBest;
+        addUI(world, new UIText(bestText, GameConfig.s(20), Color.CYAN), midX, topY + GameConfig.s(85));
+        
+        // Lowered these Y values so they don't bunch up
+        addUI(world, new UIText("Favorite Character: " + fav, 20, Color.WHITE), midX, topY + GameConfig.s(115));
+        addUI(world, new UIText("Total Playtime: " + totalTime + " mins", 20, Color.CYAN), midX, topY + GameConfig.s(140));
+        
+        // ── THE OBITUARY (The Flavor) ──
+        // Pushed the obituary lower (to s(170)) so it doesn't hit the text above it
+        addWrappedText(world, "\"" + obituary + "\"", GameConfig.s(16), Color.LIGHT_GRAY, midX, topY + GameConfig.s(170), 60);
     }
 
-    /** Waits for ENTER, then goes back to the main menu (full restart). */
     @Override
     public void update(MyWorld world) {
+        // Simple transition back to main menu
         if ("enter".equals(Greenfoot.getKey())) {
             world.getGSM().changeState(new MenuState());
         }
@@ -68,14 +68,41 @@ public class GameOverState implements GameState {
 
     @Override
     public void exit(MyWorld world) {
-        world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
+        // Cleanup visuals and character-specific death sounds
+        world.getBackground().setColor(Color.WHITE); 
+        world.getBackground().fill();
         AudioManager.stop("lost_bgm");
-        world.removeObjects(uiElements);
         AudioManager.stopPool(GameConfig.ACTIVE_CHARACTER.deathSoundKey);
+        
+        world.removeObjects(uiElements);
+        uiElements.clear();
     }
 
     private void addUI(MyWorld world, Actor a, int x, int y) {
         world.addObject(a, x, y);
         uiElements.add(a);
+    }
+    
+    private void addWrappedText(MyWorld world, String text, int fontSize, Color color, int midX, int startY, int maxCharsPerLine) {
+        String[] words = text.split(" ");
+        StringBuilder currentLine = new StringBuilder();
+        int lineCount = 0;
+        int lineSpacing = fontSize + 5; // Adjust vertical gap between lines
+    
+        for (String word : words) {
+            // Check if adding the next word exceeds the limit
+            if (currentLine.length() + word.length() > maxCharsPerLine) {
+                // Add the completed line as a UI element
+                addUI(world, new UIText(currentLine.toString().trim(), fontSize, color), midX, startY + (lineCount * lineSpacing));
+                currentLine = new StringBuilder();
+                lineCount++;
+            }
+            currentLine.append(word).append(" ");
+        }
+        
+        // Add the final remaining bit of text
+        if (currentLine.length() > 0) {
+            addUI(world, new UIText(currentLine.toString().trim(), fontSize, color), midX, startY + (lineCount * lineSpacing));
+        }
     }
 }

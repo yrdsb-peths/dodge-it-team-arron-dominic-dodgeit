@@ -188,6 +188,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             if (Greenfoot.isKeyDown(a.getKeybind())) {
                 if (!playerIsHidden || a.shouldHidePlayer()) {
                     a.activate(this, (MyWorld) getWorld());
+                    DataManager.addInt("usage_" + a.getClass().getSimpleName(), 1);
                 }
             }
         }

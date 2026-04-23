@@ -36,7 +36,25 @@ import java.util.List;
 import java.util.ArrayList;
 
 public enum CharacterConfig {
-
+    
+    MoonKnight(
+        "Moon Knight",
+        "MoonKnight",
+        "moon_knight_full.png",                             //Portrait Image (new, for character select)
+        "white_road.png",                             //CUstomised road(new, for character select)
+        new String[]{"Idle", "Dash", "Lose", "DarkSpell_01", "DarkSpell_02"},
+        "Dash",
+        GameConfig.MOON_KNIGHT_MOVE_SPEED,
+        1.2 * GameConfig.SCALE,
+        "gothic_bgm",
+        "dioLostVoices",
+        "dioBattleCry",                             //Select sound key (new, for character select)
+        BossConfig.DIO,
+        new String[]{"Ability_DarkSpell01", // V - destroys all obstacles
+                    "Ability_DarkSpell02",   // C - roots/freezes all obstacles
+                    "Ability_StickyFingers"
+        } 
+    ),
     // =========================================================================
     // CHARACTER: DIO BRANDO
     // =========================================================================
@@ -85,7 +103,7 @@ public enum CharacterConfig {
         new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} // fewer abilities than DIO
     ),
     
-    MoonKnight(
+    MoonKnight2(
         "Moon Knight",
         "MoonKnight",
         "moon_knight_full.png",                             //Portrait Image (new, for character select)

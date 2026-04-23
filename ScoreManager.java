@@ -72,8 +72,15 @@ public class ScoreManager {
      * reset() already does this, but GameOverState calls this separately
      * for clarity.
      */
-    public static void updateHighScore() {
+   public static void updateHighScore() {
         if (score > highScore) highScore = score;
+        
+        // PERSISTENCE: Check against the permanent record
+        int allTimeBest = DataManager.getInt("all_time_high");
+        if (score > allTimeBest) {
+            DataManager.setInt("all_time_high", score);
+            DataManager.save(); // Save immediately on a new world record!
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -85,4 +92,6 @@ public class ScoreManager {
 
     /** @return The best score achieved this session. */
     public static int getHighScore() { return highScore; }
+    
+    
 }
