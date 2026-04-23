@@ -92,6 +92,8 @@ public class AudioManager {
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
         loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
         loadSound("gothic_bgm",  "gothicbgm.mp3",             90);
+        loadSound("night_spell1", "nightspell1.mp3",          80);
+        
         
         
         // ── Voice pools ───────────────────────────────────────────────────────

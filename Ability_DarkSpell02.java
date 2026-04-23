@@ -13,8 +13,8 @@ public class Ability_DarkSpell02 implements Ability {
     //DarkSpell_02 has 8 frames
     
     private static final int ACTIVE_DURATION = 48;
-    private static final int FREEZE_DURATION = 180;
-    private static final int COOLDOWN_DURATION = 360;
+    private static final int FREEZE_DURATION = 100;
+    private static final int COOLDOWN_DURATION = 250;
 
     @Override
     public void activate(Player p, MyWorld world) {

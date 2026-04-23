@@ -11,7 +11,7 @@ public class Ability_DarkSpell01 implements Ability {
     private boolean keyWasDown = false;
     
     private static final int ACTIVE_DURATION = 54;
-    private static final int COOLDOWN_DURATION = 300; // 5 seconds
+    private static final int COOLDOWN_DURATION = 100; // 5 seconds
 
     @Override
     public void activate (Player p, MyWorld world) {
@@ -26,6 +26,7 @@ public class Ability_DarkSpell01 implements Ability {
             ((GenericPlayer) p).setAnimation("DarkSpell_01");
         }
         
+        AudioManager.play("night_spell1");
         // Destroy all obstacles currently on screen
         java.util.List<Obstacles> obstacles = 
             world.getObjects(Obstacles.class);
