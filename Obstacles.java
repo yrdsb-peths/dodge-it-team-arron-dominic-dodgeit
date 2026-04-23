@@ -36,6 +36,10 @@ public abstract class Obstacles extends Actor {
      * Protected so subclasses can read and write it directly.
      */
     protected int speed;
+    protected int frozenTimer = 0;
+    protected int savedSpeed = 0;
+    protected boolean pendingDestroy= false;
+    
     public abstract int getRadius();
 
     /**
@@ -47,6 +51,20 @@ public abstract class Obstacles extends Actor {
     public void act() {
         MyWorld world = (MyWorld) getWorld();
         if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
+        
+        // Handle pending destroy
+        if (pendingDestroy) {
+            world.removeObject(this);
+            return; // stop immediately after removal
+        }
+        
+        // Handle freeze countdown
+        if (frozenTimer > 0) {
+            frozenTimer--;
+            if (frozenTimer <= 0) {
+                speed = savedSpeed; // restore speed when freeze ends
+            }
+        }
 
         // --- ACCURATE DEBUG VISUAL ---
         if (GameConfig.DEBUG_MODE) {
@@ -60,6 +78,18 @@ public abstract class Obstacles extends Actor {
         movementLogic();  
         collisionLogic(); 
         checkRemove();    
+    }
+    
+    // Freezes this obstacle for a set number of frames(roots hit)
+    public void freeze(int durationFrames) {
+        frozenTimer = durationFrames;
+        savedSpeed = speed;
+        speed      = 0;
+    }
+    
+    // Marks this obstacle for destruction next frame
+    public void destroy() {
+        pendingDestroy = true;
     }
 
     /**
