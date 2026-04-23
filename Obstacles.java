@@ -111,4 +111,12 @@ public abstract class Obstacles extends Actor {
      */
     protected abstract void checkRemove();
     
+    // --- RESTORED: Freeze state ---
+    protected int freezeTimer = 0;
+    
+    /**Allows abilities to check if this is already frozen */
+    public int getFreezeTimer() {
+        return freezeTimer;
+    }
+    
 }

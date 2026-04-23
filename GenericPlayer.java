@@ -322,12 +322,11 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             );
             
             // Draw DARK SPELL 01 Blast Radius (Cyan)
-            Ability vSpell = getAbility(Ability_DarkSpell01.class);
-            if (vSpell != null && vSpell.isActive()) {
+            Ability ds1 = getAbility(Ability_DarkSpell01.class);
+            if (ds1 != null && ds1.isActive()) {
                 debugImg.setColor(Color.CYAN);
-                // The radius we use in code: s(175)
-                int spellR = GameConfig.s(Ability_DarkSpell01.BLAST_RADIUS);
-                // Draw circle centered on the sprite
+                // Reach into GameConfig for the radius constant
+                int spellR = GameConfig.s(GameConfig.DS01_RADIUS);
                 debugImg.drawOval(
                     debugImg.getWidth()/2 - spellR, 
                     debugImg.getHeight()/2 - spellR, 
@@ -335,7 +334,6 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
                     spellR*2
                 );
             }
-
             ;
             setImage(debugImg);
         } else {

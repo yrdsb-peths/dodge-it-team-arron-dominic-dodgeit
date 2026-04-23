@@ -22,7 +22,7 @@ import greenfoot.*;
 public class GameConfig {
     
     //Section -1: Debug mode
-    public static final boolean DEBUG_MODE = true; // Set to false to hide hitboxes
+    public static final boolean DEBUG_MODE = false; // Set to false to hide hitboxes
     
     // =========================================================================
     // SECTION 0 — GLOBAL SCALE
@@ -171,6 +171,21 @@ public class GameConfig {
     public static final String KC_BUTTON = "Q";
     public static final double KC_DURATION = 2.0; // How long time is frozen
     public static final double KC_COOLDOWN = 1.0;
+    
+
+    //--— DARK SPELL SETTINGS
+
+    // Spell 01 (V) - Dark Nuke
+    public static final String DS01_BUTTON = "v";
+    public static final double DS01_DURATION = 0.9;   // Seconds
+    public static final double DS01_COOLDOWN = 5.0;   // Seconds
+    public static final int    DS01_IMAGE_SIZE = 1400; // Pixels
+    public static final int    DS01_RADIUS = 500;     // Pixels (The blast radius)
+
+    // Spell 02 (C) - Lane Freeze
+    public static final String DS02_BUTTON = "c";
+    public static final double DS02_DURATION = 1.0;   // Seconds
+    public static final double DS02_COOLDOWN = 1.0;   // Seconds
 
     // =========================================================================
     // SECTION 7 — AUDIO

@@ -31,6 +31,8 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import greenfoot.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public class SpawnManager {
 
@@ -135,8 +137,20 @@ public class SpawnManager {
      */
     private void spawnRoadroller(MyWorld world) {
         int spawnY = getRandomLane();
-        world.addObject(new Roadroller(roadrollerSpeed), world.getWidth(), spawnY);
+        Roadroller roller = new Roadroller(roadrollerSpeed);
+        world.addObject(roller, world.getWidth(), spawnY);
 
+        // --- FIX: Check if the ability is ACTUALLY active ---
+        // We look for the active ability in the player's list
+        List<GenericPlayer> players = world.getObjects(GenericPlayer.class);
+        if (!players.isEmpty()) {
+            Ability ds2 = players.get(0).getAbility(Ability_DarkSpell02.class);
+            if (ds2 != null && ds2.isActive()) {
+                if (Math.abs(spawnY - Ability_DarkSpell02.CURRENT_FROZEN_LANE_Y) < 10) {
+                    roller.freeze(2); // Hold them at the edge
+                }
+            }
+        }
     }
 
     /**

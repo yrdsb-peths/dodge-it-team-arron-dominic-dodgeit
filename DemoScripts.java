@@ -74,6 +74,35 @@ public class DemoScripts {
                 // If they let go of Right too early, they snap back to the past and die.
                 // If they wait for the overlap and press Q, they shatter the cars and win!
         }
+        if (clazz == Ability_DarkSpell01.class) {
+            return new DemoStage("Dark Spell 1: Erases everything in a massive circle around you.")
+                // Spawn a cluster that covers multiple lanes
+                .spawnRoadrollerAt(20, 1)
+                .spawnRoadrollerAt(20, 2)
+                .spawnRoadrollerAt(20, 3)
+                .addWaitPoint(60, 
+                    (player, world) -> player.isAbilityActive(Ability_DarkSpell01.class), 
+                    "You're surrounded! Press [V] to trigger the Void Nuke and clear the road!"
+                );
+        }
+        
+        // --- LANE LOCKDOWN (Ability 02) ---
+        if (clazz == Ability_DarkSpell02.class) {
+            return new DemoStage("Dark Spell 2: Curses your current lane, stopping all incoming traffic.")
+                .spawnRoadrollerAt(30, 2) // Obstacle in the middle
+                .spawnRoadrollerAt(40, 2)
+                .spawnRoadrollerAt(50, 2)
+                .addWaitPoint(70, 
+                    (player, world) -> player.isAbilityActive(Ability_DarkSpell02.class), 
+                    "Line up with the car and press [C] to freeze the lane!"
+                )
+                // Spawn more cars INTO the frozen lane to show the persistent effect
+                
+                .addWaitPoint(150,
+                    (player, world) -> true, // Just a text delay to let them watch
+                    "Look! Incoming cars in this lane freeze instantly upon entry."
+                );
+        }
         
         // Fallback for missing/future abilities
         return new DemoStage("Try out the ability in the sandbox!");
