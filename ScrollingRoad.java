@@ -100,4 +100,13 @@ public class ScrollingRoad extends Actor implements Time_Snapshottable {
 
     @Override
     public void restoreState(Time_ActorMemento m) { }
+    
+    /**
+     * Forcefully scrolls the road during King Crimson's future vision,
+     * bypassing the standard 'isGameFrozen' checks.
+     */
+    public void fastForward() {
+        scroll();
+    }
+
 }

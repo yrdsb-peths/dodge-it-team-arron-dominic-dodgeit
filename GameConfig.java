@@ -178,13 +178,13 @@ public class GameConfig {
     // Spell 01 (V) - Dark Nuke
     public static final String DS01_BUTTON = "v";
     public static final double DS01_DURATION = 0.9;   // Seconds
-    public static final double DS01_COOLDOWN = 5.0;   // Seconds
-    public static final int    DS01_IMAGE_SIZE = 1400; // Pixels
-    public static final int    DS01_RADIUS = 500;     // Pixels (The blast radius)
+    public static final double DS01_COOLDOWN = 5.0;   // 5 Seconds
+    public static final int    DS01_IMAGE_SIZE = 650; // Pixels
+    public static final int    DS01_RADIUS = 200;     // Pixels (The blast radius)
 
     // Spell 02 (C) - Lane Freeze
     public static final String DS02_BUTTON = "c";
-    public static final double DS02_DURATION = 1.0;   // Seconds
+    public static final double DS02_DURATION = 2.0;   // Seconds
     public static final double DS02_COOLDOWN = 1.0;   // Seconds
 
     // =========================================================================

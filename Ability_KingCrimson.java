@@ -89,7 +89,10 @@ public class Ability_KingCrimson implements Ability {
                 // Fast forward 3 extra ticks per actual frame (4x Speed)
                 for (int i = 0; i < 3; i++) {
                     sm.update(world);
-                    for(ScrollingRoad road : world.getObjects(ScrollingRoad.class)) road.act();
+                    for(ScrollingRoad road : world.getObjects(ScrollingRoad.class)) {
+                        road.fastForward(); 
+                    }
+                    
                     
                     List<Obstacles> obstacles = world.getObjects(Obstacles.class);
                     for (Obstacles obs : obstacles) {

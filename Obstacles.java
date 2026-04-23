@@ -82,9 +82,14 @@ public abstract class Obstacles extends Actor {
     
     // Freezes this obstacle for a set number of frames(roots hit)
     public void freeze(int durationFrames) {
-        frozenTimer = durationFrames;
-        savedSpeed = speed;
-        speed      = 0;
+        // ONLY save the speed if we aren't currently frozen.
+        // If we are already frozen, speed is 0, and we don't want to save 0!
+        if (this.frozenTimer <= 0) {
+            savedSpeed = speed; 
+        }
+        
+        this.frozenTimer = durationFrames;
+        this.speed = 0;
     }
     
     // Marks this obstacle for destruction next frame

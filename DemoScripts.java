@@ -66,7 +66,7 @@ public class DemoScripts {
                 // Freeze the game right before the wall hits
                 .addWaitPoint(80, 
                     (player, world) -> player.isAbilityActive(Ability_KingCrimson.class), 
-                    "An unavoidable wall! HOLD [RIGHT ARROW] to fast-forward into the future."
+                    "HOLD [RIGHT ARROW] to fast-forward into the future, Q to confirm"
                 );
                 
                 // NO SECOND WAIT POINT! 
@@ -74,6 +74,7 @@ public class DemoScripts {
                 // If they let go of Right too early, they snap back to the past and die.
                 // If they wait for the overlap and press Q, they shatter the cars and win!
         }
+        
         if (clazz == Ability_DarkSpell01.class) {
             return new DemoStage("Dark Spell 1: Erases everything in a massive circle around you.")
                 // Spawn a cluster that covers multiple lanes
