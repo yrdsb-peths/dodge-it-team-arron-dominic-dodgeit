@@ -22,7 +22,7 @@ import greenfoot.*;
 public class GameConfig {
     
     //Section -1: Debug mode
-    public static final boolean DEBUG_MODE = false; // Set to false to hide hitboxes
+    public static final boolean DEBUG_MODE = true; // Set to false to hide hitboxes
     
     // =========================================================================
     // SECTION 0 — GLOBAL SCALE
@@ -170,7 +170,7 @@ public class GameConfig {
     //---KING CRIMSON (SKIPS TIME)
     public static final String KC_BUTTON = "Q";
     public static final double KC_DURATION = 2.0; // How long time is frozen
-    public static final double KC_COOLDOWN = 1.0;
+    public static final double KC_COOLDOWN = 0.0;
     
 
     //--— DARK SPELL SETTINGS
@@ -178,9 +178,11 @@ public class GameConfig {
     // Spell 01 (V) - Dark Nuke
     public static final String DS01_BUTTON = "v";
     public static final double DS01_DURATION = 0.9;   // Seconds
-    public static final double DS01_COOLDOWN = 5.0;   // 5 Seconds
+    public static final double DS01_COOLDOWN = 2.5;   // 5 Seconds
     public static final int    DS01_IMAGE_SIZE = 650; // Pixels
     public static final int    DS01_RADIUS = 200;     // Pixels (The blast radius)
+
+    public static final double DS01_COMBO_COOLDOWN = 1.0; // Shorter cooldown for Beam
 
     // Spell 02 (C) - Lane Freeze
     public static final String DS02_BUTTON = "c";

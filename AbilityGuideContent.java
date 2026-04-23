@@ -27,7 +27,9 @@ public class AbilityGuideContent {
             "Unleashes a massive purple explosion.\n\n" +
             "Anything inside the radius is erased instantly.\n" +
             "You are INVINCIBLE while casting.\n\n" +
-            "Use this to clear massive waves of cars."
+            "Use this to clear massive waves of cars."+
+            "RESONANCE: If a lane is FROZEN (Spell 02),\n" +
+            "this clears the ENTIRE LANE instead!"
         );
 
         guides.put(Ability_DarkSpell02.class,

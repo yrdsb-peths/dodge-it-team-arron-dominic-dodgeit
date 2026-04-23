@@ -8,6 +8,9 @@ public class Ability_DarkSpell01 implements Ability {
     
     private boolean keyWasDown = false;
     private boolean hasResized = false;
+    
+    // --- NEW: Flag to remember which cooldown to use at the end ---
+    private boolean usedResonance = false;
 
     @Override
     public void activate(Player p, MyWorld world) {
@@ -17,72 +20,101 @@ public class Ability_DarkSpell01 implements Ability {
         durationTimer.reset();
         durationTimer.start();
         
+        // 1. Determine if we are resonating right now
+        usedResonance = (Ability_DarkSpell02.CURRENT_FROZEN_LANE_Y != -1);
+
         if (p instanceof GenericPlayer) {
             GenericPlayer gp = (GenericPlayer) p;
-            if (!hasResized) {
-                gp.resizeAnimation("DarkSpell_01", GameConfig.s(GameConfig.DS01_IMAGE_SIZE));
-                hasResized = true;
+            
+            if (!usedResonance) {
+                // Standard Sphere Visual
+                if (!hasResized) {
+                    gp.resizeAnimation("DarkSpell_01", GameConfig.s(GameConfig.DS01_IMAGE_SIZE));
+                    hasResized = true;
+                }
+                gp.setAnimation("DarkSpell_01");
+            } else {
+                // Combo Beam Visual (Stay in Idle)
+                gp.setAnimation("Idle"); 
             }
-            gp.setAnimation("DarkSpell_01");
         }
+        
         AudioManager.play("night_spell1");
     }
     
     @Override
     public void update(Player p, MyWorld world) {
         cooldownTimer.update(world);
-        
         if (!Greenfoot.isKeyDown(getKeybind())) keyWasDown = false;
 
         if (durationTimer.isActive()) {
             durationTimer.update(world);
-            
-            // PERSISTENT KILLING LOGIC
-            double spellRadius = GameConfig.s(GameConfig.DS01_RADIUS);
+
             List<Obstacles> obstacles = world.getObjects(Obstacles.class);
-            for (Obstacles obs : obstacles) {
-                double distance = Math.hypot(obs.getX() - p.getX(), obs.getY() - p.getY());
-                if (distance <= (spellRadius + obs.getRadius())) {
-                    obs.destroy(); 
+            
+            if (usedResonance) {
+                // BEAM LOGIC
+                int frozenY = Ability_DarkSpell02.CURRENT_FROZEN_LANE_Y;
+                for (Obstacles obs : obstacles) {
+                    if (Math.abs(obs.getY() - frozenY) < GameConfig.s(25)) obs.destroy(); 
+                }
+                if (durationTimer.getRemainingFrames() % 5 == 0) {
+                    world.addObject(new FX_DarkAnnihilationBeam(), world.getWidth()/2, frozenY);
+                }
+            } else {
+                // SPHERE LOGIC
+                double spellRadius = GameConfig.s(GameConfig.DS01_RADIUS);
+                for (Obstacles obs : obstacles) {
+                    double dist = Math.hypot(obs.getX() - p.getX(), obs.getY() - p.getY());
+                    if (dist <= (spellRadius + obs.getRadius())) obs.destroy(); 
                 }
             }
 
             if (durationTimer.isExpired()) {
                 durationTimer.stop();
+                
+                // --- THE REWARD LOGIC ---
+                // Set cooldown based on how we just used the ability
+                double cdTime = usedResonance ? GameConfig.DS01_COMBO_COOLDOWN : GameConfig.DS01_COOLDOWN;
+                cooldownTimer.setDuration(cdTime);
+                
                 cooldownTimer.reset();
                 cooldownTimer.start();
+                
                 if (p instanceof GenericPlayer) ((GenericPlayer) p).setAnimation("Dash");
             }
         }
     }
 
-    @Override public void cancel() { durationTimer.stop(); cooldownTimer.stop(); }
-    @Override public String getKeybind() { return GameConfig.DS01_BUTTON; }
-    @Override public String getDisplayLabel() { return "V"; }
-    @Override public boolean isActive() { return durationTimer.isActive(); }
-    @Override public boolean isCooldownActive() { return cooldownTimer.isActive(); }
-    
-    @Override public double getActivePercent() { 
-        return durationTimer.isActive() ? (1.0 - durationTimer.getPercentComplete()) : 0.0; 
-    }
-    @Override public double getCooldownPercent() { 
-        return cooldownTimer.isActive() ? cooldownTimer.getPercentComplete() : 0.0; 
-    }
-
+    // Capture/Restore need to save the usedResonance flag for Rewind safety!
     @Override
     public Object captureState() {
-        return new int[]{
+        return new Object[]{
             durationTimer.getRemainingFrames(), cooldownTimer.getRemainingFrames(),
-            durationTimer.isActive() ? 1 : 0, cooldownTimer.isActive() ? 1 : 0
+            durationTimer.isActive() ? 1 : 0, cooldownTimer.isActive() ? 1 : 0,
+            usedResonance ? 1 : 0, cooldownTimer.getTotalFrames()
         };
     }
 
     @Override
     public void restoreState(Object state) {
-        int[] s = (int[]) state;
-        durationTimer.setRemainingFrames(s[0]);
-        cooldownTimer.setRemainingFrames(s[1]);
-        if (s[2] == 1) durationTimer.start(); else durationTimer.stop();
-        if (s[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
+        Object[] s = (Object[]) state;
+        durationTimer.setRemainingFrames((int)s[0]);
+        cooldownTimer.setRemainingFrames((int)s[1]);
+        if ((int)s[2] == 1) durationTimer.start(); else durationTimer.stop();
+        
+        // Restore the specific CD timer duration that was active
+        cooldownTimer.setDuration((int)s[5] / 60.0);
+        if ((int)s[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
+        
+        usedResonance = ((int)s[4] == 1);
     }
+    
+    @Override public void cancel() { durationTimer.stop(); cooldownTimer.stop(); }
+    @Override public String getKeybind() { return GameConfig.DS01_BUTTON; }
+    @Override public String getDisplayLabel() { return "V"; }
+    @Override public boolean isActive() { return durationTimer.isActive(); }
+    @Override public boolean isCooldownActive() { return cooldownTimer.isActive(); }
+    @Override public double getActivePercent() { return durationTimer.isActive() ? (1.0 - durationTimer.getPercentComplete()) : 0.0; }
+    @Override public double getCooldownPercent() { return cooldownTimer.isActive() ? cooldownTimer.getPercentComplete() : 0.0; }
 }
