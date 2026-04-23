@@ -181,7 +181,7 @@ public class GameConfig {
      * base volumes in AudioManager; actual volume = (base × master) / 200.
      */
 
-    public static final int MASTER_VOLUME = 0;
+    public static final int MASTER_VOLUME = 100;
 
     
     // =========================================================================

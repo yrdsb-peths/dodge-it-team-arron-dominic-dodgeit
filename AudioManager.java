@@ -108,10 +108,10 @@ public class AudioManager {
         loadVoicePool("dioBattleCry",  new String[]{
             "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3",
             "dio_voiceline/muda_muda.mp3", "dio_voiceline/Voicy_Timestop DiegoBrando.mp3"
-        }, 70);
+        }, 80);
         
         loadVoicePool("skipTime",  new String[]{"skip_time1.mp3","skip_time2.mp3"}, 140);
-        
+        loadVoicePool("diavoloLines", new String[]{ "diavolo_voiceline/diavolo1.mp3","diavolo_voiceline/diavolo2.mp3","diavolo_voiceline/kono_diavolo.mp3" }, 70);
         
         updateAllVolumes(); // apply master volume to everything at startup
     }

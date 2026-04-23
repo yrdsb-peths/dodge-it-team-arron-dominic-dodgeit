@@ -113,7 +113,7 @@ public enum CharacterConfig {
         0.8 * GameConfig.SCALE,
         "dio_bgm", 
         "dioLostVoices",
-        "dioBattleCry", 
+        "diavoloLines", 
         BossConfig.DIO, 
         new String[]{"Ability_KingCrimson"});
 
