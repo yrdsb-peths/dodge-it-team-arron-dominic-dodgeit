@@ -37,16 +37,22 @@ public class GameOverState implements GameState {
         int bestScore  = ScoreManager.getHighScore();
 
         int midX = world.getWidth() / 2;
-        // FETCH THE OBITUARY
         String text = ObituaryManager.getRandomObituary(GameConfig.ACTIVE_CHARACTER);
-        // Display it under the scores (Adjust Y position as needed)
-        addUI(world, new UIText(text, GameConfig.s(20), Color.BLACK), midX, GameConfig.s(290));
+    
+        // FETCH WIDTH: Use almost the whole screen width, leaving some padding
+        int wrapAt = world.getWidth() - GameConfig.s(100); 
+    
+        // Create the text WITH the maxWidth parameter
+        UIText obituaryLabel = new UIText(text, GameConfig.s(20), Color.BLACK, wrapAt);
         
+        // Add it to the screen
+        addUI(world, obituaryLabel, midX, GameConfig.s(290));
+            
         world.setBackground(new GreenfootImage("game_over.png")); 
         world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
         //addUI(world, new UIText("RETIRED",                          GameConfig.s(80), Color.RED),   midX, GameConfig.s(150));
-        addUI(world, new UIText("Final Score: "   + finalScore,     GameConfig.s(30), Color.RED),   midX, GameConfig.s(200));
-        addUI(world, new UIText("Best Survival: " + bestScore,      GameConfig.s(30), Color.RED),   midX, GameConfig.s(250));
+        addUI(world, new UIText("Final Score: "   + finalScore,     GameConfig.s(30), Color.RED),   midX, GameConfig.s(180));
+        addUI(world, new UIText("Best Survival: " + bestScore,      GameConfig.s(30), Color.RED),   midX, GameConfig.s(220));
         //addUI(world, new UIText("Press ENTER to Restart",           GameConfig.s(25), Color.BLACK), midX, GameConfig.s(300));
     
 
