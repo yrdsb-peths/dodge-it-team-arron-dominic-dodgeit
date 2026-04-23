@@ -1,0 +1,14 @@
+#BlueJ class context
+comment0.target=Mgr_Spawn
+comment0.text=\n\ Write\ a\ description\ of\ class\ SpawnManager\ here.\n\ \n\ @author\ (your\ name)\ \n\ @version\ (a\ version\ number\ or\ a\ date)\n
+comment1.params=world
+comment1.target=void\ update(MyWorld)
+comment2.params=
+comment2.target=void\ increaseDifficulty()
+comment3.params=world
+comment3.target=void\ spawnRoadroller(MyWorld)
+comment4.params=world\ speed
+comment4.target=void\ spawnTrain(MyWorld,\ int)
+comment5.params=
+comment5.target=int\ getRandomLane()
+numComments=6

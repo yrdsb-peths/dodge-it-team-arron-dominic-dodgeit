@@ -1,0 +1,21 @@
+#BlueJ class context
+comment0.target=ScoreManager
+comment1.params=amount
+comment1.target=void\ addScore(int)
+comment1.text=\n\ Adds\ points\ to\ the\ current\ score.\n\ Called\ by\ Roadroller.checkRemove()\ (+1\ per\ car\ dodged),\n\ Train.checkRemove()\ (+5\ per\ ambulance\ dodged),\n\ and\ TheWorldStand.act()\ (+2\ per\ obstacle\ destroyed\ by\ the\ Stand).\n\n\ @param\ amount\ \ Number\ of\ points\ to\ add\ (should\ be\ positive).\n
+comment2.params=s
+comment2.target=void\ setScore(int)
+comment2.text=\n\ Directly\ sets\ the\ score.\n\ Used\ ONLY\ by\ the\ time-rewind\ system\ (Time_RewindManager)\ to\ restore\n\ the\ score\ to\ its\ value\ at\ a\ past\ frame.\ \ Do\ not\ call\ this\ from\ gameplay\ code.\n\n\ @param\ s\ \ The\ score\ value\ to\ restore.\n
+comment3.params=
+comment3.target=void\ reset()
+comment3.text=\n\ Resets\ the\ current\ score\ to\ 0,\ copying\ it\ to\ highScore\ first\ if\ it's\n\ a\ new\ record.\ \ Called\ at\ the\ start\ of\ each\ new\ PlayingState.\n
+comment4.params=
+comment4.target=void\ updateHighScore()
+comment4.text=\n\ Updates\ highScore\ if\ the\ current\ score\ exceeds\ it.\n\ Called\ by\ GameOverState.enter()\ to\ freeze\ the\ best\ score\ for\ display.\n\ reset()\ already\ does\ this,\ but\ GameOverState\ calls\ this\ separately\n\ for\ clarity.\n
+comment5.params=
+comment5.target=int\ getScore()
+comment5.text=@return\ The\ current\ running\ score.
+comment6.params=
+comment6.target=int\ getHighScore()
+comment6.text=@return\ The\ best\ score\ achieved\ this\ session.
+numComments=7
