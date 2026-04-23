@@ -109,6 +109,8 @@ public class AudioManager {
             "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3",
             "dio_voiceline/muda_muda.mp3", "dio_voiceline/Voicy_Timestop DiegoBrando.mp3"
         }, 80);
+        loadVoicePool("ringo",        new String[]{ "ringo_voiceline/ringo1.mp3,","ringo_voiceline/ringo2.mp3","ringo_voiceline/ringo3.mp3","ringo_voiceline/ringo4.mp3" }, 80);
+        loadVoicePool("ringo",        new String[]{ "ringo_voiceline/ringo_lose1.mp3","ringo_voiceline/ringo_lose2.mp3"},80);
         
         loadVoicePool("skipTime",  new String[]{"skip_time1.mp3","skip_time2.mp3"}, 140);
         loadVoicePool("diavoloLines", new String[]{ "diavolo_voiceline/diavolo1.mp3","diavolo_voiceline/diavolo2.mp3","diavolo_voiceline/kono_diavolo.mp3" }, 70);
