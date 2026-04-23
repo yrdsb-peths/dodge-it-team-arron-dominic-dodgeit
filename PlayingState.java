@@ -219,6 +219,11 @@ public class PlayingState implements GameState,IActiveGameState{
     public boolean isGameFrozen() {
         return Ability_KingCrimson.ERASING; // Game freezes when KC is active
     }
+        
+        
+    public Time_RewindManager getRewindManager() {
+        return rewindManager;
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // GETTERS

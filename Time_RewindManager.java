@@ -237,6 +237,16 @@ public class Time_RewindManager {
             ((Time_Snapshottable) m.actor).restoreState(m);
         }
     }
+    
+    /** Returns the most recent snapshot without removing it from history */
+    public Time_FrameSnapshot getLastSnapshot() {
+        return history.peek();
+    }
+
+    /** Forces the world to instantly restore to a specific snapshot */
+    public void forceRestore(Time_FrameSnapshot snap, MyWorld world, SpawnManager sm) {
+        if (snap != null) restoreSnapshot(snap, world, sm);
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // STATE QUERIES

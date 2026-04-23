@@ -83,4 +83,6 @@ public class Time_FrameSnapshot {
         this.trainRate       = tRate;
         this.rngState        = rngState;
     }
+    
+    
 }

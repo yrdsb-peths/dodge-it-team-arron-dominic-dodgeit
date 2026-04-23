@@ -92,6 +92,7 @@ public class AudioManager {
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
         loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
         loadSound("gothic_bgm",  "gothicbgm.mp3",             90);
+        loadSound("kingCrimsonDuration",  "KingCrimson_Duration.mp3",             180);
         
         
         // ── Voice pools ───────────────────────────────────────────────────────
@@ -102,6 +103,8 @@ public class AudioManager {
             "dio_voiceline/wry.mp3", "dio_voiceline/high.mp3",
             "dio_voiceline/muda_muda.mp3", "dio_voiceline/Voicy_Timestop DiegoBrando.mp3"
         }, 70);
+        
+        loadVoicePool("skipTime",  new String[]{"skip_time1.mp3","skip_time2.mp3"}, 140);
         
         
         updateAllVolumes(); // apply master volume to everything at startup

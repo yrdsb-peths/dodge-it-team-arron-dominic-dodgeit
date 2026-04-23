@@ -180,7 +180,7 @@ public class GameConfig {
      * Range is 0 (silent) to 200 (full).  Individual sounds have their own
      * base volumes in AudioManager; actual volume = (base × master) / 200.
      */
-    public static final int MASTER_VOLUME = 0;
+    public static final int MASTER_VOLUME = 80;
 
     // =========================================================================
     // SECTION 8 — KEY BINDINGS
