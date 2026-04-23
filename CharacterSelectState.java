@@ -27,7 +27,7 @@ public class CharacterSelectState implements GameState {
         addUI(world, new UI_Panel(world.getWidth(), GameConfig.s(160), new Color(0, 0, 0, 180)), midX, GameConfig.s(320));
 
         // 3. Static Text
-        addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.YELLOW), midX, GameConfig.s(40));
+        addUI(world, new UIText("SELECT YOUR CHARACTER", GameConfig.s(40), Color.BLACK), midX, GameConfig.s(40));
         addUI(world, new UIText("< LEFT ARROW               RIGHT ARROW >", GameConfig.s(18), Color.CYAN), midX, GameConfig.s(260));
         addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(20), Color.GREEN), midX - GameConfig.s(130), GameConfig.s(370));
         addUI(world, new UIText("[ ENTER : START GAME ]", GameConfig.s(20), Color.RED), midX + GameConfig.s(130), GameConfig.s(370));
