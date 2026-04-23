@@ -5,13 +5,18 @@ public class Ability_KingCrimson implements Ability {
 
     public static boolean ERASING = false;
     public static double erasurePercent = 0.0;
+    
+    // New: Tracks if the player is currently standing in a "Death Zone"
+    private boolean standingInDanger = false;
 
-    // Max skip duration: 1.0 second of real time = 4 seconds of game time skipped
-    private GameTimer durationTimer = new GameTimer(GameConfig.KC_DURATION, false);
+    private GameTimer durationTimer = new GameTimer(GameConfig.KC_DURATION, false); // Slightly longer skip
     private GameTimer cooldownTimer = new GameTimer(GameConfig.KC_COOLDOWN, false);
+    
+    // Timer for the post-skip slow-motion window
+    private int slowMoTimer = 0;
 
     private int holdFrames = 0;
-    private static final int HOLD_THRESHOLD = 12; // 0.2s wind-up
+    private static final int HOLD_THRESHOLD = 12;
     private FX_KingCrimsonOverlay overlay = null;
 
     @Override
@@ -21,10 +26,15 @@ public class Ability_KingCrimson implements Ability {
     public void update(Player p, MyWorld world) {
         if (cooldownTimer.isActive()) cooldownTimer.update(world);
 
+        // --- SLOW-MO RECOVERY LOGIC ---
+        if (slowMoTimer > 0) {
+            slowMoTimer--;
+            if (slowMoTimer == 0) Greenfoot.setSpeed(50); // Restore normal speed
+        }
+
         String key = GameConfig.KC_BUTTON;
         boolean keyDown = Greenfoot.isKeyDown(key);
         
-        // --- 1. ACTIVATION LOGIC (WIND-UP) ---
         boolean canActivate = !ERASING && !durationTimer.isActive() && !cooldownTimer.isActive() && !world.isRewinding();
 
         if (keyDown && canActivate) {
@@ -37,35 +47,36 @@ public class Ability_KingCrimson implements Ability {
             holdFrames = 0; 
         }
 
-        // --- 2. ACTIVE ERASURE LOGIC ---
         if (ERASING && durationTimer.isActive()) {
             durationTimer.update(world);
             erasurePercent = durationTimer.getPercentComplete();
 
-            // REVOLUTIONARY FIX: If the player releases Q, end the skip IMMEDIATELY
             if (!keyDown) {
                 endErasure(world);
                 return;
             }
 
-            // THE VHS FAST FORWARD
-            // We simulate 4x world speed while the player moves at normal speed
+            // RESET Danger flag every frame
+            standingInDanger = false;
+
             GameState state = world.getGSM().peekState();
             if (state instanceof PlayingState) {
                 SpawnManager sm = ((PlayingState) state).getSpawnManager();
+                // 3 skip-ticks per real tick
                 for (int i = 0; i < 3; i++) {
                     sm.update(world);
-                    
-                    for(ScrollingRoad road : world.getObjects(ScrollingRoad.class)) {
-                        road.act();
-                    }
+                    for(ScrollingRoad road : world.getObjects(ScrollingRoad.class)) road.act();
                     
                     List<Obstacles> obstacles = world.getObjects(Obstacles.class);
                     for (Obstacles obs : obstacles) {
                         obs.fastForwardMove();
                         
-                        // SHATTERED FATE REWARD:
-                        if (p.checkCustomHitbox(obs, 0.8)) {
+                        // --- EPITAPH CHECK ---
+                        // If we overlap ANY car during the skip, mark danger
+                        if (p.checkCustomHitbox(obs, 1.0)) {
+                            standingInDanger = true; 
+                            
+                            // Shattered Glass Reward
                             if (Greenfoot.getRandomNumber(100) < 15) {
                                 world.addObject(new FX_ShatteredGlass(), p.getX(), p.getY());
                             }
@@ -73,6 +84,19 @@ public class Ability_KingCrimson implements Ability {
                         }
                     }
                 }
+            }
+
+            // VISUAL FEEDBACK: Pulse the player red if they are in danger
+            if (standingInDanger) {
+                p.getImage().setColor(new Color(255, 0, 0));
+                // Make the player flicker red to say "DON'T RELEASE!"
+                if (durationTimer.getRemainingFrames() % 4 < 2) {
+                    p.getImage().setTransparency(100);
+                } else {
+                    p.getImage().setTransparency(255);
+                }
+            } else {
+                p.getImage().setTransparency(255);
             }
 
             if (durationTimer.isExpired()) {
@@ -86,7 +110,6 @@ public class Ability_KingCrimson implements Ability {
         erasurePercent = 0.0;
         durationTimer.reset();
         durationTimer.start();
-
         overlay = new FX_KingCrimsonOverlay();
         world.addObject(overlay, world.getWidth() / 2, world.getHeight() / 2);
         AudioManager.play("kc_activate");
@@ -98,17 +121,23 @@ public class Ability_KingCrimson implements Ability {
         durationTimer.stop();
         overlay = null; 
 
-        // The Reality Snap Flash
         world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
         AudioManager.play("kc_snap");
 
-        // Start Cooldown
+        // --- SAFETY MECHANISM: THE REFLEX WINDOW ---
+        // Slow down the game to 35 (about 60% speed) for 15 frames
+        Greenfoot.setSpeed(35);
+        slowMoTimer = 5; 
+
         cooldownTimer.reset();
         cooldownTimer.start();
     }
 
-    // ... (rest of the interface methods remain the same)
-    @Override public void cancel() { if (ERASING) { ERASING = false; erasurePercent = 0.0; durationTimer.stop(); overlay = null; } cooldownTimer.stop(); }
+    // Standard methods...
+    @Override public void cancel() { 
+        if (ERASING) { ERASING = false; Greenfoot.setSpeed(50); } 
+        cooldownTimer.stop(); 
+    }
     @Override public boolean isActive() { return ERASING; }
     @Override public boolean isCooldownActive() { return cooldownTimer.isActive(); }
     @Override public double getActivePercent() { return ERASING ? (1.0 - durationTimer.getPercentComplete()) : 0.0; }
@@ -120,6 +149,6 @@ public class Ability_KingCrimson implements Ability {
         int[] d = (int[]) state; durationTimer.setRemainingFrames(d[0]); cooldownTimer.setRemainingFrames(d[1]);
         if (d[2] == 1) durationTimer.start(); else durationTimer.stop();
         if (d[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
-        ERASING = (d[4] == 1); erasurePercent = ERASING ? durationTimer.getPercentComplete() : 0.0; overlay = null;
+        ERASING = (d[4] == 1); overlay = null;
     }
 }
