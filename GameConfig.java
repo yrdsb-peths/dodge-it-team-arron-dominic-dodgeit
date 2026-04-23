@@ -22,7 +22,7 @@ import greenfoot.*;
 public class GameConfig {
     
     //Section -1: Debug mode
-    public static final boolean DEBUG_MODE = false; // Set to false to hide hitboxes
+    public static final boolean DEBUG_MODE = true; // Set to false to hide hitboxes
     
     // =========================================================================
     // SECTION 0 — GLOBAL SCALE
@@ -181,7 +181,7 @@ public class GameConfig {
      * base volumes in AudioManager; actual volume = (base × master) / 200.
      */
 
-    public static final int MASTER_VOLUME = 100;
+    public static final int MASTER_VOLUME = 0;
 
     
     // =========================================================================

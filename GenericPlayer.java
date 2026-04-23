@@ -307,6 +307,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         
         if (GameConfig.DEBUG_MODE) {
             GreenfootImage debugImg = new GreenfootImage(frame);
+            // 1. Draw standard Player Hitbox (Red)
             debugImg.setColor(Color.RED);
             
             int r = GameConfig.PLAYER_RADIUS;
@@ -319,6 +320,23 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
                 debugImg.getHeight()/2 - r + drawYOffset, // <--- Apply offset here
                 r*2, r*2
             );
+            
+            // Draw DARK SPELL 01 Blast Radius (Cyan)
+            Ability vSpell = getAbility(Ability_DarkSpell01.class);
+            if (vSpell != null && vSpell.isActive()) {
+                debugImg.setColor(Color.CYAN);
+                // The radius we use in code: s(175)
+                int spellR = GameConfig.s(Ability_DarkSpell01.BLAST_RADIUS);
+                // Draw circle centered on the sprite
+                debugImg.drawOval(
+                    debugImg.getWidth()/2 - spellR, 
+                    debugImg.getHeight()/2 - spellR, 
+                    spellR*2, 
+                    spellR*2
+                );
+            }
+
+            ;
             setImage(debugImg);
         } else {
             setImage(frame);
@@ -529,5 +547,28 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         if (name.equals("MoonKnight"))  offset = GameConfig.MOON_KNIGHT_HITBOX_OFFSET;  // Lower MoonKnight's hitbox by 5px
         
         return getY() + offset;
+    }
+    
+        /**
+     * Scales every frame of a specific animation to a new size.
+     * Used by Dark Spells to make the visual match the massive gameplay range.
+     */
+    public void scaleAnimation(String animName, int width, int height) {
+        if (animations.containsKey(animName)) {
+            Animator anim = animations.get(animName);
+            // We need to add a method to Animator to allow this, 
+            // OR we can reach into the frames if we make them accessible.
+            // Let's assume we use a new helper in Animator.
+            anim.scaleAllFrames(width, height);
+        }
+    }
+    /**
+     * Changes the size of a specific animation. 
+     * Used to make spells match their hitboxes.
+     */
+    public void resizeAnimation(String name, int size) {
+        if (animations.containsKey(name)) {
+            animations.get(name).scaleAllFrames(size, size);
+        }
     }
 }

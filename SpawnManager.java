@@ -136,6 +136,7 @@ public class SpawnManager {
     private void spawnRoadroller(MyWorld world) {
         int spawnY = getRandomLane();
         world.addObject(new Roadroller(roadrollerSpeed), world.getWidth(), spawnY);
+
     }
 
     /**
