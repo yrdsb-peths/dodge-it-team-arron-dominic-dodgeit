@@ -86,14 +86,19 @@ public class Ability_KingCrimson implements Ability {
                 IActiveGameState activeState = (IActiveGameState) state;
                 SpawnManager sm = activeState.getSpawnManager();
                 
-                // Fast forward 3 extra ticks per actual frame (4x Speed)
                 for (int i = 0; i < 3; i++) {
                     sm.update(world);
+                    
+                    // 1. Fast forward road
                     for(ScrollingRoad road : world.getObjects(ScrollingRoad.class)) {
                         road.fastForward(); 
                     }
                     
+                    // 2. NEW: Fast forward Warning Signs
+                    for(Exclaimation ex : world.getObjects(Exclaimation.class)) ex.fastForward();
+                    for(PathWarning pw : world.getObjects(PathWarning.class)) pw.fastForward();
                     
+                    // 3. Fast forward obstacles
                     List<Obstacles> obstacles = world.getObjects(Obstacles.class);
                     for (Obstacles obs : obstacles) {
                         obs.fastForwardMove();

@@ -63,6 +63,15 @@ public class PathWarning extends Actor implements Time_Snapshottable {
             world.removeObject(this);
         }
     }
+    // Inside PathWarning.java
+    
+    /** Forces the path highlight to expire rapidly */
+    public void fastForward() {
+        timer -= 2; // Age twice as fast during skips
+        if (timer <= 0) {
+            if (getWorld() != null) getWorld().removeObject(this);
+        }
+    }
 
     @Override
     public Time_ActorMemento captureState() {

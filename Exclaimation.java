@@ -52,6 +52,14 @@ public class Exclaimation extends Actor implements Time_Snapshottable {
             getWorld().removeObject(this);
         }
     }
+    
+    /** Forces the warning to age rapidly during a time skip */
+    public void fastForward() {
+        lifeTimer.forceTick(); // Ticks the timer regardless of game state
+        if (lifeTimer.isExpired()) {
+            if (getWorld() != null) getWorld().removeObject(this);
+        }
+    }
 
     @Override
     public Time_ActorMemento captureState() {
