@@ -148,11 +148,26 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         titleText.setText("");
         descText.setText(currentStage.getDefaultText());
         btnEnter.setText("[ R : Replay ]");
+        titleText.setText("Press [H] for Detailed Guide");
         btnEsc.setText("[ ESC : Back to Menu ]");
     }
 
+    
     private void handlePlayingMode(MyWorld world, String key) {
         if ("escape".equals(key)) { stopDemo(world); return; }
+        
+        // --- NEW: THE GUIDE TRIGGER ---
+        if ("h".equals(key)) {
+            Ability selected = dummyPlayer.getAllAbilities().get(selectedIndex);
+            
+            // 1. Hide the current UI
+            setSandboxUIVisible(false);
+            
+            // 2. Push the Manual (Passing 'this' so the manual can call us back)
+            world.getGSM().pushState(new AbilityGuideState(selected.getClass(), this));
+            return; 
+        }
+
         if ("r".equals(key) && !rewindManager.isRewinding()) { startDemo(world); return; }
         if (playerDiedThisFrame) { playerDiedThisFrame = false; startDemo(world); return; }
 
@@ -286,5 +301,19 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
 
     @Override
     public Time_RewindManager getRewindManager() { return rewindManager; }
-
+    
+    /** Hides or shows the Sandbox UI text elements so the manual doesn't overlap them */
+    public void setSandboxUIVisible(boolean visible) {
+        int alpha = visible ? 255 : 0;
+        for (Actor a : uiElements) {
+            // Only hide the text and icons, keep the dark bottom panel visible if you like
+            if (a instanceof UIText || a instanceof UI_AbilityIcon || a instanceof UI_HighlightBox) {
+                if (a.getImage() != null) a.getImage().setTransparency(alpha);
+            }
+        }
+        // Specifically hide the Rewind Bar if it exists
+        if (activeRewindBar != null && activeRewindBar.getImage() != null) {
+            activeRewindBar.getImage().setTransparency(alpha);
+        }
+    }
 }
