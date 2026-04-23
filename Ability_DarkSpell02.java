@@ -73,6 +73,7 @@ public class Ability_DarkSpell02 implements Ability {
         onCooldown    = false;
         activeTimer   = 0;
         cooldownTimer = 0;
+        keyWasDown    = false; // reset keywasdown to allow reactivation after cancel
     }
     
     @Override public String getKeybind()        { return "c"; }

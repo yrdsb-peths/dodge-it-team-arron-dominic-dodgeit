@@ -90,7 +90,7 @@ public enum CharacterConfig {
         "MoonKnight",
         "moon_knight_full.png",                             //Portrait Image (new, for character select)
         "red_road.png",                             //CUstomised road(new, for character select)
-        new String[]{"Idle", "Dash", "Lose"},
+        new String[]{"Idle", "Dash", "Lose", "DarkSpell_01", "DarkSpell_02"},
         "Dash",
         GameConfig.MOON_KNIGHT_MOVE_SPEED,
         1.2 * GameConfig.SCALE,
@@ -98,7 +98,9 @@ public enum CharacterConfig {
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,
-        new String[]{"Ability_Mandom"} // fewer abilities than DIO，
+        new String[]{"Ability_DarkSpell01", // V - destroys all obstacles
+                    "Ability_DarkSpell02"   // C - roots/freezes all obstacles
+        } 
     ),
     DIAVOLO(
         "Diavolo",

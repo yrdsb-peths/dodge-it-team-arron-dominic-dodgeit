@@ -70,12 +70,21 @@ public class Ability_DarkSpell01 implements Ability {
         onCooldown = false;
         activeTimer = 0;
         cooldownTimer = 0;
+        keyWasDown = false;
     }
     
     @Override public String getKeybind()    { return "v"; }
     @Override public String getDisplayLabel() { return "V"; }
     @Override public boolean isActive()       { return isActive; }
     @Override public boolean isCooldownActive() { return onCooldown; }
+    
+    @Override
+    public double getCooldownPercent() {
+        // Calculate cooldown percentage manually
+        if (!onCooldown) return 0.0;
+        // Returns how much of cooldown is remaining
+        return (double) cooldownTimer / COOLDOWN_DURATION;
+    }
     
     @Override
     public double getActivePercent() {
