@@ -1,6 +1,0 @@
-#BlueJ class context
-comment0.target=GameConfig
-comment1.params=pixels
-comment1.target=int\ s(int)
-comment1.text=\n\ Scales\ any\ pixel\ value\ by\ the\ global\ SCALE\ factor.\n\ ALWAYS\ use\ this\ instead\ of\ hardcoding\ pixel\ numbers.\n\n\ Example\:\ s(100)\ at\ SCALE\=1.5\ returns\ 150.\n\n\ @param\ pixels\ \ The\ "design-size"\ pixel\ value\ (what\ it\ would\ be\ at\ SCALE\=1.0).\n\ @return\ \ \ \ \ \ \ \ The\ scaled\ pixel\ value,\ rounded\ to\ the\ nearest\ integer.\n
-numComments=2
