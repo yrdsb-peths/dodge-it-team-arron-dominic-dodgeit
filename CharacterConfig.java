@@ -146,7 +146,7 @@ public enum CharacterConfig {
         GameConfig.DIO_MOVE_SPEED,
         0.8 * GameConfig.SCALE,
         "dio_bgm", 
-        "dioLostVoices",
+        "diavoloLoseLines",
         "diavoloLines", 
         BossConfig.DIO, 
         new String[]{"Ability_KingCrimson"});
