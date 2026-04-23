@@ -214,6 +214,11 @@ public class PlayingState implements GameState,IActiveGameState{
             world.addObject(rewindOverlay, world.getWidth() / 2, world.getHeight() / 2);
         }
     }
+    
+    @Override
+    public boolean isGameFrozen() {
+        return Ability_KingCrimson.ERASING; // Game freezes when KC is active
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // GETTERS
@@ -224,10 +229,5 @@ public class PlayingState implements GameState,IActiveGameState{
     /** @return True while the rewind manager is actively rewinding. */
     public boolean isRewinding() {
         return rewindManager != null && rewindManager.isRewinding();
-    }
-    
-    @Override
-    public boolean isGameFrozen() {
-        return false; 
     }
 }

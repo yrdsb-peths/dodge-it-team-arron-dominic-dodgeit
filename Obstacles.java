@@ -48,18 +48,18 @@ public abstract class Obstacles extends Actor {
         MyWorld world = (MyWorld) getWorld();
         if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
 
-        // --- ACCURATE DEBUG VISUAL ---
-        if (GameConfig.DEBUG_MODE) {
-            GreenfootImage img = getImage();
-            img.setColor(Color.CYAN);
-            int r = getRadius();
-            // Draw circle centered on the sprite center
-            img.drawOval(img.getWidth()/2 - r, img.getHeight()/2 - r, r*2, r*2);
-        }
+        // FREEZE CARS DURING KING CRIMSON
+        IActiveGameState activeState = (IActiveGameState) world.getGSM().peekState();
+        if (activeState.isGameFrozen()) return; 
 
-        movementLogic();  
-        collisionLogic(); 
-        checkRemove();    
+        movementLogic();  // 1. Move
+        collisionLogic(); // 2. Check hits
+        checkRemove();    // 3. Remove if off-screen
+    }
+
+        
+    public void fastForwardMove() {
+        movementLogic(); // Just the move(-speed) part
     }
 
     /**
