@@ -81,7 +81,8 @@ public class MyWorld extends World {
          */
         setPaintOrder(
             Banner.class, UIText.class, UI_HighlightBox.class, UI_AbilityIcon.class, UI_RewindBar.class,
-            TheWorldStand.class,GenericPlayer.class,
+            FX_ErasureSnap.class, FX_ShatteredGlass.class,    
+            TheWorldStand.class,GenericPlayer.class,FX_KingCrimsonOverlay.class,          
             UI_Panel.class,FX_RewindOverlay.class,
             Exclaimation.class, PathWarning.class,
             FX_Portal.class, FX_ZipperGround.class,

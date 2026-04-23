@@ -170,7 +170,7 @@ public class GameConfig {
     //---KING CRIMSON (SKIPS TIME)
     public static final String KC_BUTTON = "q";
     public static final double KC_DURATION = 2.0; // How long time is frozen
-    public static final double KC_COOLDOWN = 10.0;
+    public static final double KC_COOLDOWN = 1.0;
 
     // =========================================================================
     // SECTION 7 — AUDIO
@@ -180,7 +180,7 @@ public class GameConfig {
      * Range is 0 (silent) to 200 (full).  Individual sounds have their own
      * base volumes in AudioManager; actual volume = (base × master) / 200.
      */
-    public static final int MASTER_VOLUME = 100;
+    public static final int MASTER_VOLUME = 0;
 
     // =========================================================================
     // SECTION 8 — KEY BINDINGS

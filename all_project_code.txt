@@ -308,12 +308,19 @@ public class GameOverState implements GameState {
         int bestScore  = ScoreManager.getHighScore();
 
         int midX = world.getWidth() / 2;
+        // FETCH THE OBITUARY
+        String text = ObituaryManager.getRandomObituary(GameConfig.ACTIVE_CHARACTER);
+        // Display it under the scores (Adjust Y position as needed)
+        addUI(world, new UIText(text, GameConfig.s(20), Color.BLACK), midX, GameConfig.s(290));
+        
         world.setBackground(new GreenfootImage("game_over.png")); 
         world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
         //addUI(world, new UIText("RETIRED",                          GameConfig.s(80), Color.RED),   midX, GameConfig.s(150));
         addUI(world, new UIText("Final Score: "   + finalScore,     GameConfig.s(30), Color.RED),   midX, GameConfig.s(200));
         addUI(world, new UIText("Best Survival: " + bestScore,      GameConfig.s(30), Color.RED),   midX, GameConfig.s(250));
         //addUI(world, new UIText("Press ENTER to Restart",           GameConfig.s(25), Color.BLACK), midX, GameConfig.s(300));
+    
+
     }
 
     /** Waits for ENTER, then goes back to the main menu (full restart). */
@@ -621,8 +628,22 @@ public enum CharacterConfig {
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,
-        new String[]{"Ability_Mandom","Ability_MadeInHeaven"} // fewer abilities than DIO
-    );
+        new String[]{"Ability_Mandom"} // fewer abilities than DIO，
+    ),
+    DIAVOLO(
+        "Diavolo",
+        "Dio",           // Reusing Dio's folder for now until you have Diavolo sprites
+        "diavolo_full.jpg", // Add this to your images folder later
+        "standard_road.png", 
+        new String[]{"Idle", "Dash", "Lose"},
+        "Dash",
+        GameConfig.DIO_MOVE_SPEED,
+        0.8 * GameConfig.SCALE,
+        "dio_bgm", 
+        "dioLostVoices",
+        "dioBattleCry", 
+        BossConfig.DIO, 
+        new String[]{"Ability_KingCrimson"});
 
     // =========================================================================
     // FIELDS  (every character carries these values)
@@ -851,18 +872,17 @@ public abstract class Obstacles extends Actor {
         MyWorld world = (MyWorld) getWorld();
         if (world == null || !world.getGSM().isState(IActiveGameState.class)) return;
 
-        // --- ACCURATE DEBUG VISUAL ---
-        if (GameConfig.DEBUG_MODE) {
-            GreenfootImage img = getImage();
-            img.setColor(Color.CYAN);
-            int r = getRadius();
-            // Draw circle centered on the sprite center
-            img.drawOval(img.getWidth()/2 - r, img.getHeight()/2 - r, r*2, r*2);
-        }
+        // FREEZE CARS DURING KING CRIMSON
+        IActiveGameState activeState = (IActiveGameState) world.getGSM().peekState();
+        if (activeState.isGameFrozen()) return; 
 
-        movementLogic();  
-        collisionLogic(); 
-        checkRemove();    
+        movementLogic();  // 1. Move
+        collisionLogic(); // 2. Check hits
+        checkRemove();    // 3. Remove if off-screen
+    }
+
+    public void fastForwardMove() {
+        movementLogic();
     }
 
     /**
@@ -4116,6 +4136,10 @@ public class GameConfig {
     public static final double PORTAL_IFRAME_DURATION = 1;
     /** Seconds before the portal can fire again after a warp. */
     public static final double PORTAL_COOLDOWN_DURATION = 4;
+    //---KING CRIMSON (SKIPS TIME)
+    public static final String KC_BUTTON = "q";
+    public static final double KC_DURATION = 2.0; // How long time is frozen
+    public static final double KC_COOLDOWN = 10.0;
 
     // =========================================================================
     // SECTION 7 — AUDIO
@@ -5430,6 +5454,65 @@ public class ScoreManager {
     public static int getHighScore() { return highScore; }
 }
 
+
+
+==================================================
+FILE: ./ObituaryManager.java
+==================================================
+
+import greenfoot.*;
+import java.util.*;
+import java.io.*;
+
+public class ObituaryManager {
+    private static Map<CharacterConfig, List<String>> obituaryCache = new HashMap<>();
+    
+    // The name of the sub-folder in your project directory
+    private static final String FOLDER_NAME = "obituaries";
+
+    public static String getRandomObituary(CharacterConfig config) {
+        if (!obituaryCache.containsKey(config)) {
+            loadObituaries(config);
+        }
+
+        List<String> lines = obituaryCache.get(config);
+        if (lines == null || lines.isEmpty()) {
+            return "Fate is cruel. (Check your obituaries folder!)";
+        }
+
+        return lines.get(Greenfoot.getRandomNumber(lines.size()));
+    }
+
+    private static void loadObituaries(CharacterConfig config) {
+        List<String> lines = new ArrayList<>();
+        
+        // Path logic: "obituaries/obituaries_DIO.txt"
+         String fileName = "obituaries/obituaries_" + config.name() + ".txt";
+        
+        // Use Greenfoot's way of finding the project directory via standard Java File
+        try {
+            File file = new File(fileName);
+            if (!file.exists()) {
+                System.out.println("MISSING FILE: Create " + fileName);
+                lines.add("A silent end for " + config.displayName);
+            } else {
+                BufferedReader br = new BufferedReader(new FileReader(file));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (!line.trim().isEmpty()) {
+                        lines.add(line.trim());
+                    }
+                }
+                br.close();
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading " + fileName);
+            lines.add("The words escaped him in the end.");
+        }
+        
+        obituaryCache.put(config, lines);
+    }
+}
 
 
 ==================================================
@@ -7190,6 +7273,34 @@ public class PathWarning extends Actor implements Time_Snapshottable {
 
 
 ==================================================
+FILE: ./FX_ErasureSnap.java
+==================================================
+
+import greenfoot.*;
+
+public class FX_ErasureSnap extends Actor {
+    private int alpha = 255;
+
+    public FX_ErasureSnap() {
+        GreenfootImage img = new GreenfootImage(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
+        img.setColor(Color.WHITE);
+        img.fill();
+        setImage(img);
+    }
+
+    @Override
+    public void act() {
+        alpha -= 25; // Fades out very quickly (~10 frames)
+        if (alpha <= 0) {
+            if (getWorld() != null) getWorld().removeObject(this);
+        } else {
+            getImage().setTransparency(alpha);
+        }
+    }
+}
+
+
+==================================================
 FILE: ./Time_Snapshottable.java
 ==================================================
 
@@ -8511,8 +8622,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
     private void clearSandbox(MyWorld world) {
         isFrozen = false;
         playerDiedThisFrame = false;
-        AudioManager.stopAllPools();
-        AudioManager.stopAllAbilities();
+        
         world.removeObjects(world.getObjects(ScrollingRoad.class));
         world.removeObjects(world.getObjects(Obstacles.class));
         world.removeObjects(world.getObjects(Player.class));
@@ -8647,6 +8757,174 @@ public class UI_Preview extends Actor {
         }
     }
 }
+
+
+==================================================
+FILE: ./FX_KingCrimsonOverlay.java
+==================================================
+
+import greenfoot.*;
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * FX_KingCrimsonOverlay.java  —  THE CRIMSON ERASURE SCREEN
+ * ─────────────────────────────────────────────────────────────────────────────
+ * A full-screen actor placed over the world during King Crimson's time erasure.
+ *
+ * Visual behaviour:
+ *   While Ability_KingCrimson.ERASING == true, the screen is washed in deep
+ *   crimson.  The wash starts subtle (alpha ≈ 70) so the player can still read
+ *   obstacle positions, then ramps dramatically to 220 in the final 0.4 seconds
+ *   — signalling "the window is closing, move NOW."
+ *
+ *   Two pre-drawn frames alternate every 3 ticks, creating a slight flicker
+ *   that differentiates the effect from Mandom's blue scanlines.
+ *
+ * Self-removal:
+ *   When ERASING flips false (erasure ends), this actor removes itself from the
+ *   world.  The ability does not need to track or clean up the overlay.
+ *
+ * Performance:
+ *   Both frames are drawn once into static fields and reused for the lifetime
+ *   of the game — no per-frame image allocation.
+ *   Transparency is applied via setTransparency() on the actor's image copy.
+ *
+ * Interacts with:
+ *   Ability_KingCrimson (reads ERASING and erasurePercent),
+ *   PlayingState (added to world by Ability_KingCrimson.startErasure()),
+ *   MyWorld (paint order: above obstacles, below UI)
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+public class FX_KingCrimsonOverlay extends Actor {
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PRE-DRAWN FRAMES (static — created once, shared across all instances)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Two crimson overlays with slightly different vertical grain patterns.
+     * Alternating between them every few frames creates the "static" feel.
+     */
+    private static GreenfootImage frame1;
+    private static GreenfootImage frame2;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // INSTANCE STATE
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Local mutable copy of the currently displayed frame (so we can call setTransparency). */
+    private GreenfootImage displayImage;
+
+    /** Counts up each act() — used to alternate frames. */
+    private int frameTick = 0;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONSTRUCTOR
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public FX_KingCrimsonOverlay() {
+        if (frame1 == null || frame2 == null) {
+            frame1 = buildOverlay(false);
+            frame2 = buildOverlay(true);
+        }
+        // Start with a fresh mutable copy so setTransparency doesn't mutate the shared static
+        displayImage = new GreenfootImage(frame1);
+        setImage(displayImage);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ACT — update transparency and handle self-removal
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Override
+    public void act() {
+        // Self-remove the moment erasure ends
+        if (!Ability_KingCrimson.ERASING) {
+            if (getWorld() != null) getWorld().removeObject(this);
+            return;
+        }
+
+        frameTick++;
+
+        // Alternate between the two grain variants every 3 frames
+        GreenfootImage base = (frameTick % 6 < 3) ? frame1 : frame2;
+
+        // Reuse the display image — copy current base frame in
+        displayImage = new GreenfootImage(base);
+
+        // ── Alpha ramp ────────────────────────────────────────────────────────
+        // erasurePercent: 0.0 = window just opened, 1.0 = window about to close.
+        //
+        // Phase 1 (0.0 – 0.6): hold at a low 70 alpha — world is readable.
+        // Phase 2 (0.6 – 1.0): ramp from 70 → 210 — urgent red wall closing in.
+        double pct = Ability_KingCrimson.erasurePercent;
+        int alpha;
+        if (pct < 0.6) {
+            alpha = 70;
+        } else {
+            double t = (pct - 0.6) / 0.4;      // 0 → 1 over the final 40%
+            alpha = 70 + (int)(t * t * 140);    // quadratic ramp: eases in then accelerates
+        }
+        displayImage.setTransparency(Math.min(255, alpha));
+
+        setImage(displayImage);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PRELOAD  (call from PlayingState.enter() to avoid first-use lag)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Pre-draws both overlay frames into static memory.
+     * Call this from PlayingState.enter() so images exist before the first Q press.
+     */
+    public static void preLoad() {
+        if (frame1 == null) {
+            frame1 = buildOverlay(false);
+            frame2 = buildOverlay(true);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // IMAGE BUILDER
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Draws one crimson overlay frame.
+     *
+     * Layers (bottom → top):
+     *   1. Deep red tint fill
+     *   2. Thin vertical grain lines, spaced 6px apart
+     *      (if offset=true, lines start 3px right — creates the flicker)
+     *
+     * Alpha is intentionally low here (50); it is overridden per-frame by
+     * setTransparency() in act().  The actual opacity is controlled dynamically.
+     *
+     * @param offset  Whether to shift grain lines by half a period.
+     */
+    private static GreenfootImage buildOverlay(boolean offset) {
+        int w = GameConfig.WORLD_WIDTH;
+        int h = GameConfig.WORLD_HEIGHT;
+        GreenfootImage img = new GreenfootImage(w, h);
+
+        // Base crimson tint — deep blood red
+        img.setColor(new Color(160, 5, 20, 50));
+        img.fill();
+
+        // Vertical grain lines — evenly spaced, slight offset variant
+        img.setColor(new Color(220, 0, 0, 30));
+        int grain = GameConfig.s(6);   // gap between lines
+        int lineW = GameConfig.s(1);   // line width
+        int startX = offset ? (grain / 2) : 0;
+
+        for (int x = startX; x < w; x += grain) {
+            img.fillRect(x, 0, lineW, h);
+        }
+
+        return img;
+    }
+}
+
 
 
 ==================================================
@@ -8892,6 +9170,138 @@ public enum BossConfig {
     }
 }
 
+
+
+==================================================
+FILE: ./Ability_KingCrimson.java
+==================================================
+
+import greenfoot.*;
+import java.util.List;
+
+public class Ability_KingCrimson implements Ability {
+
+    public static boolean ERASING = false;
+    public static double erasurePercent = 0.0;
+
+    private GameTimer durationTimer = new GameTimer(GameConfig.KC_DURATION, false);
+    private GameTimer cooldownTimer = new GameTimer(GameConfig.KC_COOLDOWN, false);
+
+    private int holdFrames = 0;
+    private static final int HOLD_THRESHOLD = 12;
+
+    private FX_KingCrimsonOverlay overlay = null;
+
+    @Override
+    public void activate(Player p, MyWorld world) { /* Handled in update */ }
+
+    @Override
+    public void update(Player p, MyWorld world) {
+        if (cooldownTimer.isActive()) cooldownTimer.update(world);
+
+        boolean keyDown = Greenfoot.isKeyDown(GameConfig.KC_BUTTON);
+        boolean canActivate = !ERASING && !durationTimer.isActive() && !cooldownTimer.isActive() && !world.isRewinding();
+
+        // Hold-to-activate logic
+        if (keyDown && canActivate) {
+            holdFrames++;
+            if (holdFrames >= HOLD_THRESHOLD) {
+                startErasure(world);
+                holdFrames = 0;
+            }
+        } else if (!keyDown) {
+            holdFrames = 0; 
+        }
+
+        // Erasure tick
+        if (ERASING && durationTimer.isActive()) {
+            durationTimer.update(world);
+            erasurePercent = durationTimer.getPercentComplete();
+
+            if (durationTimer.isExpired()) {
+                endErasure(world);
+            }
+        }
+    }
+
+    private void startErasure(MyWorld world) {
+        ERASING = true;
+        erasurePercent = 0.0;
+        durationTimer.reset();
+        durationTimer.start();
+
+        overlay = new FX_KingCrimsonOverlay();
+        world.addObject(overlay, world.getWidth() / 2, world.getHeight() / 2);
+        AudioManager.play("kc_activate");
+    }
+
+    private void endErasure(MyWorld world) {
+        ERASING = false;
+        erasurePercent = 0.0;
+        
+        int skipFrames = durationTimer.getTotalFrames();
+        durationTimer.stop();
+        overlay = null; 
+
+        // THE MAGIC: FAST-FORWARD ALL OBSTACLES BY 2 SECONDS
+        List<Obstacles> obstacles = world.getObjects(Obstacles.class);
+        for (int i = 0; i < skipFrames; i++) {
+            for (Obstacles obs : obstacles) {
+                obs.fastForwardMove(); // Simulates their movement without killing the player mid-skip
+            }
+        }
+
+        // Fast-forward the SpawnManager so we don't spawn the exact same wave again
+        if (world.getGSM().peekState() instanceof PlayingState) {
+            PlayingState ps = (PlayingState) world.getGSM().peekState();
+            int currentTimer = ps.getSpawnManager().getSpawnTimer();
+            ps.getSpawnManager().setSpawnTimer(currentTimer + skipFrames);
+        }
+
+        // The Reality Snap Flash
+        world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
+        AudioManager.play("kc_snap");
+
+        cooldownTimer.reset();
+        cooldownTimer.start();
+    }
+
+    @Override
+    public void cancel() {
+        if (ERASING) {
+            ERASING = false;
+            erasurePercent = 0.0;
+            durationTimer.stop();
+            overlay = null;
+        }
+        cooldownTimer.stop();
+    }
+
+    @Override public boolean isActive()         { return ERASING; }
+    @Override public boolean isCooldownActive() { return cooldownTimer.isActive(); }
+    @Override public double getActivePercent()  { return ERASING ? (1.0 - durationTimer.getPercentComplete()) : 0.0; }
+    @Override public double getCooldownPercent() { return cooldownTimer.isActive() ? cooldownTimer.getPercentComplete() : 0.0; }
+    @Override public String  getKeybind()       { return GameConfig.KC_BUTTON; }
+    @Override public String  getDisplayLabel()  { return "Q"; }
+    @Override public boolean shouldShowIcon()   { return true; }
+
+    @Override
+    public Object captureState() {
+        return new int[]{ durationTimer.getRemainingFrames(), cooldownTimer.getRemainingFrames(), durationTimer.isActive() ? 1 : 0, cooldownTimer.isActive() ? 1 : 0, ERASING ? 1 : 0 };
+    }
+
+    @Override
+    public void restoreState(Object state) {
+        int[] d = (int[]) state;
+        durationTimer.setRemainingFrames(d[0]);
+        cooldownTimer.setRemainingFrames(d[1]);
+        if (d[2] == 1) durationTimer.start(); else durationTimer.stop();
+        if (d[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
+        ERASING = (d[4] == 1);
+        erasurePercent = ERASING ? durationTimer.getPercentComplete() : 0.0;
+        overlay = null;
+    }
+}
 
 
 ==================================================
@@ -9265,6 +9675,11 @@ public class PlayingState implements GameState,IActiveGameState{
             world.addObject(rewindOverlay, world.getWidth() / 2, world.getHeight() / 2);
         }
     }
+    
+    @Override
+    public boolean isGameFrozen() {
+        return Ability_KingCrimson.ERASING; // Game freezes when KC is active
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // GETTERS
@@ -9275,11 +9690,6 @@ public class PlayingState implements GameState,IActiveGameState{
     /** @return True while the rewind manager is actively rewinding. */
     public boolean isRewinding() {
         return rewindManager != null && rewindManager.isRewinding();
-    }
-    
-    @Override
-    public boolean isGameFrozen() {
-        return false; 
     }
 }
 

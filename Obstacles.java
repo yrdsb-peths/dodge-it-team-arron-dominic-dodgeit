@@ -57,8 +57,9 @@ public abstract class Obstacles extends Actor {
         checkRemove();    // 3. Remove if off-screen
     }
 
+        
     public void fastForwardMove() {
-        movementLogic();
+        movementLogic(); // Just the move(-speed) part
     }
 
     /**
