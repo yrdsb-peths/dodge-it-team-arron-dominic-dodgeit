@@ -1,6 +1,0 @@
-#BlueJ class context
-comment0.target=Config_Boss
-comment0.text=\n\ Write\ a\ description\ of\ class\ BossConfig\ here.\n\ \n\ @author\ (your\ name)\ \n\ @version\ (a\ version\ number\ or\ a\ date)\n
-comment1.params=color\ soundsKey\ overlays
-comment1.target=Config_Boss(greenfoot.Color,\ java.lang.String,\ Banner.SpriteOverlay[])
-numComments=2

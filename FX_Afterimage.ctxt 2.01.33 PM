@@ -1,8 +1,0 @@
-#BlueJ class context
-comment0.target=FX_Afterimage
-comment1.params=playerImg
-comment1.target=FX_Afterimage(greenfoot.GreenfootImage)
-comment1.text=\n\ Creates\ an\ afterimage\ from\ the\ player's\ current\ sprite.\n\ Pixel-by-pixel\ colour\ inversion\ is\ applied\ to\ distinguish\ it\ from\ the\ live\ player.\n\n\ @param\ playerImg\ \ The\ player's\ current\ GreenfootImage.\ \ A\ copy\ is\ made\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ so\ modifications\ do\ not\ affect\ the\ original.\n
-comment2.params=
-comment2.target=void\ act()
-numComments=3

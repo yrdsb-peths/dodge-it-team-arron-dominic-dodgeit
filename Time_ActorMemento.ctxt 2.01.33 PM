@@ -1,6 +1,0 @@
-#BlueJ class context
-comment0.target=Time_ActorMemento
-comment1.params=actor\ x\ y\ customData
-comment1.target=Time_ActorMemento(greenfoot.Actor,\ int,\ int,\ java.lang.Object)
-comment1.text=\n\ Creates\ a\ new\ memento\ for\ the\ given\ actor.\n\n\ @param\ actor\ \ \ \ \ \ \ The\ actor\ being\ captured.\n\ @param\ x\ \ \ \ \ \ \ \ \ \ \ Its\ current\ X\ position.\n\ @param\ y\ \ \ \ \ \ \ \ \ \ \ Its\ current\ Y\ position.\n\ @param\ customData\ \ Any\ extra\ actor-specific\ data\ (may\ be\ null).\n
-numComments=2
