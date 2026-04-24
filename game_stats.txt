@@ -1,0 +1,4 @@
+#DIO-DGE IT Persistent Stats
+#Thu Apr 23 20:18:24 EDT 2026
+all_time_high=4
+usage_Ability_DarkSpell01=1
