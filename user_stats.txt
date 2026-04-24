@@ -1,6 +1,0 @@
-#DIO-DGE IT PERSISTENT STATS
-#Thu Apr 23 22:44:25 EDT 2026
-time_DIAVOLO=21
-time_MoonKnight=70
-time_Ringo=49
-total_playtime=140
