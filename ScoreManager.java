@@ -73,17 +73,18 @@ public class ScoreManager {
      * for clarity.
      */
    public static void updateHighScore() {
-       if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.omnipotent_DIO) {
-            System.out.println("Omnipotent Dio score ignored for leaderboard.");
+        // 1. Ignore "Cheater" Dio scores
+        if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.omnipotent_DIO) {
             return; 
         }
+        
         if (score > highScore) highScore = score;
         
-        // PERSISTENCE: Check against the permanent record
-        int allTimeBest = DataManager.getInt("all_time_high");
+        // 2. THE FIX: Switch from DataManager to SaveManager
+        int allTimeBest = SaveManager.getInt("all_time_high"); 
         if (score > allTimeBest) {
-            DataManager.setInt("all_time_high", score);
-            DataManager.save(); // Save immediately on a new world record!
+            SaveManager.setInt("all_time_high", score);
+            SaveManager.save(); // Save to user_stats.txt
         }
     }
 

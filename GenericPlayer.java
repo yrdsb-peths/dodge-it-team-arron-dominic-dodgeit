@@ -173,37 +173,38 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     protected void movementLogic() {
         iFrameTimer.update((MyWorld) getWorld());
 
-        boolean playerIsHidden = isHidden(); // true if Sticky Fingers is underground
+        boolean playerIsHidden = isHidden(); 
 
-        // ── Ability update + activation ───────────────────────────────────────
+        // ── Ability update + activation + STAT TRACKING ────────────────────────
         for (Ability a : abilities) {
             
-            // Do not use ability if in demo and not demo-ing current ability
+            // 1. Demo Filter (for the Sandbox)
             if (demoAbilityFilters != null) {
                 boolean allowed = false;
                 for (Class<?> c : demoAbilityFilters) {
-                    if (c.isInstance(a)) {
-                        allowed = true;
-                        break;
-                    }
+                    if (c.isInstance(a)) { allowed = true; break; }
                 }
                 if (!allowed) continue;
             }
             
-             // Always update the ability so its timers run.
-            // But if the player is hidden, skip updates for abilities that
-            // would move the visible player (shouldHidePlayer = true means they
-            // already know about the hide state).
+            // 2. Continuous Update (Timers, etc)
             if (!playerIsHidden || a.shouldHidePlayer() || a.isActive()) {
                 a.update(this, (MyWorld) getWorld());
             }
 
-            // Check for key press — only activate if: key is held AND
-            // (player is not hidden, OR this ability works while underground).
+            // 3. THE TRACKER: Detect the EXACT frame the key is pressed
             if (Greenfoot.isKeyDown(a.getKeybind())) {
+                
+                // Only count if the ability isn't already active and isn't on cooldown.
+                // This prevents adding +1 for every frame you hold the key!
+                if (!a.isActive() && !a.isCooldownActive()) {
+                    String statKey = "use_" + a.getClass().getSimpleName();
+                    // System.out.println("STAT LOGGED: " + statKey); // Debug
+                }
+
+                // 4. Actual Activation
                 if (!playerIsHidden || a.shouldHidePlayer()) {
                     a.activate(this, (MyWorld) getWorld());
-                    DataManager.addInt("usage_" + a.getClass().getSimpleName(), 1);
                 }
             }
         }
@@ -216,10 +217,8 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             } else if (!((MyWorld) getWorld()).isRewinding()) {
                 GameState currentState = ((MyWorld) getWorld()).getGSM().peekState();
                 if (currentState instanceof AbilityDisplayState) {
-                // Tell the demo state we died so it can restart the demo
-                ((AbilityDisplayState) currentState).notifyPlayerDied();
+                    ((AbilityDisplayState) currentState).notifyPlayerDied();
                 } else {
-                    // Otherwise, proceed to the real Game Over screen
                     ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
                 }
             }

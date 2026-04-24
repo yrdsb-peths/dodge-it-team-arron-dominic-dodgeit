@@ -1,24 +1,3 @@
-/*
- * ─────────────────────────────────────────────────────────────────────────────
- * MenuState.java  —  THE MAIN MENU
- * ─────────────────────────────────────────────────────────────────────────────
- * Role:
- *   The first state shown when the project starts.
- *   Displays the game title, control instructions, and a "Press ENTER" prompt.
- *   Pressing ENTER switches to CharacterSelectState.
- *
- * Layout strategy:
- *   Most text is centre-aligned (x = world.getWidth()/2).
- *   Control instructions are left-aligned relative to the centre:
- *   addUI places them at leftAlign + GameConfig.s(120) so the TEXT BLOCK
- *   as a whole appears centred even though individual lines start from a
- *   consistent left edge.
- *
- * Interacts with:
- *   GameStateManager (changeState), CharacterSelectState (next state),
- *   UIText (text labels), GameConfig (scaling)
- * ─────────────────────────────────────────────────────────────────────────────
- */
 import greenfoot.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,68 +7,65 @@ public class MenuState implements GameState {
     /** All actors created by this state — removed in exit(). */
     private List<Actor> uiElements = new ArrayList<>();
 
-    @Override
     public void enter(MyWorld world) {
+        // ── Background Setup ──────────────────────────────────────────────────
         world.setBackground(new GreenfootImage("dodge_it.png")); 
-        world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
-        /*
-        int middle = world.getWidth() / 2;
+        world.getBackground().scale(GameConfig.WORLD_WIDTH + 200, GameConfig.WORLD_HEIGHT);
 
-        // ── Title ─────────────────────────────────────────────────────────────
-        addUI(world, new UIText("DIO-DGE IT",                      GameConfig.s(55), Color.YELLOW),         middle,          GameConfig.s(120));
-
-        // ── Controls (left-aligned block, visually centred) ───────────────────
-        int leftAlign = middle - GameConfig.s(120);
-        int rowStart  = GameConfig.s(150);
-        int spacing   = GameConfig.s(35);
-
-        addUI(world, new UIText("ARROWS : Move Dio",                            GameConfig.s(22), Color.BLACK),               leftAlign, GameConfig.s(200));
-     
-        // ── Objective ─────────────────────────────────────────────────────────
-        addUI(world, new UIText("Dodge the Road Rollers and Ambulances!", GameConfig.s(18), Color.ORANGE), middle, GameConfig.s(330));
-
-        // ── Start prompt ──────────────────────────────────────────────────────
-
-        addUI(world, new UIText("[ Press ENTER to Begin ]",               GameConfig.s(24), Color.CYAN),   middle, GameConfig.s(375));
-        */
+        // --- THE FIX: RELIABLE LABEL PLACEMENT ---
+        // Synchronize with GameConfig!
+        int currentHiScore = SaveManager.getInt("all_time_high");
+        
+        if (currentHiScore >= GameConfig.LEGACY_UNLOCK_SCORE) {
+            // Move it further left (s(120) from edge) and lower (s(50) from top)
+            int x = world.getWidth() - GameConfig.s(120); 
+            int y = GameConfig.s(50);
+            
+            // Use a bigger font (s(18)) so it's actually readable
+            UIText legacyBtn = new UIText("[ L : VIEW LEGACY ]", GameConfig.s(18), Color.YELLOW);
+            addUI(world, legacyBtn, x, y);
+            
+        }
     }
 
-    /** Waits for ENTER, then transitions to the character select screen. */
     @Override
     public void update(MyWorld world) {
-        
+        // ── Ambience ──────────────────────────────────────────────────────────
         if (Greenfoot.getRandomNumber(120) == 0) {
-            
-            // Start way off-screen to the right
             int startX = world.getWidth() + GameConfig.s(300);
-            
             world.addObject(new FX_MenuAmbulance(), startX, GameConfig.s(290));
         }
 
         AudioManager.playLoop("menu_bgm"); 
-        if ("enter".equals(Greenfoot.getKey())) {
+
+        // ── Inputs ────────────────────────────────────────────────────────────
+        String key = Greenfoot.getKey();
+        
+        if ("enter".equals(key)) {
             world.getGSM().changeState(new CharacterSelectState());
+        } 
+        
+        // Handle the secret Legacy key if they have the score
+        else if ("l".equals(key) && SaveManager.getInt("all_time_high") >= 1) {
+            world.getGSM().pushState(new LegacyState());
         }
     }
 
-    /** Removes all text labels when leaving the menu. */
     @Override
     public void exit(MyWorld world) {
-        world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
+        // Cleanup
+        world.getBackground().setColor(Color.WHITE); 
+        world.getBackground().fill();
+        
         world.removeObjects(uiElements);
         uiElements.clear();
-        world.removeObjects(world.getObjects(FX_MenuAmbulance.class));//Remove the ambulance...
+        
+        // Clear the ambulances
+        world.removeObjects(world.getObjects(FX_MenuAmbulance.class));
     }
 
-    /**
-     * Adds an actor to the world and tracks it for cleanup.
-     * Left-aligned text (x < world centre) is shifted right by GameConfig.s(120)
-     * so the text block appears visually centred as a group.
-     */
     private void addUI(MyWorld world, Actor a, int x, int y) {
-        int drawX = (a instanceof UIText && x < world.getWidth() / 2)
-            ? x + GameConfig.s(120) : x;
-        world.addObject(a, drawX, y);
+        world.addObject(a, x, y);
         uiElements.add(a);
     }
 }

@@ -14,7 +14,9 @@ public class Ability_TheWorld implements Ability {
         
         if (TIME_STOPPED) {
             // --- STOP TIME ---
+            SaveManager.addInt("use_Ability_TheWorld", 1);
             world.addObject(new FX_TimeStopOverlay(), world.getWidth() / 2, world.getHeight() / 2);
+            
             
             if (GameConfig.ACTIVE_CHARACTER.bossConfig != null) {
                 world.addObject(new Banner(GameConfig.ACTIVE_CHARACTER.bossConfig), GameConfig.s(1120), GameConfig.s(200));

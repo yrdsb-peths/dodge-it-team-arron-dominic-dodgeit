@@ -254,6 +254,10 @@ public class GameConfig {
      * Tweak this! s(280) makes the UI deck exactly 30% of the screen.
      */
     public static final int DEMO_BOTTOM_BOUND = s(290);
+    
+    
+    //Section 13: Progression
+    public static final int LEGACY_UNLOCK_SCORE = 100;
 
     // =========================================================================
     // THE SCALING HELPER — the most important method in this file
