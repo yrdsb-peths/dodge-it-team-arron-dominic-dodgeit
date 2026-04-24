@@ -103,6 +103,11 @@ public class Ability_StickyFingers implements Ability {
     /** How many frames the portal flash stays visible. 18 frames ≈ 0.3 seconds. */
     private static final int PORTAL_FLASH_DURATION = 18;
 
+    
+    
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     // ═════════════════════════════════════════════════════════════════════════
     // ACTIVATE — toggle underground / emerge
     // ═════════════════════════════════════════════════════════════════════════

@@ -8,7 +8,10 @@ public class Ability_DarkSpell02 implements Ability {
     private boolean keyWasDown = false;
     
     public static int CURRENT_FROZEN_LANE_Y = -1;
-
+        
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     @Override
     public void activate(Player p, MyWorld world) {
         if (durationTimer.isActive() || cooldownTimer.isActive() || keyWasDown) return;
@@ -94,23 +97,25 @@ public class Ability_DarkSpell02 implements Ability {
 
     @Override
     public Object captureState() {
-        return new int[]{
-            durationTimer.getRemainingFrames(), cooldownTimer.getRemainingFrames(),
-            durationTimer.isActive() ? 1 : 0, cooldownTimer.isActive() ? 1 : 0,
-            CURRENT_FROZEN_LANE_Y
-        };
+        int[] s = statePool[poolIdx++ % POOL];
+        s[0] = durationTimer.getRemainingFrames();
+        s[1] = cooldownTimer.getRemainingFrames();
+        s[2] = durationTimer.isActive() ? 1 : 0;
+        s[3] = cooldownTimer.isActive() ? 1 : 0;
+        s[4] = CURRENT_FROZEN_LANE_Y;
+        return s;
     }
-
     
-@Override
-    public void restoreState(Object state) {
-        int[] s = (int[]) state;
-        durationTimer.setRemainingFrames(s[0]);
-        cooldownTimer.setRemainingFrames(s[1]);
-        if (s[2] == 1) durationTimer.start(); else durationTimer.stop();
-        if (s[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
         
-        // This line is the most important for the freeze bug!
-        CURRENT_FROZEN_LANE_Y = s[4]; 
+    @Override
+        public void restoreState(Object state) {
+            int[] s = (int[]) state;
+            durationTimer.setRemainingFrames(s[0]);
+            cooldownTimer.setRemainingFrames(s[1]);
+            if (s[2] == 1) durationTimer.start(); else durationTimer.stop();
+            if (s[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
+            
+            // This line is the most important for the freeze bug!
+            CURRENT_FROZEN_LANE_Y = s[4]; 
+        }
     }
-}

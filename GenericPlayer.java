@@ -98,6 +98,14 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             animations.put(name, new Animator(config.folderName, name, config.scale));
         }
         setAnimation(config.defaultAnim);
+        
+        if (config == CharacterConfig.Ringo) {
+            // Speed up the Dash: Lower number = Faster animation
+            // Default is 6. Setting to 4 makes him look slicker.
+            if (animations.containsKey("Dash")) {
+                animations.get("Dash").setSpeed(4);
+            }
+        }
 
         // ── STEP 2: Load abilities via Reflection ─────────────────────────────
         // Class.forName(name) finds the class by its String name at runtime.
@@ -449,25 +457,28 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
      * Stores everything about the player at one moment in time.
      */
     private static class PlayerMemento {
-        boolean isDead;
-        String  anim;
-        int     deathFrames;   // remaining frames on the death timer
-        int     iFrameFrames;  // remaining frames on the i-frame timer
-        List<Object> abilityStates = new ArrayList<>(); // one snapshot per ability
+        boolean  isDead;
+        String   anim;
+        int      deathFrames;
+        int      iFrameFrames;
+        Object[] abilityStates;  // ← plain array, no ArrayList
     }
 
     /**
      * Captures the player's complete state for the rewind history.
      * Called every frame by Time_RewindManager.record().
      */
+        
     @Override
     public Time_ActorMemento captureState() {
-        PlayerMemento m = new PlayerMemento();
+        PlayerMemento m = new PlayerMemento();  // new each frame — required for correct history
         m.isDead       = isDead;
         m.anim         = currentAnimName;
         m.deathFrames  = deathTimer.getRemainingFrames();
         m.iFrameFrames = iFrameTimer.getRemainingFrames();
-        for (Ability a : abilities) m.abilityStates.add(a.captureState());
+        m.abilityStates = new Object[abilities.size()];  // array not ArrayList — one less object
+        for (int i = 0; i < abilities.size(); i++)
+            m.abilityStates[i] = abilities.get(i).captureState();
         return new Time_ActorMemento(this, getX(), getY(), m);
     }
 
@@ -480,16 +491,14 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         PlayerMemento data = (PlayerMemento) m.customData;
         this.isDead = data.isDead;
         setAnimation(data.anim);
-
+    
         deathTimer.setRemainingFrames(data.deathFrames);
         iFrameTimer.setRemainingFrames(data.iFrameFrames);
-
-        // Re-activate or deactivate timers to match their past state
+    
         if (data.iFrameFrames > 0) iFrameTimer.start(); else iFrameTimer.stop();
-
-        // Restore each ability from its own saved snapshot
+    
         for (int i = 0; i < abilities.size(); i++) {
-            abilities.get(i).restoreState(data.abilityStates.get(i));
+            abilities.get(i).restoreState(data.abilityStates[i]); // was .get(i), now [i]
         }
     }
     

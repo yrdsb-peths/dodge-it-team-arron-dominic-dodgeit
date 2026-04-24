@@ -30,7 +30,10 @@
 import greenfoot.*;
 
 public class Ability_Mandom implements Ability {
-
+        
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     /**
      * No icon is shown for this ability — the UI_RewindBar handles the display.
      */
@@ -50,7 +53,7 @@ public class Ability_Mandom implements Ability {
             state.triggerRewind(world);
         }
     }
-
+    
     // This ability has no ongoing update, no timers, and no state to save.
     @Override public void update(Player p, MyWorld world) {}
     @Override public void cancel() {}

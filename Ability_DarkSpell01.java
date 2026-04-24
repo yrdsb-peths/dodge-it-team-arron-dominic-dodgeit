@@ -2,7 +2,10 @@ import greenfoot.*;
 import java.util.List;
 
 public class Ability_DarkSpell01 implements Ability {
-
+        
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     private GameTimer durationTimer = new GameTimer(GameConfig.DS01_DURATION, false);
     private GameTimer cooldownTimer = new GameTimer(GameConfig.DS01_COOLDOWN, false);
     

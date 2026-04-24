@@ -32,6 +32,11 @@ public class Ability_KingCrimson implements Ability {
     
     private FX_KingCrimsonOverlay overlay = null;
     private Time_FrameSnapshot savedReality = null; 
+    
+            
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
 
     @Override
     public void activate(Player p, MyWorld world) { /* Logic handled in update */ }
@@ -199,14 +204,15 @@ public class Ability_KingCrimson implements Ability {
     @Override public String getDisplayLabel() { return "->"; }
     @Override public boolean shouldShowIcon() { return true; }
 
-    @Override public Object captureState() { 
-        return new int[]{ 
-            durationTimer.getRemainingFrames(), 
-            cooldownTimer.getRemainingFrames(), 
-            durationTimer.isActive() ? 1 : 0, 
-            cooldownTimer.isActive() ? 1 : 0, 
-            ERASING ? 1 : 0 
-        }; 
+    @Override 
+    public Object captureState() {
+        int[] s = statePool[poolIdx++ % POOL];
+        s[0] = durationTimer.getRemainingFrames();
+        s[1] = cooldownTimer.getRemainingFrames();
+        s[2] = durationTimer.isActive() ? 1 : 0;
+        s[3] = cooldownTimer.isActive() ? 1 : 0;
+        // KingCrimson also needs: s[4] = ERASING ? 1 : 0;
+        return s;
     }
     
     @Override public void restoreState(Object state) { 
