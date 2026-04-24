@@ -168,7 +168,9 @@ public class PlayingState implements GameState,IActiveGameState{
         }
 
         // ── Update spawning and score display ─────────────────────────────────
-        spawnManager.update(world);
+        if (!isRewinding() && !isGameFrozen()) {
+            spawnManager.update(world);
+        }
         scoreDisplay.setText("SCORE: " + ScoreManager.getScore());
     }
 
