@@ -39,7 +39,7 @@ public abstract class Obstacles extends Actor {
     protected int frozenTimer = 0;
     protected int savedSpeed = 0;
     protected boolean pendingDestroy= false;
-    
+    protected Animator anim; 
     public abstract int getRadius();
 
     /**
@@ -58,6 +58,12 @@ public abstract class Obstacles extends Actor {
             return; // stop immediately after removal
         }
         
+        if (anim != null && !world.isRewinding()) {
+            if (anim != null && !world.isRewinding()) {
+                //Just get the frame. Do NOT call mirrorHorizontally() or scale() here.
+                setImage(anim.getCurrentFrame());
+            }
+        }
         // Handle freeze countdown
         if (frozenTimer > 0) {
             frozenTimer--;

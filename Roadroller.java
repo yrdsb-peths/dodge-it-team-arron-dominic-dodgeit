@@ -44,10 +44,34 @@ public class Roadroller extends Obstacles implements Time_Snapshottable {
      * Called indirectly by the other constructors via this().
      */
     public Roadroller() {
-        GreenfootImage img = new GreenfootImage("obstacles/road_roller.png");
-        setImage(img);
-        getImage().mirrorHorizontally(); // face left (moving left)
-        getImage().scale(GameConfig.ROADROLLER_WIDTH, GameConfig.ROADROLLER_WIDTH);
+        String road = GameConfig.getActiveRoad();
+        String animFolder = GameConfig.getObstacleAnimFolder(road, false);
+        
+        if (animFolder != null) {
+            // 1. Create the animator
+            this.anim = new Animator("obstacles", animFolder, 4, GameConfig.SCALE);
+            
+            // 2. APPLY X-SCALE AND Y-SCALE HERE (Once)
+            // Example: Stretch width (X) by 1.2 but keep height (Y) normal
+            int customWidth = (int)(GameConfig.ROADROLLER_WIDTH * 1.2); 
+            int customHeight = GameConfig.ROADROLLER_WIDTH;
+            this.anim.scaleAllFrames(customWidth, customHeight);
+            
+            // 3. APPLY MIRROR HERE (Once)
+            this.anim.mirrorAllFrames();
+            
+            setImage(anim.getCurrentFrame());
+        } else {
+            // Static Image Fallback
+            String imgPath = GameConfig.getObstacleImage(road, false);
+            GreenfootImage img = new GreenfootImage(imgPath);
+            
+            // Scale and Mirror the static image BEFORE calling setImage
+            img.mirrorHorizontally();
+            img.scale((int)(GameConfig.ROADROLLER_WIDTH * 1.2), GameConfig.ROADROLLER_WIDTH);
+            setImage(img);
+        }
+        
         speed = GameConfig.ROADROLLER_SPEED;
     }
 

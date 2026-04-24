@@ -74,7 +74,8 @@ public class ScoreManager {
      */
    public static void updateHighScore() {
         // 1. Ignore "Cheater" Dio scores
-        if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.omnipotent_DIO) {
+        if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.omnipotent_DIO|| 
+            GameConfig.ACTIVE_CHARACTER == CharacterConfig.CUSTOM) {
             return; 
         }
         

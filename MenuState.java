@@ -23,6 +23,10 @@ public class MenuState implements GameState {
             UIText legacyBtn = new UIText("[ L : VIEW LEGACY ]", GameConfig.s(20), Color.YELLOW);
             addUI(world, legacyBtn, x, y);
         }
+        UIText customBtn = new UIText("[ C : CUSTOM MODE ]", GameConfig.s(20), Color.CYAN);
+        addUI(world, customBtn, world.getWidth() / 2, world.getHeight() - GameConfig.s(40));
+        UIText warning = new UIText("[NOTE:CUSTOM MODE AND OMNI DIO DOESNT COUNT SCORE", GameConfig.s(20), Color.CYAN);
+        addUI(world, warning, world.getWidth() / 2, world.getHeight() - GameConfig.s(20));
     }
 
 
@@ -46,6 +50,10 @@ public class MenuState implements GameState {
         // Handle the secret Legacy key if they have the score
         else if ("l".equals(key) && SaveManager.getInt("all_time_high") >= 1) {
             world.getGSM().pushState(new LegacyState());
+        }
+        
+        else if ("c".equals(key)) {
+            world.getGSM().changeState(new CustomModeState());
         }
     }
 

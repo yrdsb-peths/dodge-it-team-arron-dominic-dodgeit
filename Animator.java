@@ -194,9 +194,23 @@ public class Animator {
         this.loop = loop;
     }
     
+    /**
+     * Custom scale: w is width (X), h is height (Y). 
+     * Use this to stretch or shrink the sprite specifically.
+     */
     public void scaleAllFrames(int w, int h) {
         for (int i = 0; i < frames.length; i++) {
-            frames[i].scale(w, h);
+            // We check to make sure width/height are at least 1 to prevent crashes
+            frames[i].scale(Math.max(1, w), Math.max(1, h));
+        }
+    }
+    
+    /**
+     * Mirroring at the source so it stays permanent and doesn't flicker.
+     */
+    public void mirrorAllFrames() {
+        for (int i = 0; i < frames.length; i++) {
+            frames[i].mirrorHorizontally();
         }
     }
 

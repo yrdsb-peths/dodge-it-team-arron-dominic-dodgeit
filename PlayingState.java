@@ -67,7 +67,7 @@ public class PlayingState implements GameState,IActiveGameState{
         ScoreManager.reset();  // reset score to 0 (copies to highScore if higher)
 
         // Start the character's background music
-        AudioManager.playLoop(GameConfig.ACTIVE_CHARACTER.bgmKey);
+        AudioManager.playLoop(GameConfig.getActiveBGM());
 
         // Pre-draw the rewind overlay images into static memory now, before
         // the player first presses R, to avoid a lag spike on first use.

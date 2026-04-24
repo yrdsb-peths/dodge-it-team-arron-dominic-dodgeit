@@ -63,9 +63,35 @@ public class Train extends Obstacles implements Time_Snapshottable {
      * @param speed  Pixels per frame when in STATE 1 (rushing).
      */
     public Train(int speed) {
-        GreenfootImage img = new GreenfootImage("obstacles/ambulence.png");
+        // 1. Get the image path based on the road
+        String road = GameConfig.getActiveRoad();
+        String imgPath = GameConfig.getObstacleImage(road, true);
+        
+        GreenfootImage img = new GreenfootImage(imgPath);
         setImage(img);
-        getImage().scale(GameConfig.TRAIN_WIDTH, GameConfig.TRAIN_WIDTH);
+    
+        // 2. Default sizes
+        int targetWidth = GameConfig.TRAIN_WIDTH;
+        int targetHeight = GameConfig.TRAIN_WIDTH;
+    
+        // 3. THE SPECIFIC OVERRIDE
+        // Check if the path contains our specific "bigAngel" filename
+        if (imgPath.contains("bigAngel")) {
+            // Option A: Scale to a specific smaller size (e.g. 90x90 instead of 130x130)
+            targetWidth = GameConfig.s(90); 
+            targetHeight = GameConfig.s(90);
+            
+            /* 
+            // Option B: Maintain Aspect Ratio (Better for tall sprites)
+            // This keeps it from looking "fat" or "squished"
+            double ratio = (double)img.getHeight() / img.getWidth();
+            targetWidth = GameConfig.s(80); // Set your desired width
+            targetHeight = (int)(targetWidth * ratio);
+            */
+        }
+    
+        // 4. Apply the scale
+        getImage().scale(targetWidth, targetHeight);
         this.speed = speed;
     }
 

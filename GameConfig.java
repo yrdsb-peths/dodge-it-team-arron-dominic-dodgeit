@@ -290,4 +290,58 @@ public class GameConfig {
         // Default: The classic semi-transparent red
         return new Color(255, 0, 0);
     }
+    
+        
+    public static String getObstacleImage(String roadImage, boolean isTrain) {
+        if (isTrain) {
+            // --- TRAIN / AMBULANCE MAPPING ---
+            //if (roadImage.equals("punk_road.png"))   return "obstacles/punk_ambulance.png";
+            // (roadImage.equals("red_road.png"))    return "obstacles/red_ambulance.png";
+            if (roadImage.equals("white_road.png"))  return "obstacles/bigAngel.png";
+            if (roadImage.equals("racetrack.png"))  return "obstacles/polnareff.png";
+            
+            return "obstacles/ambulence.png"; // Default
+        } else {
+            // --- ROADROLLER / CAR MAPPING ---
+            //if (roadImage.equals("punk_road.png"))   return "obstacles/punk_car.png";
+            //if (roadImage.equals("red_road.png"))    return "obstacles/red_car.png";
+            if (roadImage.equals("white_road.png"))  return "obstacles/angel.png";
+            //if (roadImage.equals("racetrack.png"))  return "obstacles/polnareff.png";
+            
+            return "obstacles/road_roller.png"; // Default
+        }
+    }
+    
+    
+    public static String getObstacleAnimFolder(String roadImage, boolean isTrain) {
+        // Example: If the road is racetrack, use the "horse" folder for Roadrollers
+        if (roadImage.equals("racetrack.png") && !isTrain) {
+            return "horse"; 
+        }
+        
+        // Add more here:
+        // if (roadImage.equals("lava_road.png")) return "fire_ball";
+    
+        return null; // No animation for this road
+    }
+    
+    // Inside GameConfig.java
+    
+    // These will be reset every time you return to the menu
+    public static String SESSION_ROAD = ""; 
+    public static String SESSION_BGM  = "";
+    
+    /** 
+     * Helper to get the current active road, 
+     * prioritizing the user's manual choice.
+     */
+    public static String getActiveRoad() {
+        if (!SESSION_ROAD.equals("")) return SESSION_ROAD;
+        return ACTIVE_CHARACTER.roadImage;
+    }
+    
+    public static String getActiveBGM() {
+        if (!SESSION_BGM.equals("")) return SESSION_BGM;
+        return ACTIVE_CHARACTER.bgmKey;
+    }
 }

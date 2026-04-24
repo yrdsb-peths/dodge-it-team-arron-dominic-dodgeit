@@ -6,11 +6,8 @@ public class UIText extends Actor {
     private String text;
     private int fontSize;
     private Color color;
-    private int maxWidth; // New: determines when to skip to the next line
+    private int maxWidth;
 
-    /**
-     * @param maxWidth Pass 0 for a single line, or a pixel value (like 400) to wrap text.
-     */
     public UIText(String text, int fontSize, Color color, int maxWidth) {
         this.text = text;
         this.fontSize = fontSize;
@@ -19,7 +16,6 @@ public class UIText extends Actor {
         updateImage();
     }
 
-    // Keep the old constructor working for simple things like "SCORE"
     public UIText(String text, int fontSize, Color color) {
         this(text, fontSize, color, 0);
     }
@@ -30,15 +26,21 @@ public class UIText extends Actor {
             updateImage();
         }
     }
+    
+    // NEW METHOD
+    public void setColor(Color newColor) {
+        if (!this.color.equals(newColor)) {
+            this.color = newColor;
+            updateImage();
+        }
+    }
 
     private void updateImage() {
         if (maxWidth <= 0) {
-            // Standard single-line behavior
             setImage(new GreenfootImage(text, fontSize, color, new Color(0, 0, 0, 0)));
             return;
         }
 
-        // --- SMART WRAP LOGIC ---
         List<String> lines = wrapText(text, fontSize, maxWidth);
         int lineSpacing = 2;
         int totalHeight = lines.size() * (fontSize + lineSpacing);
@@ -47,7 +49,6 @@ public class UIText extends Actor {
         
         for (int i = 0; i < lines.size(); i++) {
             GreenfootImage lineImg = new GreenfootImage(lines.get(i), fontSize, color, new Color(0,0,0,0));
-            // Center the text horizontally within the maxWidth
             int x = (maxWidth - lineImg.getWidth()) / 2;
             int y = i * (fontSize + lineSpacing);
             finalImg.drawImage(lineImg, x, y);
@@ -55,7 +56,6 @@ public class UIText extends Actor {
         setImage(finalImg);
     }
 
-    /** Splits a long string into lines that fit the maxWidth */
     private List<String> wrapText(String text, int size, int width) {
         List<String> lines = new ArrayList<>();
         String[] words = text.split(" ");
@@ -63,7 +63,6 @@ public class UIText extends Actor {
 
         for (String word : words) {
             String testLine = currentLine.isEmpty() ? word : currentLine + " " + word;
-            // Create a temp image to measure width
             GreenfootImage measure = new GreenfootImage(testLine, size, Color.BLACK, Color.WHITE);
             if (measure.getWidth() > width) {
                 lines.add(currentLine);
