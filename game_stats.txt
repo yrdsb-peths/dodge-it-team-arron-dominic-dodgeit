@@ -1,6 +1,7 @@
 #DIO-DGE IT Persistent Stats
-#Thu Apr 23 21:12:47 EDT 2026
-all_time_high=66
-usage_Ability_DarkSpell01=68
-usage_Ability_DarkSpell02=55
+#Thu Apr 23 21:28:53 EDT 2026
+all_time_high=162
+usage_Ability_DarkSpell01=282
+usage_Ability_DarkSpell02=181
+usage_Ability_KingCrimson=384
 usage_Ability_StickyFingers=26
