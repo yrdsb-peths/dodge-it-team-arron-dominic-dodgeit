@@ -23,19 +23,12 @@ public class GameOverState implements GameState {
         // 2. DATA GATHERING
         ScoreManager.updateHighScore();
         int finalScore    = ScoreManager.getScore();
-        int sessionBest   = ScoreManager.getHighScore();
         int allTimeBest   = DataManager.getInt("all_time_high");
         String obituary   = ObituaryManager.getRandomObituary(GameConfig.ACTIVE_CHARACTER);
         String fav        = SaveManager.getFavoriteCharacter();
         
-        // --- THE MATH FIX ---
         int totalSeconds = SaveManager.getInt("total_playtime");
-        int minutes = totalSeconds / 60;
-        int seconds = totalSeconds % 60; // Gets the leftover seconds!
-        
-        // Formats it beautifully like "5:08" or "0:45"
-        String timeStr = String.format("%d:%02d", minutes, seconds); 
-        // --------------------
+        String timeStr = String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60); 
         
         // 3. BACKGROUND SETUP
         world.setBackground(new GreenfootImage("game_over.png")); 
@@ -43,25 +36,35 @@ public class GameOverState implements GameState {
 
         // 4. UI CONSTRUCTION
         int midX = world.getWidth() / 2;
-        int topY = GameConfig.s(140);
+        int panelY = GameConfig.s(240);
+        int panelW = world.getWidth() - 100;
+        int panelH = GameConfig.s(170);
 
-        // ── DARK BACKDROP PANEL (Makes text readable) ──
-        addUI(world, new UI_Panel(world.getWidth() - 100, GameConfig.s(160), new Color(0, 0, 0, 160)), midX, GameConfig.s(240));
+        // ── DARK BACKDROP PANEL ──
+        addUI(world, new UI_Panel(panelW, panelH, new Color(0, 0, 0, 160)), midX, panelY);
 
-        // ── SCORE BLOCK ──
+        // ── SCORE & STATS BLOCK (Grouped higher up in the panel) ──
+        int statsStartY = panelY - GameConfig.s(55);
+        
         Color scoreColor = (finalScore >= allTimeBest) ? Color.YELLOW : Color.WHITE;
-        addUI(world, new UIText("FINAL SCORE: " + finalScore, GameConfig.s(20), scoreColor), midX, topY + GameConfig.s(45));
+        addUI(world, new UIText("FINAL SCORE: " + finalScore, GameConfig.s(22), scoreColor), midX, statsStartY);
         
         String bestText = (finalScore >= allTimeBest) ? "NEW ALL-TIME RECORD!" : "ALL-TIME BEST: " + allTimeBest;
-        addUI(world, new UIText(bestText, GameConfig.s(20), Color.CYAN), midX, topY + GameConfig.s(65));
+        addUI(world, new UIText(bestText, GameConfig.s(18), Color.CYAN), midX, statsStartY + GameConfig.s(25));
         
-        // ── PERSISTENT STATS ──
-        addUI(world, new UIText("Favorite Character: " + fav, 20, Color.WHITE), midX, topY + GameConfig.s(85));
-        addUI(world, new UIText("Total Playtime: " + timeStr, 20, Color.CYAN), midX, topY + GameConfig.s(105)); // USING timeStr!
+        addUI(world, new UIText("Favorite: " + fav + "  |  Total Time: " + timeStr, GameConfig.s(15), Color.LIGHT_GRAY), midX, statsStartY + GameConfig.s(45));
         
         // ── THE OBITUARY (The Flavor) ──
-        addWrappedText(world, "\"" + obituary + "\"", GameConfig.s(16), Color.LIGHT_GRAY, midX, topY + GameConfig.s(130), 100);
+        // THE FIX: Use the built-in wrapping of UIText. 
+        // We set the maxWidth to be slightly smaller than the panel.
+        int wrapWidth = panelW - GameConfig.s(40); 
+        UIText obiText = new UIText("\"" + obituary + "\"", GameConfig.s(17), Color.WHITE, wrapWidth);
+        
+        // Place it in the lower half of the panel
+        addUI(world, obiText, midX, panelY + GameConfig.s(25));
     }
+
+    // REMOVE the addWrappedText method entirely!
 
     @Override
     public void update(MyWorld world) {

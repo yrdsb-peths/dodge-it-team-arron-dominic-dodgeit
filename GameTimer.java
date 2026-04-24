@@ -111,12 +111,17 @@ public class GameTimer {
      */
     public void update(MyWorld world) {
         if (active && world.getGSM().isState(IActiveGameState.class)) {
+            IActiveGameState state = (IActiveGameState) world.getGSM().peekState();
+            
+            // --- THE FIX: Stop the timer if the demo is showing a prompt ---
+            if (state.isGameFrozen()) return; 
+
             if (remainingFrames > 0) {
                 remainingFrames--;
             } else if (loop) {
-                reset(); // auto-refill and keep running
+                reset(); 
             } else {
-                active = false; // one-shot: stop when done
+                active = false; 
             }
         }
     }

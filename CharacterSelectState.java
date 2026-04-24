@@ -85,11 +85,13 @@ public class CharacterSelectState implements GameState {
     private void spawnNewCharacter(MyWorld world, boolean fromRight, boolean isInitial) {
         CharacterConfig selected = roster[currentIndex];
 
-        // 1. Play Voice Line (Using a failsafe for both Voice Pool and Single Audio)
-        if (!isInitial) {
-            AudioManager.stopAllPools(); // Clean up previous character's voice
-            AudioManager.playPool(selected.selectSoundKey);
-        }
+        // 1. Stop any lingering voices first so they don't stack
+        AudioManager.stopAllPools(); 
+
+        // 2. Play the selection voice line immediately
+        // (Checking both pools and single sounds for safety)
+        AudioManager.playPool(selected.selectSoundKey);
+        AudioManager.play(selected.selectSoundKey); 
 
         // 2. Spawn Sliding Preview Image
         currentPreview = new UI_Preview(selected, fromRight, world.getWidth() / 2);

@@ -29,40 +29,46 @@ import greenfoot.*;
 public class UI_RewindBar extends Actor {
 
     private Time_RewindManager rewindManager;
-
-    /** Design width and height of the bar (before scaling). */
     private static final int BAR_W = 150;
     private static final int BAR_H = 12;
 
-    /**
-     * @param rewindManager  The manager to read fill level and state from.
-     */
+    // ── cache these so we only redraw when something changes ──
+    private static GreenfootImage cachedLabel = null; // drawn once, ever
+    private int    lastHistorySize  = -1;
+    private boolean lastCanRewind   = false;
+    private boolean lastIsRewinding = false;
+
     public UI_RewindBar(Time_RewindManager rewindManager) {
         this.rewindManager = rewindManager;
+        if (cachedLabel == null)
+            cachedLabel = new GreenfootImage("TIME", GameConfig.s(10),
+                Color.WHITE, new Color(0, 0, 0, 0));
         redraw();
     }
 
     @Override
     public void act() {
-        redraw();
+        int     histSize    = rewindManager.getHistorySize();
+        boolean canRewind   = rewindManager.canRewind();
+        boolean isRewinding = rewindManager.isRewinding();
+
+        // only redraw if something actually changed
+        if (histSize != lastHistorySize || canRewind != lastCanRewind || isRewinding != lastIsRewinding) {
+            lastHistorySize  = histSize;
+            lastCanRewind    = canRewind;
+            lastIsRewinding  = isRewinding;
+            redraw();
+        }
     }
 
-    /**
-     * Redraws the entire bar image each frame.
-     * Reads the current history size and rewind state from the manager.
-     */
     private void redraw() {
         int w       = GameConfig.s(BAR_W);
         int h       = GameConfig.s(BAR_H);
         int padding = GameConfig.s(2);
 
-        // Canvas tall enough for the "TIME" label above the bar
         GreenfootImage img = new GreenfootImage(w + padding * 2, h + GameConfig.s(18));
 
-        // ── "TIME" label ──────────────────────────────────────────────────────
-        GreenfootImage label = new GreenfootImage("TIME", GameConfig.s(10),
-            Color.WHITE, new Color(0, 0, 0, 0));
-        img.drawImage(label, 0, 0);
+        img.drawImage(cachedLabel, 0, 0); // reuse, never re-render
 
         int barTop = GameConfig.s(14); // Y position where the bar starts
 

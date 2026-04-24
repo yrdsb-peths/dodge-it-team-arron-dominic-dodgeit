@@ -131,11 +131,6 @@ public class PlayingState implements GameState,IActiveGameState{
         // Store the pressed key once — a second call would return null.
         String key = Greenfoot.getKey();
 
-        // ── Time-stop: W pushes PausedState on top of this state ─────────────
-        if (GameConfig.TIME_STOP_BUTTON.equals(key)) {
-            world.getGSM().pushState(new PausedState());
-        }
-
         /*
          * DVD-PLAYER METAPHOR:
          *   If Rewind Mode is on  → play the game BACKWARD (restore past states).
@@ -229,7 +224,7 @@ public class PlayingState implements GameState,IActiveGameState{
     
     @Override
     public boolean isGameFrozen() {
-        return Ability_KingCrimson.ERASING; // Game freezes when KC is active
+        return Ability_KingCrimson.ERASING|| Ability_TheWorld.TIME_STOPPED; // Game freezes when KC is active
     }
         
         

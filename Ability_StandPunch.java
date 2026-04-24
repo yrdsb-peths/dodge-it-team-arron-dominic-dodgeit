@@ -41,7 +41,11 @@ public class Ability_StandPunch implements Ability {
      * Lower = faster animation.  Read by TheWorldStand's Animator.
      */
     public int standAnimSpeed = 2;
-
+        
+        
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     // ─────────────────────────────────────────────────────────────────────────
     // ABILITY INTERFACE IMPLEMENTATION
     // ─────────────────────────────────────────────────────────────────────────
@@ -142,12 +146,13 @@ public class Ability_StandPunch implements Ability {
      */
     @Override
     public Object captureState() {
-        return new int[]{
-            durationTimer.getRemainingFrames(),
-            cooldownTimer.getRemainingFrames(),
-            durationTimer.isActive() ? 1 : 0,
-            cooldownTimer.isActive() ? 1 : 0
-        };
+        int[] s = statePool[poolIdx++ % POOL];
+        s[0] = durationTimer.getRemainingFrames();
+        s[1] = cooldownTimer.getRemainingFrames();
+        s[2] = durationTimer.isActive() ? 1 : 0;
+        s[3] = cooldownTimer.isActive() ? 1 : 0;
+        // KingCrimson also needs: s[4] = ERASING ? 1 : 0;
+        return s;
     }
 
     /** Restores both timers from the saved int[4] array. */
