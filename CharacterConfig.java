@@ -124,7 +124,7 @@ public enum CharacterConfig {
     
     DIAVOLO(
         "Diavolo",
-        "Dio",           // Reusing Dio's folder for now until you have Diavolo sprites
+        "diavolo",           // Reusing Dio's folder for now until you have Diavolo sprites
         "diavolo_full.jpg", // Add this to your images folder later
         "standard_road.png", 
         new String[]{"Idle", "Dash", "Lose"},
