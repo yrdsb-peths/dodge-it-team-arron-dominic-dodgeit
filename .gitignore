@@ -3,3 +3,5 @@
 project.greenfoot
 **/greenfoot.jar
 *.txt
+*.txt
+*.py

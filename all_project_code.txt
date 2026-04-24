@@ -1,3 +1,4 @@
+--- START OF CODE BUNDLE ---
 
 ==================================================
 FILE: ./FX_DimOverlay.java
@@ -13,7 +14,6 @@ public class FX_DimOverlay extends Actor {
         setImage(img);
     }
 }
-
 
 ==================================================
 FILE: ./MyWorld.java
@@ -180,7 +180,6 @@ public class MyWorld extends World {
 }
 
 
-
 ==================================================
 FILE: ./SadFace.java
 ==================================================
@@ -207,7 +206,6 @@ public class SadFace extends Actor {
         // Currently unused. See class comment above.
     }
 }
-
 
 
 ==================================================
@@ -331,7 +329,6 @@ public class GameOverState implements GameState {
     }
 }
 
-
 ==================================================
 FILE: ./FX_DarkLane.java
 ==================================================
@@ -359,6 +356,34 @@ public class FX_DarkLane extends Actor {
     }
 }
 
+==================================================
+FILE: ./FX_TimeStopOverlay.java
+==================================================
+
+import greenfoot.*;
+
+public class FX_TimeStopOverlay extends Actor {
+    public FX_TimeStopOverlay() {
+        GreenfootImage img = new GreenfootImage(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
+        // Darken the screen slightly
+        img.setColor(new Color(0, 0, 0, 120)); 
+        img.fill();
+        
+        // Add text
+        GreenfootImage text = new GreenfootImage("TIME STOPPED", GameConfig.s(40), Color.RED, new Color(0,0,0,0));
+        img.drawImage(text, (img.getWidth() - text.getWidth()) / 2, GameConfig.s(100));
+        
+        setImage(img);
+    }
+    
+    @Override
+    public void act() {
+        // Automatically remove itself when time resumes
+        if (!Ability_TheWorld.TIME_STOPPED) {
+            if (getWorld() != null) getWorld().removeObject(this);
+        }
+    }
+}
 
 ==================================================
 FILE: ./UI_RewindBar.java
@@ -395,40 +420,46 @@ import greenfoot.*;
 public class UI_RewindBar extends Actor {
 
     private Time_RewindManager rewindManager;
-
-    /** Design width and height of the bar (before scaling). */
     private static final int BAR_W = 150;
     private static final int BAR_H = 12;
 
-    /**
-     * @param rewindManager  The manager to read fill level and state from.
-     */
+    // ── cache these so we only redraw when something changes ──
+    private static GreenfootImage cachedLabel = null; // drawn once, ever
+    private int    lastHistorySize  = -1;
+    private boolean lastCanRewind   = false;
+    private boolean lastIsRewinding = false;
+
     public UI_RewindBar(Time_RewindManager rewindManager) {
         this.rewindManager = rewindManager;
+        if (cachedLabel == null)
+            cachedLabel = new GreenfootImage("TIME", GameConfig.s(10),
+                Color.WHITE, new Color(0, 0, 0, 0));
         redraw();
     }
 
     @Override
     public void act() {
-        redraw();
+        int     histSize    = rewindManager.getHistorySize();
+        boolean canRewind   = rewindManager.canRewind();
+        boolean isRewinding = rewindManager.isRewinding();
+
+        // only redraw if something actually changed
+        if (histSize != lastHistorySize || canRewind != lastCanRewind || isRewinding != lastIsRewinding) {
+            lastHistorySize  = histSize;
+            lastCanRewind    = canRewind;
+            lastIsRewinding  = isRewinding;
+            redraw();
+        }
     }
 
-    /**
-     * Redraws the entire bar image each frame.
-     * Reads the current history size and rewind state from the manager.
-     */
     private void redraw() {
         int w       = GameConfig.s(BAR_W);
         int h       = GameConfig.s(BAR_H);
         int padding = GameConfig.s(2);
 
-        // Canvas tall enough for the "TIME" label above the bar
         GreenfootImage img = new GreenfootImage(w + padding * 2, h + GameConfig.s(18));
 
-        // ── "TIME" label ──────────────────────────────────────────────────────
-        GreenfootImage label = new GreenfootImage("TIME", GameConfig.s(10),
-            Color.WHITE, new Color(0, 0, 0, 0));
-        img.drawImage(label, 0, 0);
+        img.drawImage(cachedLabel, 0, 0); // reuse, never re-render
 
         int barTop = GameConfig.s(14); // Y position where the bar starts
 
@@ -460,7 +491,6 @@ public class UI_RewindBar extends Actor {
         setImage(img);
     }
 }
-
 
 
 ==================================================
@@ -541,6 +571,7 @@ public enum CharacterConfig {
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,                             // bossConfig   (intro banner)
         new String[]{                               // abilityClassNames (loaded via Reflection)
+            "Ability_TheWorld",
             "Ability_StandPunch",   // E — summon TheWorldStand
             "Ability_MadeInHeaven", // S — speed boost
             "Ability_Mandom",       // R — time rewind (delegates to PlayingState)
@@ -572,34 +603,34 @@ public enum CharacterConfig {
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,
-        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} // fewer abilities than DIO
+        new String[]{"Ability_TheWorld","Ability_StandPunch", "Ability_MadeInHeaven"} // fewer abilities than DIO
     ),
     Ringo(
         "Ringo Roadagain",
         "Ringo",
         "ringo_full.jpg",                             //Portrait Image (new, for character select)
         "standard_road.png",                             //CUstomised road(new, for character select)
-        new String[]{"Idle","Dash", "Lose"},
+        new String[]{"Idle","Dash", "Wry","Lose"},
         "Dash",
         GameConfig.DIO_MOVE_SPEED,
         1.5 * GameConfig.SCALE,
         "ringo_theme",
         "ringoLoseLines",
         "ringoLines",                             //Select sound key (new, for character select)
-        BossConfig.DIO,
-        new String[]{"Ability_Mandom"}
+        BossConfig.Ringo,
+        new String[]{"Ability_Mandom","Ability_TheWorld"}
     ),
     
     DIAVOLO(
         "Diavolo",
-        "Dio",           // Reusing Dio's folder for now until you have Diavolo sprites
+        "diavolo",           // Reusing Dio's folder for now until you have Diavolo sprites
         "diavolo_full.jpg", // Add this to your images folder later
         "standard_road.png", 
         new String[]{"Idle", "Dash", "Lose"},
         "Dash",
         GameConfig.DIO_MOVE_SPEED,
         0.8 * GameConfig.SCALE,
-        "dio_bgm", 
+        "diavolo_theme", 
         "diavoloLoseLines",
         "diavoloLines", 
         BossConfig.DIO, 
@@ -678,7 +709,6 @@ public enum CharacterConfig {
         this.abilityClassNames = abilities;
     }
 }
-
 
 
 ==================================================
@@ -775,7 +805,6 @@ public class FX_ZipperGround extends Actor {
         setImage(img);
     }
 }
-
 
 
 ==================================================
@@ -911,7 +940,6 @@ public abstract class Obstacles extends Actor {
 }
 
 
-
 ==================================================
 FILE: ./FX_EpitaphRevert.java
 ==================================================
@@ -940,7 +968,6 @@ public class FX_EpitaphRevert extends Actor {
     }
 }
 
-
 ==================================================
 FILE: ./Ability_DarkSpell02.java
 ==================================================
@@ -955,7 +982,10 @@ public class Ability_DarkSpell02 implements Ability {
     private boolean keyWasDown = false;
     
     public static int CURRENT_FROZEN_LANE_Y = -1;
-
+        
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     @Override
     public void activate(Player p, MyWorld world) {
         if (durationTimer.isActive() || cooldownTimer.isActive() || keyWasDown) return;
@@ -1041,27 +1071,28 @@ public class Ability_DarkSpell02 implements Ability {
 
     @Override
     public Object captureState() {
-        return new int[]{
-            durationTimer.getRemainingFrames(), cooldownTimer.getRemainingFrames(),
-            durationTimer.isActive() ? 1 : 0, cooldownTimer.isActive() ? 1 : 0,
-            CURRENT_FROZEN_LANE_Y
-        };
+        int[] s = statePool[poolIdx++ % POOL];
+        s[0] = durationTimer.getRemainingFrames();
+        s[1] = cooldownTimer.getRemainingFrames();
+        s[2] = durationTimer.isActive() ? 1 : 0;
+        s[3] = cooldownTimer.isActive() ? 1 : 0;
+        s[4] = CURRENT_FROZEN_LANE_Y;
+        return s;
     }
-
     
-@Override
-    public void restoreState(Object state) {
-        int[] s = (int[]) state;
-        durationTimer.setRemainingFrames(s[0]);
-        cooldownTimer.setRemainingFrames(s[1]);
-        if (s[2] == 1) durationTimer.start(); else durationTimer.stop();
-        if (s[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
         
-        // This line is the most important for the freeze bug!
-        CURRENT_FROZEN_LANE_Y = s[4]; 
+    @Override
+        public void restoreState(Object state) {
+            int[] s = (int[]) state;
+            durationTimer.setRemainingFrames(s[0]);
+            cooldownTimer.setRemainingFrames(s[1]);
+            if (s[2] == 1) durationTimer.start(); else durationTimer.stop();
+            if (s[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
+            
+            // This line is the most important for the freeze bug!
+            CURRENT_FROZEN_LANE_Y = s[4]; 
+        }
     }
-}
-
 
 ==================================================
 FILE: ./TheWorldStand.java
@@ -1180,7 +1211,6 @@ public class TheWorldStand extends Actor implements Time_Snapshottable {
 }
 
 
-
 ==================================================
 FILE: ./UI_MenuBackground.java
 ==================================================
@@ -1195,7 +1225,6 @@ public class UI_MenuBackground extends Actor {
         setImage(img);
     }
 }
-
 
 ==================================================
 FILE: ./Roadroller.java
@@ -1369,7 +1398,6 @@ public class Roadroller extends Obstacles implements Time_Snapshottable {
 }
 
 
-
 ==================================================
 FILE: ./DemoStage.java
 ==================================================
@@ -1444,7 +1472,6 @@ public class DemoStage {
     
     
 }
-
 
 ==================================================
 FILE: ./GameRNG.java
@@ -1552,32 +1579,10 @@ public class GameRNG {
 }
 
 
-
 ==================================================
 FILE: ./MenuState.java
 ==================================================
 
-/*
- * ─────────────────────────────────────────────────────────────────────────────
- * MenuState.java  —  THE MAIN MENU
- * ─────────────────────────────────────────────────────────────────────────────
- * Role:
- *   The first state shown when the project starts.
- *   Displays the game title, control instructions, and a "Press ENTER" prompt.
- *   Pressing ENTER switches to CharacterSelectState.
- *
- * Layout strategy:
- *   Most text is centre-aligned (x = world.getWidth()/2).
- *   Control instructions are left-aligned relative to the centre:
- *   addUI places them at leftAlign + GameConfig.s(120) so the TEXT BLOCK
- *   as a whole appears centred even though individual lines start from a
- *   consistent left edge.
- *
- * Interacts with:
- *   GameStateManager (changeState), CharacterSelectState (next state),
- *   UIText (text labels), GameConfig (scaling)
- * ─────────────────────────────────────────────────────────────────────────────
- */
 import greenfoot.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -1590,70 +1595,63 @@ public class MenuState implements GameState {
     @Override
     public void enter(MyWorld world) {
         world.setBackground(new GreenfootImage("dodge_it.png")); 
-        world.getBackground().scale(GameConfig.WORLD_WIDTH+200, GameConfig.WORLD_HEIGHT);
-        /*
-        int middle = world.getWidth() / 2;
+        world.getBackground().scale(GameConfig.WORLD_WIDTH + 200, GameConfig.WORLD_HEIGHT);
 
-        // ── Title ─────────────────────────────────────────────────────────────
-        addUI(world, new UIText("DIO-DGE IT",                      GameConfig.s(55), Color.YELLOW),         middle,          GameConfig.s(120));
-
-        // ── Controls (left-aligned block, visually centred) ───────────────────
-        int leftAlign = middle - GameConfig.s(120);
-        int rowStart  = GameConfig.s(150);
-        int spacing   = GameConfig.s(35);
-
-        addUI(world, new UIText("ARROWS : Move Dio",                            GameConfig.s(22), Color.BLACK),               leftAlign, GameConfig.s(200));
-     
-        // ── Objective ─────────────────────────────────────────────────────────
-        addUI(world, new UIText("Dodge the Road Rollers and Ambulances!", GameConfig.s(18), Color.ORANGE), middle, GameConfig.s(330));
-
-        // ── Start prompt ──────────────────────────────────────────────────────
-
-        addUI(world, new UIText("[ Press ENTER to Begin ]",               GameConfig.s(24), Color.CYAN),   middle, GameConfig.s(375));
-        */
+        int currentHiScore = SaveManager.getInt("all_time_high");
+        
+        // FIX: Use 1 here so you can see it immediately for testing!
+        if (currentHiScore >= GameConfig.LEGACY_UNLOCK_SCORE) { 
+            // Move it slightly more toward the center (s(150)) so it's not tucked in the corner
+            int x = world.getWidth() - GameConfig.s(150); 
+            int y = GameConfig.s(40);
+            
+            UIText legacyBtn = new UIText("[ L : VIEW LEGACY ]", GameConfig.s(20), Color.YELLOW);
+            addUI(world, legacyBtn, x, y);
+        }
     }
 
-    /** Waits for ENTER, then transitions to the character select screen. */
+
     @Override
     public void update(MyWorld world) {
-        
+        // ── Ambience ──────────────────────────────────────────────────────────
         if (Greenfoot.getRandomNumber(120) == 0) {
-            
-            // Start way off-screen to the right
             int startX = world.getWidth() + GameConfig.s(300);
-            
             world.addObject(new FX_MenuAmbulance(), startX, GameConfig.s(290));
         }
 
         AudioManager.playLoop("menu_bgm"); 
-        if ("enter".equals(Greenfoot.getKey())) {
+
+        // ── Inputs ────────────────────────────────────────────────────────────
+        String key = Greenfoot.getKey();
+        
+        if ("enter".equals(key)) {
             world.getGSM().changeState(new CharacterSelectState());
+        } 
+        
+        // Handle the secret Legacy key if they have the score
+        else if ("l".equals(key) && SaveManager.getInt("all_time_high") >= 1) {
+            world.getGSM().pushState(new LegacyState());
         }
     }
 
-    /** Removes all text labels when leaving the menu. */
     @Override
     public void exit(MyWorld world) {
-        world.getBackground().setColor(Color.WHITE); world.getBackground().fill();
+        // Cleanup
+        world.getBackground().setColor(Color.WHITE); 
+        world.getBackground().fill();
+        
         world.removeObjects(uiElements);
         uiElements.clear();
-        world.removeObjects(world.getObjects(FX_MenuAmbulance.class));//Remove the ambulance...
+        
+        // Clear the ambulances
+        world.removeObjects(world.getObjects(FX_MenuAmbulance.class));
     }
 
-    /**
-     * Adds an actor to the world and tracks it for cleanup.
-     * Left-aligned text (x < world centre) is shifted right by GameConfig.s(120)
-     * so the text block appears visually centred as a group.
-     */
     private void addUI(MyWorld world, Actor a, int x, int y) {
-        int drawX = (a instanceof UIText && x < world.getWidth() / 2)
-            ? x + GameConfig.s(120) : x;
-        world.addObject(a, drawX, y);
+        world.addObject(a, x, y);
         uiElements.add(a);
     }
 }
-
-
 
 ==================================================
 FILE: ./DemoScripts.java
@@ -1671,7 +1669,7 @@ public class DemoScripts {
                 .spawnRoadrollerAt(50, 2)
                 .addWaitPoint(90, 
                     (player, world) -> player.isAbilityActive(Ability_StandPunch.class), 
-                    "Press E to summon your Stand and destroy them!"
+                    "Press [E] to summon your Stand and destroy them!"
                 );
         }
         
@@ -1681,7 +1679,7 @@ public class DemoScripts {
                 .spawnRoadrollerAt(40, 1)
                 .addWaitPoint(80, 
                     (player, world) -> player.isAbilityActive(Ability_MadeInHeaven.class), 
-                    "Press S to accelerate time and dodge!"
+                    "Press [S] to accelerate time and dodge!"
                 );
         }
         
@@ -1690,11 +1688,11 @@ public class DemoScripts {
                 .spawnRoadrollerAt(20, 2)
                 .addWaitPoint(60, 
                     (player, world) -> player.isHidden(), 
-                    "Press F to zip into the road and hide!"
+                    "Press[F] to zip into the road and hide!"
                 )
                 .addWaitPoint(150, 
                     (player, world) -> !player.isHidden(), 
-                    "The danger passed. Press F to surface with invincibility!"
+                    "The danger passed. Press[F] to surface with invincibility!"
                 )
                 .addWaitPoint(250, 
                     (player, world) -> player.getAbility(Ability_StickyFingers.class).getSecondaryCooldownPercent() > 0, 
@@ -1703,7 +1701,7 @@ public class DemoScripts {
         }
         
         if (clazz == Ability_Mandom.class) {
-            return new DemoStage("Mandom rewinds time to fix mistakes. \nIf you've been here before, you have mastered this skill")
+            return new DemoStage("Mandom rewinds time to fix mistakes.")
                 .spawnRoadrollerAt(50, 1)
                 .spawnRoadrollerAt(50, 2)
                 .spawnRoadrollerAt(80, 0)
@@ -1711,7 +1709,21 @@ public class DemoScripts {
                 .spawnRoadrollerAt(80, 1)
                 .addWaitPoint(150, 
                     (player, world) -> world.isRewinding(), 
-                    "You're trapped! Press R to rewind time!"
+                    "You're trapped! Press[R] to rewind time!"
+                );
+        }
+        
+        if (clazz == Ability_TheWorld.class) {
+            return new DemoStage("The World: Total mastery over time. No limits.")
+                .spawnRoadrollerAt(20, 2)
+                .spawnRoadrollerAt(20, 3)
+                .addWaitPoint(60, 
+                    (player, world) -> player.isAbilityActive(Ability_TheWorld.class), 
+                    "Press [W] to STOP TIME! Walk around the frozen cars safely!"
+                )
+                .addWaitPoint(120, 
+                    (player, world) -> !player.isAbilityActive(Ability_TheWorld.class), 
+                    "Whenever you are ready, press [W] again to RESUME time."
                 );
         }
         
@@ -1735,42 +1747,59 @@ public class DemoScripts {
                 // If they let go of Right too early, they snap back to the past and die.
                 // If they wait for the overlap and press Q, they shatter the cars and win!
         }
-        
+
         if (clazz == Ability_DarkSpell01.class) {
             return new DemoStage("Dark Spell 1: Erases everything in a massive circle around you.")
-                // Spawn a cluster that covers multiple lanes
-                .spawnRoadrollerAt(20, 1)
+                // --- PHASE 1: NORMAL MODE ---
                 .spawnRoadrollerAt(20, 2)
-                .spawnRoadrollerAt(20, 3)
                 .addWaitPoint(60, 
                     (player, world) -> player.isAbilityActive(Ability_DarkSpell01.class), 
-                    "You're surrounded! Press [V] to trigger the Void Nuke and clear the road!"
+                    "Normal Mode: Press [V] to trigger the Void Nuke and clear the circle!"
+                )
+                
+                // --- THE HACK: Wait until the cast FINISHES, then reset cooldown ---
+                .addWaitPoint(130, // Changed from 100 to 130 to allow the 54-frame cast to finish!
+                    (player, world) -> {
+                        player.getAbility(Ability_DarkSpell01.class).cancel();
+                        player.setAnimation("Dash"); // Safety catch to stop the loop!
+                        return true; 
+                    }, 
+                    ""
+                )
+                
+                // --- PHASE 3: RESONANCE COMBO SETUP ---
+                .spawnRoadrollerAt(150, 2)
+                .spawnRoadrollerAt(170, 2)
+                .addWaitPoint(210, 
+                    (player, world) -> player.isAbilityActive(Ability_DarkSpell02.class), 
+                    "RESONANCE COMBO! First, line up with the cars and press [C] to freeze the lane."
+                )
+                
+                // --- PHASE 4: BEAM EXECUTION ---
+                .addWaitPoint(220, // Snappy transition!
+                    (player, world) -> player.isAbilityActive(Ability_DarkSpell01.class), 
+                    "Quick! While the lane is frozen, press [V] to fire the Annihilation Beam!"
                 );
         }
         
-        // --- LANE LOCKDOWN (Ability 02) ---
         if (clazz == Ability_DarkSpell02.class) {
             return new DemoStage("Dark Spell 2: Curses your current lane, stopping all incoming traffic.")
-                .spawnRoadrollerAt(30, 2) // Obstacle in the middle
+                .spawnRoadrollerAt(30, 2) 
                 .spawnRoadrollerAt(40, 2)
                 .spawnRoadrollerAt(50, 2)
                 .addWaitPoint(70, 
                     (player, world) -> player.isAbilityActive(Ability_DarkSpell02.class), 
                     "Line up with the car and press [C] to freeze the lane!"
                 )
-                // Spawn more cars INTO the frozen lane to show the persistent effect
-                
                 .addWaitPoint(150,
-                    (player, world) -> true, // Just a text delay to let them watch
+                    (player, world) -> true, 
                     "Look! Incoming cars in this lane freeze instantly upon entry."
                 );
         }
         
-        // Fallback for missing/future abilities
         return new DemoStage("Try out the ability in the sandbox!");
     }
 }
-
 
 ==================================================
 FILE: ./AbilityGuideState.java
@@ -1831,7 +1860,6 @@ public class AbilityGuideState implements GameState {
         ui.add(a);
     }
 }
-
 
 ==================================================
 FILE: ./CharacterSelectState.java
@@ -1957,7 +1985,6 @@ public class CharacterSelectState implements GameState {
         uiElements.add(a);
     }
 }
-
 
 ==================================================
 FILE: ./UI_AbilityIcon.java
@@ -2110,7 +2137,6 @@ public class UI_AbilityIcon extends Actor {
         setImage(img);
     }
 }
-
 
 
 ==================================================
@@ -2285,7 +2311,6 @@ public class Train extends Obstacles implements Time_Snapshottable {
 }
 
 
-
 ==================================================
 FILE: ./GenericPlayer.java
 ==================================================
@@ -2367,7 +2392,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     private int dieY;
     
     //Special filter setting for demo
-    private Class<? extends Ability> demoAbilityFilter = null;
+    private Class<?>[] demoAbilityFilters = null;
     // ─────────────────────────────────────────────────────────────────────────
     // CONSTRUCTOR
     // ─────────────────────────────────────────────────────────────────────────
@@ -2465,30 +2490,38 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     protected void movementLogic() {
         iFrameTimer.update((MyWorld) getWorld());
 
-        boolean playerIsHidden = isHidden(); // true if Sticky Fingers is underground
+        boolean playerIsHidden = isHidden(); 
 
-        // ── Ability update + activation ───────────────────────────────────────
+        // ── Ability update + activation + STAT TRACKING ────────────────────────
         for (Ability a : abilities) {
             
-            //Do not use ability if in demo and not demo-ing current ability
-            if (demoAbilityFilter != null && !demoAbilityFilter.isInstance(a)) {
-                continue;
+            // 1. Demo Filter (for the Sandbox)
+            if (demoAbilityFilters != null) {
+                boolean allowed = false;
+                for (Class<?> c : demoAbilityFilters) {
+                    if (c.isInstance(a)) { allowed = true; break; }
+                }
+                if (!allowed) continue;
             }
             
-             // Always update the ability so its timers run.
-            // But if the player is hidden, skip updates for abilities that
-            // would move the visible player (shouldHidePlayer = true means they
-            // already know about the hide state).
+            // 2. Continuous Update (Timers, etc)
             if (!playerIsHidden || a.shouldHidePlayer() || a.isActive()) {
                 a.update(this, (MyWorld) getWorld());
             }
 
-            // Check for key press — only activate if: key is held AND
-            // (player is not hidden, OR this ability works while underground).
+            // 3. THE TRACKER: Detect the EXACT frame the key is pressed
             if (Greenfoot.isKeyDown(a.getKeybind())) {
+                
+                // Only count if the ability isn't already active and isn't on cooldown.
+                // This prevents adding +1 for every frame you hold the key!
+                if (!a.isActive() && !a.isCooldownActive()) {
+                    String statKey = "use_" + a.getClass().getSimpleName();
+                    // System.out.println("STAT LOGGED: " + statKey); // Debug
+                }
+
+                // 4. Actual Activation
                 if (!playerIsHidden || a.shouldHidePlayer()) {
                     a.activate(this, (MyWorld) getWorld());
-                    DataManager.addInt("usage_" + a.getClass().getSimpleName(), 1);
                 }
             }
         }
@@ -2501,10 +2534,8 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             } else if (!((MyWorld) getWorld()).isRewinding()) {
                 GameState currentState = ((MyWorld) getWorld()).getGSM().peekState();
                 if (currentState instanceof AbilityDisplayState) {
-                // Tell the demo state we died so it can restart the demo
-                ((AbilityDisplayState) currentState).notifyPlayerDied();
+                    ((AbilityDisplayState) currentState).notifyPlayerDied();
                 } else {
-                    // Otherwise, proceed to the real Game Over screen
                     ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
                 }
             }
@@ -2749,25 +2780,28 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
      * Stores everything about the player at one moment in time.
      */
     private static class PlayerMemento {
-        boolean isDead;
-        String  anim;
-        int     deathFrames;   // remaining frames on the death timer
-        int     iFrameFrames;  // remaining frames on the i-frame timer
-        List<Object> abilityStates = new ArrayList<>(); // one snapshot per ability
+        boolean  isDead;
+        String   anim;
+        int      deathFrames;
+        int      iFrameFrames;
+        Object[] abilityStates;  // ← plain array, no ArrayList
     }
 
     /**
      * Captures the player's complete state for the rewind history.
      * Called every frame by Time_RewindManager.record().
      */
+        
     @Override
     public Time_ActorMemento captureState() {
-        PlayerMemento m = new PlayerMemento();
+        PlayerMemento m = new PlayerMemento();  // new each frame — required for correct history
         m.isDead       = isDead;
         m.anim         = currentAnimName;
         m.deathFrames  = deathTimer.getRemainingFrames();
         m.iFrameFrames = iFrameTimer.getRemainingFrames();
-        for (Ability a : abilities) m.abilityStates.add(a.captureState());
+        m.abilityStates = new Object[abilities.size()];  // array not ArrayList — one less object
+        for (int i = 0; i < abilities.size(); i++)
+            m.abilityStates[i] = abilities.get(i).captureState();
         return new Time_ActorMemento(this, getX(), getY(), m);
     }
 
@@ -2780,16 +2814,14 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         PlayerMemento data = (PlayerMemento) m.customData;
         this.isDead = data.isDead;
         setAnimation(data.anim);
-
+    
         deathTimer.setRemainingFrames(data.deathFrames);
         iFrameTimer.setRemainingFrames(data.iFrameFrames);
-
-        // Re-activate or deactivate timers to match their past state
+    
         if (data.iFrameFrames > 0) iFrameTimer.start(); else iFrameTimer.stop();
-
-        // Restore each ability from its own saved snapshot
+    
         for (int i = 0; i < abilities.size(); i++) {
-            abilities.get(i).restoreState(data.abilityStates.get(i));
+            abilities.get(i).restoreState(data.abilityStates[i]); // was .get(i), now [i]
         }
     }
     
@@ -2832,10 +2864,10 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     }
         
     //Special Setting for Demo
-    public void setDemoAbilityFilter(Class<? extends Ability> clazz) {
-        this.demoAbilityFilter = clazz;
+    public void setDemoAbilityFilter(Class<?>... clazzes) {
+        this.demoAbilityFilters = clazzes;
     }
-    
+
         
     private int getHitboxY() {
         int offset = 0;
@@ -2873,7 +2905,6 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
 }
 
 
-
 ==================================================
 FILE: ./SaveManager.java
 ==================================================
@@ -2883,20 +2914,25 @@ import java.io.*;
 
 public class SaveManager {
     private static final String SAVE_FILE = "user_stats.txt";
+    private static final String CHECKSUM_KEY = "integrity";
     private static Properties stats = new Properties();
 
-    /** Call this ONCE in MyWorld's constructor to load existing data */
     public static void load() {
         try (FileInputStream in = new FileInputStream(SAVE_FILE)) {
             stats.load(in);
+            if (!verifyChecksum()) {
+                System.out.println("Save file tampered — resetting.");
+                stats.clear();
+                save();
+            }
         } catch (IOException e) {
-            // No file yet? No problem.
             System.out.println("New archive created.");
         }
     }
 
-    /** Writes current data to the text file. Call this on Game Over or Exit. */
     public static void save() {
+        stats.remove(CHECKSUM_KEY);           // strip old checksum before hashing
+        stats.setProperty(CHECKSUM_KEY, String.valueOf(computeChecksum()));
         try (FileOutputStream out = new FileOutputStream(SAVE_FILE)) {
             stats.store(out, "DIO-DGE IT PERSISTENT STATS");
         } catch (IOException e) {
@@ -2904,39 +2940,44 @@ public class SaveManager {
         }
     }
 
-    // --- HELPER METHODS ---
-
-    /** Get an integer stat (default is 0 if not found) */
-    public static int getInt(String key) {
-        return Integer.parseInt(stats.getProperty(key, "0"));
+    private static int computeChecksum() {
+        // Hash every key=value pair except the checksum itself
+        StringBuilder sb = new StringBuilder();
+        for (String key : stats.stringPropertyNames()) {
+            if (!key.equals(CHECKSUM_KEY))
+                sb.append(key).append("=").append(stats.getProperty(key)).append(";");
+        }
+        return sb.toString().hashCode() ^ 0xDEADBEEF; // XOR makes it less obvious
     }
 
-    /** Set an integer stat */
-    public static void setInt(String key, int value) {
-        stats.setProperty(key, String.valueOf(value));
+    private static boolean verifyChecksum() {
+        if (!stats.containsKey(CHECKSUM_KEY)) return false;
+        try {
+            int stored = Integer.parseInt(stats.getProperty(CHECKSUM_KEY));
+            stats.remove(CHECKSUM_KEY);           // remove before recomputing
+            boolean valid = (computeChecksum() == stored);
+            stats.setProperty(CHECKSUM_KEY, String.valueOf(stored)); // put back
+            return valid;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
-    /** Increment a stat (e.g., adding +1 to ability usage) */
-    public static void addInt(String key, int amount) {
-        setInt(key, getInt(key) + amount);
-    }
+    public static int    getInt(String key)            { return Integer.parseInt(stats.getProperty(key, "0")); }
+    public static void   setInt(String key, int value) { stats.setProperty(key, String.valueOf(value)); }
+    public static void   addInt(String key, int amount){ setInt(key, getInt(key) + amount); }
 
-    /** Calculates which character has the most play time */
     public static String getFavoriteCharacter() {
         String fav = "None";
         int maxTime = -1;
-        // Loop through all character names to find the highest playtime
         for (CharacterConfig config : CharacterConfig.values()) {
             int time = getInt("time_" + config.name());
-            if (time > maxTime) {
-                maxTime = time;
-                fav = config.displayName;
-            }
+            if (time > maxTime) { maxTime = time; fav = config.displayName; }
         }
         return fav;
     }
+    
 }
-
 
 ==================================================
 FILE: ./Time_FrameSnapshot.java
@@ -3032,7 +3073,6 @@ public class Time_FrameSnapshot {
 }
 
 
-
 ==================================================
 FILE: ./GameConfig.java
 ==================================================
@@ -3061,7 +3101,7 @@ import greenfoot.*;
 public class GameConfig {
     
     //Section -1: Debug mode
-    public static final boolean DEBUG_MODE = true; // Set to false to hide hitboxes
+    public static final boolean DEBUG_MODE = false; // Set to false to hide hitboxes
     
     // =========================================================================
     // SECTION 0 — GLOBAL SCALE
@@ -3208,7 +3248,7 @@ public class GameConfig {
     public static final double PORTAL_COOLDOWN_DURATION = 4;
     //---KING CRIMSON (SKIPS TIME)
     public static final String KC_BUTTON = "Q";
-    public static final double KC_DURATION = 2.0; // How long time is frozen
+    public static final double KC_DURATION = 3.0; // How long time is frozen
     public static final double KC_COOLDOWN = 0.0;
     
 
@@ -3293,6 +3333,10 @@ public class GameConfig {
      * Tweak this! s(280) makes the UI deck exactly 30% of the screen.
      */
     public static final int DEMO_BOTTOM_BOUND = s(290);
+    
+    
+    //Section 13: Progression
+    public static final int LEGACY_UNLOCK_SCORE = 100;
 
     // =========================================================================
     // THE SCALING HELPER — the most important method in this file
@@ -3326,7 +3370,6 @@ public class GameConfig {
         return new Color(255, 0, 0);
     }
 }
-
 
 
 ==================================================
@@ -3469,7 +3512,6 @@ public interface Ability {
 }
 
 
-
 ==================================================
 FILE: ./Ability_StickyFingers.java
 ==================================================
@@ -3579,6 +3621,11 @@ public class Ability_StickyFingers implements Ability {
     /** How many frames the portal flash stays visible. 18 frames ≈ 0.3 seconds. */
     private static final int PORTAL_FLASH_DURATION = 18;
 
+    
+    
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     // ═════════════════════════════════════════════════════════════════════════
     // ACTIVATE — toggle underground / emerge
     // ═════════════════════════════════════════════════════════════════════════
@@ -3822,7 +3869,6 @@ public class Ability_StickyFingers implements Ability {
 }
 
 
-
 ==================================================
 FILE: ./Dio.java
 ==================================================
@@ -3893,7 +3939,6 @@ public class Dio extends GenericPlayer {
 }
 
 
-
 ==================================================
 FILE: ./UI_Panel.java
 ==================================================
@@ -3914,7 +3959,6 @@ public class UI_Panel extends Actor {
         setImage(img);
     }
 }
-
 
 ==================================================
 FILE: ./ObituaryManager.java
@@ -3973,7 +4017,6 @@ public class ObituaryManager {
         obituaryCache.put(config, lines);
     }
 }
-
 
 ==================================================
 FILE: ./ScoreManager.java
@@ -4054,17 +4097,18 @@ public class ScoreManager {
      * for clarity.
      */
    public static void updateHighScore() {
-       if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.omnipotent_DIO) {
-            System.out.println("Omnipotent Dio score ignored for leaderboard.");
+        // 1. Ignore "Cheater" Dio scores
+        if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.omnipotent_DIO) {
             return; 
         }
+        
         if (score > highScore) highScore = score;
         
-        // PERSISTENCE: Check against the permanent record
-        int allTimeBest = DataManager.getInt("all_time_high");
+        // 2. THE FIX: Switch from DataManager to SaveManager
+        int allTimeBest = SaveManager.getInt("all_time_high"); 
         if (score > allTimeBest) {
-            DataManager.setInt("all_time_high", score);
-            DataManager.save(); // Save immediately on a new world record!
+            SaveManager.setInt("all_time_high", score);
+            SaveManager.save(); // Save to user_stats.txt
         }
     }
 
@@ -4080,7 +4124,6 @@ public class ScoreManager {
     
     
 }
-
 
 
 ==================================================
@@ -4161,7 +4204,6 @@ public class Exclaimation extends Actor implements Time_Snapshottable {
         lifeTimer.setRemainingFrames((int) m.customData);
     }
 }
-
 
 
 ==================================================
@@ -4255,7 +4297,6 @@ public class PathWarning extends Actor implements Time_Snapshottable {
 }
 
 
-
 ==================================================
 FILE: ./Time_ActorMemento.java
 ==================================================
@@ -4331,7 +4372,6 @@ public class Time_ActorMemento {
 }
 
 
-
 ==================================================
 FILE: ./DataManager.java
 ==================================================
@@ -4385,7 +4425,6 @@ public class DataManager {
         stats.setProperty(key, value);
     }
 }
-
 
 ==================================================
 FILE: ./UIText.java
@@ -4469,7 +4508,6 @@ public class UIText extends Actor {
         return lines;
     }
 }
-
 
 ==================================================
 FILE: ./Time_RewindManager.java
@@ -4742,7 +4780,6 @@ public class Time_RewindManager {
 }
 
 
-
 ==================================================
 FILE: ./GameTimer.java
 ==================================================
@@ -4860,12 +4897,17 @@ public class GameTimer {
      */
     public void update(MyWorld world) {
         if (active && world.getGSM().isState(IActiveGameState.class)) {
+            IActiveGameState state = (IActiveGameState) world.getGSM().peekState();
+            
+            // --- THE FIX: Stop the timer if the demo is showing a prompt ---
+            if (state.isGameFrozen()) return; 
+
             if (remainingFrames > 0) {
                 remainingFrames--;
             } else if (loop) {
-                reset(); // auto-refill and keep running
+                reset(); 
             } else {
-                active = false; // one-shot: stop when done
+                active = false; 
             }
         }
     }
@@ -4932,7 +4974,6 @@ public class GameTimer {
 }
 
 
-
 ==================================================
 FILE: ./FX_ShatteredGlass.java
 ==================================================
@@ -4977,7 +5018,6 @@ public class FX_ShatteredGlass extends Actor {
     }
 }
 
-
 ==================================================
 FILE: ./Ability_Mandom.java
 ==================================================
@@ -5014,7 +5054,10 @@ FILE: ./Ability_Mandom.java
 import greenfoot.*;
 
 public class Ability_Mandom implements Ability {
-
+        
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     /**
      * No icon is shown for this ability — the UI_RewindBar handles the display.
      */
@@ -5034,7 +5077,7 @@ public class Ability_Mandom implements Ability {
             state.triggerRewind(world);
         }
     }
-
+    
     // This ability has no ongoing update, no timers, and no state to save.
     @Override public void update(Player p, MyWorld world) {}
     @Override public void cancel() {}
@@ -5049,7 +5092,6 @@ public class Ability_Mandom implements Ability {
     @Override public Object captureState()           { return null; }
     @Override public void   restoreState(Object s)   {}
 }
-
 
 
 ==================================================
@@ -5169,7 +5211,6 @@ public class ScrollingRoad extends Actor implements Time_Snapshottable {
 
 }
 
-
 ==================================================
 FILE: ./FX_ErasureSnap.java
 ==================================================
@@ -5196,7 +5237,6 @@ public class FX_ErasureSnap extends Actor {
         }
     }
 }
-
 
 ==================================================
 FILE: ./AbilityGuideContent.java
@@ -5231,9 +5271,10 @@ public class AbilityGuideContent {
             "Unleashes a massive purple explosion.\n\n" +
             "Anything inside the radius is erased instantly.\n" +
             "You are INVINCIBLE while casting.\n\n" +
-            "Use this to clear massive waves of cars."+
+            "Use this to clear massive waves of cars.\n"+
             "RESONANCE: If a lane is FROZEN (Spell 02),\n" +
-            "this clears the ENTIRE LANE instead!"
+            "this clears the ENTIRE LANE instead!\n"+
+            "The cooldown is then massively reduced"
         );
 
         guides.put(Ability_DarkSpell02.class,
@@ -5278,13 +5319,21 @@ public class AbilityGuideContent {
             "how much history you have stored."+
             "Can rewind even after you are dead"
         );
+        
+        guides.put(Ability_TheWorld.class,
+            "--- THE WORLD (Time Stop) ---\n\n" +
+            "PRESS[W] to stop time completely.\n\n" +
+            "The world freezes, but you can move freely.\n" +
+            "Use this window to reposition yourself safely\n" +
+            "or escape impossible situations.\n\n" +
+            "Time resumes automatically after 4 seconds."
+        );
     }
 
     public static String get(Class<? extends Ability> clazz) {
         return guides.getOrDefault(clazz, "No detailed guide available.");
     }
 }
-
 
 ==================================================
 FILE: ./Time_Snapshottable.java
@@ -5339,7 +5388,6 @@ public interface Time_Snapshottable {
      */
     void restoreState(Time_ActorMemento memento);
 }
-
 
 
 ==================================================
@@ -5480,7 +5528,6 @@ public abstract class Player extends Actor {
 }
 
 
-
 ==================================================
 FILE: ./GameStateManager.java
 ==================================================
@@ -5615,7 +5662,6 @@ public class GameStateManager {
 }
 
 
-
 ==================================================
 FILE: ./FX_MenuAmbulance.java
 ==================================================
@@ -5651,7 +5697,6 @@ public class FX_MenuAmbulance extends Actor {
         }
     }
 }
-
 
 ==================================================
 FILE: ./BossConfig.java
@@ -5696,7 +5741,19 @@ public enum BossConfig {
             new Banner.SpriteOverlay("dio_full.png",  150, 150, -200, 0), // full-body sprite, left of centre
             new Banner.SpriteOverlay("dio_label.png", 300, 100,    0, 0)  // name label, centred
         }
+    ),
+    
+    Ringo(
+        Color.BLACK,          // bgColor — classic black banner
+        "ringoLines",       // soundsKey — random voice from the "dioBattleCry" pool
+        new Banner.SpriteOverlay[] {
+            // Each SpriteOverlay: (filename, width, height, xOffset, yOffset)
+            // All values go through GameConfig.s() inside SpriteOverlay's constructor.
+            new Banner.SpriteOverlay("ringo_full.png",  300, 150, -200, 0), // full-body sprite, left of centre
+            new Banner.SpriteOverlay("ringo_label.png", 300, 100,    0, 0)  // name label, centred
+        }
     );
+
 
     // =========================================================================
     // FIELDS
@@ -5719,7 +5776,6 @@ public enum BossConfig {
         this.overlays  = overlays;
     }
 }
-
 
 
 ==================================================
@@ -5973,7 +6029,6 @@ public class Banner extends Actor {
 }
 
 
-
 ==================================================
 FILE: ./FX_Portal.java
 ==================================================
@@ -6068,7 +6123,6 @@ public class FX_Portal extends Actor {
 }
 
 
-
 ==================================================
 FILE: ./AbilityDisplayState.java
 ==================================================
@@ -6107,7 +6161,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
     private boolean playerDiedThisFrame = false;
 
     @Override
-    public boolean isGameFrozen() { return isFrozen; }
+    public boolean isGameFrozen() { return isFrozen || Ability_KingCrimson.ERASING || Ability_TheWorld.TIME_STOPPED;  }
 
     @Override
     public void enter(MyWorld world) {   
@@ -6209,8 +6263,12 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) activePlayer = new Dio();
         else activePlayer = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
         
-        //Get ability list
-        activePlayer.setDemoAbilityFilter(selectedAbility.getClass());
+        if (selectedAbility.getClass() == Ability_DarkSpell01.class) {
+            // IF we are learning Spell 01, we need Spell 02 active for the combo!
+            activePlayer.setDemoAbilityFilter(Ability_DarkSpell01.class, Ability_DarkSpell02.class);
+        } else {
+            activePlayer.setDemoAbilityFilter(selectedAbility.getClass());
+        }
         
         world.addObject(activePlayer, GameConfig.s(80), GameConfig.DEMO_BOTTOM_BOUND / 2);
         
@@ -6323,6 +6381,8 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         isFrozen = false;
         playerDiedThisFrame = false;
         AudioManager.stopAllAbilities();
+        Ability_DarkSpell02.CURRENT_FROZEN_LANE_Y = -1;
+
         world.removeObjects(world.getObjects(ScrollingRoad.class));
         world.removeObjects(world.getObjects(Obstacles.class));
         world.removeObjects(world.getObjects(Player.class));
@@ -6392,7 +6452,6 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         }
     }
 }
-
 
 ==================================================
 FILE: ./UI_Preview.java
@@ -6481,7 +6540,6 @@ public class UI_Preview extends Actor {
     }
 }
 
-
 ==================================================
 FILE: ./FX_KingCrimsonOverlay.java
 ==================================================
@@ -6563,7 +6621,6 @@ public class FX_KingCrimsonOverlay extends Actor {
         }
     }
 }
-
 
 ==================================================
 FILE: ./FX_RewindOverlay.java
@@ -6664,7 +6721,6 @@ public class FX_RewindOverlay extends Actor {
 }
 
 
-
 ==================================================
 FILE: ./Ability_KingCrimson.java
 ==================================================
@@ -6672,28 +6728,12 @@ FILE: ./Ability_KingCrimson.java
 import greenfoot.*;
 import java.util.List;
 
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * Ability_KingCrimson.java — THE EMPEROR OF TIME
- * ─────────────────────────────────────────────────────────────────────────────
- * 1. HOLD [RIGHT ARROW] to use EPITAPH: The world fast-forwards 400%. 
- *    You are a ghost; move to reposition.
- * 2. RELEASE [RIGHT] to REVERT: The world snaps back to the present, 
- *    but you keep your new physical position.
- * 3. PRESS [Q] during vision to ERASE: Commit to the future timeline.
- * 
- * SHIREN: Standing inside cars during the vision awards points and shatters reality.
- * SAFETY: Player pulses red if standing in a death zone when the skip ends.
- * ─────────────────────────────────────────────────────────────────────────────
- */
 public class Ability_KingCrimson implements Ability {
 
     public static boolean ERASING = false;
     public static double erasurePercent = 0.0;
     
     private boolean standingInDanger = false;
-
-    // The Preview (Epitaph) can last up to 1.5 real-time seconds (6 seconds of future)
     private GameTimer durationTimer = new GameTimer(1.5, false);
     private GameTimer cooldownTimer = new GameTimer(GameConfig.KC_COOLDOWN, false);
     
@@ -6703,25 +6743,39 @@ public class Ability_KingCrimson implements Ability {
     
     private FX_KingCrimsonOverlay overlay = null;
     private Time_FrameSnapshot savedReality = null; 
+    
+    // Performance State Pool
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; 
+    private int[][] statePool = new int[POOL][5]; 
+    private int poolIdx = 0;
 
     @Override
-    public void activate(Player p, MyWorld world) { /* Logic handled in update */ }
+    public void activate(Player p, MyWorld world) { }
 
     @Override
     public void update(Player p, MyWorld world) {
-        // 1. Tick Cooldown
         if (cooldownTimer.isActive()) cooldownTimer.update(world);
 
-        // 2. Handle Reflex Window (Slow-Mo) recovery
         if (slowMoTimer > 0) {
             slowMoTimer--;
             if (slowMoTimer == 0) Greenfoot.setSpeed(50); 
         }
 
-        // 3. Activation Check
+        // --- ZOMBIE PROTECTION ---
+        // If for any reason ERASING is true but the timer isn't running, force a reset.
+        if (ERASING && !durationTimer.isActive()) {
+            ERASING = false;
+            overlay = null;
+        }
+
         boolean rightDown = Greenfoot.isKeyDown("right");
         boolean qDown = Greenfoot.isKeyDown(GameConfig.KC_BUTTON);
-        boolean canActivate = !ERASING && !durationTimer.isActive() && !cooldownTimer.isActive() && !world.isRewinding();
+        
+        // canActivate logic
+        boolean canActivate = !ERASING 
+                           && !durationTimer.isActive() 
+                           && !cooldownTimer.isActive() 
+                           && !world.isRewinding();
 
         if (rightDown && canActivate) {
             holdFrames++;
@@ -6733,23 +6787,21 @@ public class Ability_KingCrimson implements Ability {
             holdFrames = 0; 
         }
 
-        // 4. Active Vision Logic
         if (ERASING && durationTimer.isActive()) {
-            durationTimer.update(world);
+            durationTimer.forceTick();
             erasurePercent = durationTimer.getPercentComplete();
-            p.getImage().setTransparency(180); // Look ghostly
+            p.getImage().setTransparency(180);
 
-            // --- INPUT HANDLING ---
             if (qDown) {
-                endErasure(world, p, true); // COMMIT (King Crimson)
+                endErasure(world, p, true);
                 return;
             }
             if (!rightDown || durationTimer.isExpired()) {
-                endErasure(world, p, false); // REVERT (Epitaph)
+                endErasure(world, p, false);
                 return;
             }
 
-            // --- THE FUTURE SIMULATION ---
+            // --- FUTURE SIMULATION ---
             standingInDanger = false;
             GameState state = world.getGSM().peekState();
             
@@ -6759,36 +6811,23 @@ public class Ability_KingCrimson implements Ability {
                 
                 for (int i = 0; i < 3; i++) {
                     sm.update(world);
-                    
-                    // 1. Fast forward road
-                    for(ScrollingRoad road : world.getObjects(ScrollingRoad.class)) {
-                        road.fastForward(); 
-                    }
-                    
-                    // 2. NEW: Fast forward Warning Signs
+                    for(ScrollingRoad road : world.getObjects(ScrollingRoad.class)) road.fastForward(); 
                     for(Exclaimation ex : world.getObjects(Exclaimation.class)) ex.fastForward();
                     for(PathWarning pw : world.getObjects(PathWarning.class)) pw.fastForward();
                     
-                    // 3. Fast forward obstacles
                     List<Obstacles> obstacles = world.getObjects(Obstacles.class);
                     for (Obstacles obs : obstacles) {
                         obs.fastForwardMove();
-                        
-                        // DANGER CHECK & SHIREN REWARD
                         if (p.checkCustomHitbox(obs, 1.0)) {
                             standingInDanger = true; 
-                            if (Greenfoot.getRandomNumber(100) < 15) {
-                                world.addObject(new FX_ShatteredGlass(), p.getX(), p.getY());
-                            }
+                            if (Greenfoot.getRandomNumber(100) < 15) world.addObject(new FX_ShatteredGlass(), p.getX(), p.getY());
                             if (Greenfoot.getRandomNumber(100) < 5) ScoreManager.addScore(1); 
                         }
                     }
                 }
             }
 
-            // --- EPITAPH VISUAL FEEDBACK ---
             if (standingInDanger) {
-                // Pulse bright red to warn the player
                 if (durationTimer.getRemainingFrames() % 4 < 2) p.getImage().setTransparency(50);
                 else p.getImage().setTransparency(220);
             }
@@ -6796,70 +6835,84 @@ public class Ability_KingCrimson implements Ability {
     }
 
     private void startErasure(MyWorld world) {
-        ERASING = true;
-        erasurePercent = 0.0;
-        durationTimer.reset();
-        durationTimer.start();
         
-        // Use IActiveGameState to support both PlayingState and AbilityDemo
         GameState state = world.getGSM().peekState();
         if (state instanceof IActiveGameState) {
             IActiveGameState activeState = (IActiveGameState) state;
             activeState.getRewindManager().record(world, activeState.getSpawnManager());
             savedReality = activeState.getRewindManager().getLastSnapshot();
         }
-
+        
+        ERASING = true;
+        erasurePercent = 0.0;
+        durationTimer.reset();
+        durationTimer.start();
+        SaveManager.addInt("use_Ability_KingCrimson", 1);
+        
         overlay = new FX_KingCrimsonOverlay();
         world.addObject(overlay, world.getWidth() / 2, world.getHeight() / 2);
-        
-        AudioManager.playLoop("kingCrimsonDuration"); // The vision hum
+        AudioManager.playLoop("kingCrimsonDuration");
     }
 
     private void endErasure(MyWorld world, Player p, boolean commit) {
-        AudioManager.stop("kingCrimsonDuration"); // Stop the vision hum immediately
-        
-        ERASING = false;
-        erasurePercent = 0.0;
-        durationTimer.stop();
-        if (overlay != null && overlay.getWorld() != null) world.removeObject(overlay);
-        overlay = null; 
-        p.getImage().setTransparency(255);
+    AudioManager.stop("kingCrimsonDuration");
+    ERASING = false;
+    erasurePercent = 0.0;
+    durationTimer.stop();
+    if (overlay != null && overlay.getWorld() != null) world.removeObject(overlay);
+    overlay = null; 
+    p.getImage().setTransparency(255);
 
-        if (commit) {
-            // --- COMMIT (Future remains) ---
-            AudioManager.playPool("skipTime"); 
-            world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
-        } else {
-            // --- REVERT (Snap back to present) ---
-            if (savedReality != null) {
-                int currentX = p.getX();
-                int currentY = p.getY();
+    if (commit) {
+        AudioManager.playPool("skipTime"); 
+        world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
+    } else {
+        if (savedReality != null) {
+            int currentX = p.getX();
+            int currentY = p.getY();
+            GameState state = world.getGSM().peekState();
+            if (state instanceof IActiveGameState) {
+                IActiveGameState activeState = (IActiveGameState) state;
                 
-                GameState state = world.getGSM().peekState();
-                if (state instanceof IActiveGameState) {
-                    IActiveGameState activeState = (IActiveGameState) state;
-                    activeState.getRewindManager().forceRestore(savedReality, world, activeState.getSpawnManager());
-                }
+                // 1. Restore the world to the past
+                activeState.getRewindManager().forceRestore(savedReality, world, activeState.getSpawnManager());
                 
-                p.setLocation(currentX, currentY); // Keep new physical position
-                
-                world.addObject(new FX_EpitaphRevert(), world.getWidth() / 2, world.getHeight() / 2);
+                // 2. IMPORTANT: The restore just reset this ability's variables.
+                // We MUST manually re-set the cooldown and ERASING state here
+                // AFTER the restoration so they persist in the "new" reality.
+                this.cooldownTimer.reset();
+                this.cooldownTimer.start();
+                this.ERASING = false; 
+                this.holdFrames = -15; // Optional: add extra delay before it can charge again
             }
+            p.setLocation(currentX, currentY);
+            world.addObject(new FX_EpitaphRevert(), world.getWidth() / 2, world.getHeight() / 2);
         }
+    }
 
-        // TRIGGER REFLEX WINDOW (Slow-mo)
-        Greenfoot.setSpeed(35);
-        slowMoTimer = 5; 
-
+    Greenfoot.setSpeed(35);
+    slowMoTimer = 5; 
+    
+    // Move these inside the 'if (commit)' or handle carefully
+    // If you keep them here, they only apply to the 'commit' branch 
+    // because the 'else' branch does its own restore.
+    if (commit) {
         cooldownTimer.reset();
         cooldownTimer.start();
-        savedReality = null;
     }
+    
+    savedReality = null;
+}
 
     @Override public void cancel() { 
         AudioManager.stop("kingCrimsonDuration");
-        if (ERASING) { ERASING = false; Greenfoot.setSpeed(50); } 
-        cooldownTimer.stop(); 
+        ERASING = false; // RESET THE STATIC FLAG
+        Greenfoot.setSpeed(50);
+        slowMoTimer = 0;
+        durationTimer.stop();
+        cooldownTimer.stop();
+        overlay = null;
+        savedReality = null;
     }
 
     @Override public boolean isActive() { return ERASING; }
@@ -6870,14 +6923,15 @@ public class Ability_KingCrimson implements Ability {
     @Override public String getDisplayLabel() { return "->"; }
     @Override public boolean shouldShowIcon() { return true; }
 
-    @Override public Object captureState() { 
-        return new int[]{ 
-            durationTimer.getRemainingFrames(), 
-            cooldownTimer.getRemainingFrames(), 
-            durationTimer.isActive() ? 1 : 0, 
-            cooldownTimer.isActive() ? 1 : 0, 
-            ERASING ? 1 : 0 
-        }; 
+    @Override 
+    public Object captureState() {
+        int[] s = statePool[poolIdx++ % POOL];
+        s[0] = durationTimer.getRemainingFrames();
+        s[1] = cooldownTimer.getRemainingFrames();
+        s[2] = durationTimer.isActive() ? 1 : 0;
+        s[3] = cooldownTimer.isActive() ? 1 : 0;
+        s[4] = ERASING ? 1 : 0; // FIX: ACTUALLY SAVE THE STATE
+        return s;
     }
     
     @Override public void restoreState(Object state) { 
@@ -6886,11 +6940,12 @@ public class Ability_KingCrimson implements Ability {
         cooldownTimer.setRemainingFrames(d[1]);
         if (d[2] == 1) durationTimer.start(); else durationTimer.stop();
         if (d[3] == 1) cooldownTimer.start(); else cooldownTimer.stop();
+        
+        // FIX: Re-sync the static flag with the past
         ERASING = (d[4] == 1); 
         overlay = null;
     }
 }
-
 
 ==================================================
 FILE: ./FX_Afterimage.java
@@ -6968,7 +7023,6 @@ public class FX_Afterimage extends Actor {
 }
 
 
-
 ==================================================
 FILE: ./PausedState.java
 ==================================================
@@ -7040,7 +7094,6 @@ public class PausedState implements GameState {
         uiElements.add(a);
     }
 }
-
 
 
 ==================================================
@@ -7180,11 +7233,6 @@ public class PlayingState implements GameState,IActiveGameState{
         // Store the pressed key once — a second call would return null.
         String key = Greenfoot.getKey();
 
-        // ── Time-stop: W pushes PausedState on top of this state ─────────────
-        if (GameConfig.TIME_STOP_BUTTON.equals(key)) {
-            world.getGSM().pushState(new PausedState());
-        }
-
         /*
          * DVD-PLAYER METAPHOR:
          *   If Rewind Mode is on  → play the game BACKWARD (restore past states).
@@ -7222,7 +7270,9 @@ public class PlayingState implements GameState,IActiveGameState{
         }
 
         // ── Update spawning and score display ─────────────────────────────────
-        spawnManager.update(world);
+        if (!isRewinding() && !isGameFrozen()) {
+            spawnManager.update(world);
+        }
         scoreDisplay.setText("SCORE: " + ScoreManager.getScore());
     }
 
@@ -7278,7 +7328,7 @@ public class PlayingState implements GameState,IActiveGameState{
     
     @Override
     public boolean isGameFrozen() {
-        return Ability_KingCrimson.ERASING; // Game freezes when KC is active
+        return Ability_KingCrimson.ERASING|| Ability_TheWorld.TIME_STOPPED; // Game freezes when KC is active
     }
         
         
@@ -7297,7 +7347,6 @@ public class PlayingState implements GameState,IActiveGameState{
         return rewindManager != null && rewindManager.isRewinding();
     }
 }
-
 
 
 ==================================================
@@ -7352,7 +7401,6 @@ public interface GameState {
      */
     void exit(MyWorld world);
 }
-
 
 
 ==================================================
@@ -7564,7 +7612,6 @@ public class Animator {
 }
 
 
-
 ==================================================
 FILE: ./UI_HighlightBox.java
 ==================================================
@@ -7583,7 +7630,6 @@ public class UI_HighlightBox extends Actor {
         setImage(img);
     }
 }
-
 
 ==================================================
 FILE: ./SpawnManager.java
@@ -7812,7 +7858,6 @@ public class SpawnManager {
 }
 
 
-
 ==================================================
 FILE: ./FX_DarkAnnihilationBeam.java
 ==================================================
@@ -7854,7 +7899,6 @@ public class FX_DarkAnnihilationBeam extends Actor {
     }
 }
 
-
 ==================================================
 FILE: ./IActiveGameState.java
 ==================================================
@@ -7868,7 +7912,6 @@ public interface IActiveGameState {
     SpawnManager getSpawnManager();
     Time_RewindManager getRewindManager();
 }
-
 
 
 
@@ -7931,6 +7974,10 @@ public class Ability_MadeInHeaven implements Ability {
 
     /** Prevents re-activating while the cooldown is running. */
     private GameTimer cooldownTimer = new GameTimer(GameConfig.MIH_COOLDOWN, false);
+            
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
 
     // ─────────────────────────────────────────────────────────────────────────
     // ABILITY INTERFACE IMPLEMENTATION
@@ -8027,10 +8074,13 @@ public class Ability_MadeInHeaven implements Ability {
     /** Format: [durationFrames, cooldownFrames, durationActive(0/1), cooldownActive(0/1)] */
     @Override
     public Object captureState() {
-        return new int[]{
-            durationTimer.getRemainingFrames(), cooldownTimer.getRemainingFrames(),
-            durationTimer.isActive() ? 1 : 0,  cooldownTimer.isActive() ? 1 : 0
-        };
+        int[] s = statePool[poolIdx++ % POOL];
+        s[0] = durationTimer.getRemainingFrames();
+        s[1] = cooldownTimer.getRemainingFrames();
+        s[2] = durationTimer.isActive() ? 1 : 0;
+        s[3] = cooldownTimer.isActive() ? 1 : 0;
+        // KingCrimson also needs: s[4] = ERASING ? 1 : 0;
+        return s;
     }
 
     @Override
@@ -8051,7 +8101,6 @@ public class Ability_MadeInHeaven implements Ability {
         return (durationTimer.isActive() && !durationTimer.isExpired()) ? speedMultiplier : 1.0;
     }
 }
-
 
 
 ==================================================
@@ -8156,7 +8205,8 @@ public class AudioManager {
         loadSound("night_spell1", "nightspell1.mp3",          120);
         loadSound("night_spell2", "nightspell2.mp3",           120);
         loadSound("kingCrimsonDuration",  "KingCrimson_Duration.mp3",             180);
-         loadSound("ringo_theme",  "ringo_theme.mp3",             90);
+        loadSound("ringo_theme",  "ringo_theme.mp3",             90);
+        loadSound("diavolo_theme",  "diavolo_theme.mp3",             90);
 
 
     
@@ -8176,9 +8226,9 @@ public class AudioManager {
         loadVoicePool("skipTime",  new String[]{"skip_time1.mp3","skip_time2.mp3"}, 140);
         loadVoicePool("diavoloLines", new String[]{ "diavolo_voiceline/diavolo1.mp3","diavolo_voiceline/diavolo2.mp3","diavolo_voiceline/kono_diavolo.mp3" }, 70);
         loadVoicePool("diavoloLoseLines",        new String[]{"diavolo_voiceline/diavolo_lose.mp3"}, 50);
-        loadVoicePool("nightEntryVoice2",        new String[]{"night_voiceline/nightEntryVoice2.wav"},200);
+        loadVoicePool("nightEntryVoice2",        new String[]{"night_voiceline/nightEntryVoice2.wav"},160);
         loadVoicePool("nightAbilityVoice2",      new String[]{"night_voiceline/nightAbilityVoice2.wav"}, 100);
-        loadVoicePool("nightLostVoice",         new String[]{"night_voiceline/nightLostVoice.wav"}, 200);
+        loadVoicePool("nightLostVoice",         new String[]{"night_voiceline/nightLostVoice.wav"}, 160);
         
         updateAllVolumes(); // apply master volume to everything at startup
     }
@@ -8363,7 +8413,6 @@ public class AudioManager {
 
 
 
-
 ==================================================
 FILE: ./Ability_StandPunch.java
 ==================================================
@@ -8411,7 +8460,11 @@ public class Ability_StandPunch implements Ability {
      * Lower = faster animation.  Read by TheWorldStand's Animator.
      */
     public int standAnimSpeed = 2;
-
+        
+        
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     // ─────────────────────────────────────────────────────────────────────────
     // ABILITY INTERFACE IMPLEMENTATION
     // ─────────────────────────────────────────────────────────────────────────
@@ -8512,12 +8565,13 @@ public class Ability_StandPunch implements Ability {
      */
     @Override
     public Object captureState() {
-        return new int[]{
-            durationTimer.getRemainingFrames(),
-            cooldownTimer.getRemainingFrames(),
-            durationTimer.isActive() ? 1 : 0,
-            cooldownTimer.isActive() ? 1 : 0
-        };
+        int[] s = statePool[poolIdx++ % POOL];
+        s[0] = durationTimer.getRemainingFrames();
+        s[1] = cooldownTimer.getRemainingFrames();
+        s[2] = durationTimer.isActive() ? 1 : 0;
+        s[3] = cooldownTimer.isActive() ? 1 : 0;
+        // KingCrimson also needs: s[4] = ERASING ? 1 : 0;
+        return s;
     }
 
     /** Restores both timers from the saved int[4] array. */
@@ -8546,6 +8600,113 @@ public class Ability_StandPunch implements Ability {
 }
 
 
+==================================================
+FILE: ./LegacyState.java
+==================================================
+
+import greenfoot.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class LegacyState implements GameState {
+
+    private List<Actor> ui = new ArrayList<>();
+
+    @Override
+    public void enter(MyWorld world) {
+        int midX = world.getWidth() / 2;
+        int midY = world.getHeight() / 2;
+
+        // 1. DIM THE ENTIRE WORLD
+        addUI(world, new FX_DimOverlay(world.getWidth(), world.getHeight()), midX, midY);
+
+        // 2. THE EVALUATION PANEL (Darker and sleek)
+        addUI(world, new UI_Panel(world.getWidth() - GameConfig.s(60), world.getHeight() - GameConfig.s(40), new Color(10, 10, 15, 250)), midX, midY);
+
+        // 3. GATHER THE DATA FROM THE ARCHIVE
+        int bestScore = SaveManager.getInt("all_time_high");
+        int totalSeconds = SaveManager.getInt("total_playtime");
+        String timeStr = String.format("%d mins, %d secs", totalSeconds / 60, totalSeconds % 60);
+        
+        String favChar = SaveManager.getFavoriteCharacter();
+
+        // 4. FIND THE MOST ABUSED POWER
+        String[] abilities = {
+            "Ability_StandPunch", "Ability_MadeInHeaven", "Ability_StickyFingers", 
+            "Ability_Mandom", "Ability_KingCrimson", "Ability_DarkSpell01", "Ability_DarkSpell02","Ability_TheWorld"
+        };
+        
+        String topAbility = "None";
+        int maxUses = 0;
+        for (String a : abilities) {
+            int uses = SaveManager.getInt("use_" + a);
+            if (uses > maxUses) {
+                maxUses = uses;
+                topAbility = a;
+            }
+        }
+
+        // 5. THE PERSONALITY VERDICT
+        String verdict = "PURIST: You barely use abilities. Do you even have a Stand?";
+        if (maxUses > 0) {
+            switch(topAbility) {
+                case "Ability_StandPunch":   verdict = "AGGRESSOR: You let your Stand do all the talking. No fear."; break;
+                case "Ability_MadeInHeaven": verdict = "SPEED DEMON: You live life in the fast lane. Blink and you're dead."; break;
+                case "Ability_StickyFingers": verdict = "COWARD: You spend half your life hiding underground. Classy."; break;
+                case "Ability_Mandom":       verdict = "TIME LORD: You refuse to accept your own mistakes. Rewind again?"; break;
+                case "Ability_KingCrimson":  verdict = "EMPEROR: You look at absolute danger and simply skip it."; break;
+                case "Ability_DarkSpell01":  verdict = "VOID BRINGER: Why dodge cars when you can just delete them?"; break;
+                case "Ability_DarkSpell02":  verdict = "CONTROL FREAK: You like your enemies frozen and helpless."; break;
+                case "Ability_TheWorld":  verdict = "ZA WARUDO! You are Dio himself."; break;
+            }
+        }
+
+        // 6. DRAW THE UI (Surgical Placement)
+        int startY = GameConfig.s(60);
+        int spacing = GameConfig.s(22);
+
+        addUI(world, new UIText("--- CLASSIFIED STAND DOSSIER ---", GameConfig.s(22), Color.YELLOW), midX, startY);
+        
+        addUI(world, new UIText("ULTIMATE RECORD: " + bestScore, GameConfig.s(18), Color.WHITE), midX, startY + spacing * 2);
+        addUI(world, new UIText("LIFETIME SURVIVED: " + timeStr, GameConfig.s(16), Color.WHITE), midX, startY + spacing * 3);
+        addUI(world, new UIText("FAVORITE USER: " + favChar, GameConfig.s(16), Color.WHITE), midX, startY + spacing * 4);
+        
+        // Highlight the most used ability
+        String abilityName = topAbility.replace("Ability_", "").replace("StandPunch", "The World");
+        addUI(world, new UIText("MOST ABUSED POWER: " + abilityName + " (" + maxUses + " times)", GameConfig.s(16), Color.CYAN), midX, startY + spacing * 5);
+        
+        // The sassy personality verdict (Wrapped)
+        UIText verdictText = new UIText("\"" + verdict + "\"", GameConfig.s(15), Color.LIGHT_GRAY, world.getWidth() - GameConfig.s(100));
+        addUI(world, verdictText, midX, startY + spacing * 7);
+
+        // --- 7. THE CALL TO ACTION (FIXED) ---
+        addUI(world, new UIText("--- PROVE YOUR RESOLVE ---", GameConfig.s(18), Color.ORANGE), midX, startY + spacing * 9);
+        
+        // Split these into two separate actors so wrapping never breaks them
+        addUI(world, new UIText("Screenshot this page and send your legacy to:", GameConfig.s(14), Color.WHITE), midX, startY + spacing * 10);
+        
+        // THE EMAIL - Given its own line and a bright color!
+        UIText emailAddress = new UIText("440043978@gapps.yrdsb.ca", GameConfig.s(15), Color.YELLOW);
+        addUI(world, emailAddress, midX, startY + spacing * 11);
+
+        // Exit button - Lowered slightly to give the email room
+        addUI(world, new UIText("[ ESC : RETURN TO MENU ]", GameConfig.s(18), Color.WHITE), midX, world.getHeight() - GameConfig.s(45));
+    }
+
+    @Override
+    public void update(MyWorld world) {
+        if ("escape".equals(Greenfoot.getKey())) {
+            world.getGSM().popState(); 
+        }
+    }
+
+    @Override public void exit(MyWorld world) { world.removeObjects(ui); }
+
+    private void addUI(MyWorld world, Actor a, int x, int y) {
+        world.addObject(a, x, y);
+        ui.add(a);
+    }
+}
 
 ==================================================
 FILE: ./Ability_DarkSpell01.java
@@ -8555,7 +8716,10 @@ import greenfoot.*;
 import java.util.List;
 
 public class Ability_DarkSpell01 implements Ability {
-
+        
+    private static final int POOL = GameConfig.MAX_REWIND_TIME + 10; // 370 slots
+    private int[][] statePool = new int[POOL][5]; // 5 = however many values you store
+    private int poolIdx = 0;
     private GameTimer durationTimer = new GameTimer(GameConfig.DS01_DURATION, false);
     private GameTimer cooldownTimer = new GameTimer(GameConfig.DS01_COOLDOWN, false);
     
@@ -8672,3 +8836,77 @@ public class Ability_DarkSpell01 implements Ability {
     @Override public double getCooldownPercent() { return cooldownTimer.isActive() ? cooldownTimer.getPercentComplete() : 0.0; }
 }
 
+==================================================
+FILE: ./Ability_TheWorld.java
+==================================================
+
+import greenfoot.*;
+
+public class Ability_TheWorld implements Ability {
+
+    public static boolean TIME_STOPPED = false;
+    private boolean keyWasDown = false;
+
+    @Override
+    public void activate(Player p, MyWorld world) {
+        if (keyWasDown) return; // Debounce so it only fires once per tap
+        
+        keyWasDown = true;
+        TIME_STOPPED = !TIME_STOPPED; // Toggle the state
+        
+        if (TIME_STOPPED) {
+            // --- STOP TIME ---
+            SaveManager.addInt("use_Ability_TheWorld", 1);
+            world.addObject(new FX_TimeStopOverlay(), world.getWidth() / 2, world.getHeight() / 2);
+            
+            
+            if (GameConfig.ACTIVE_CHARACTER.bossConfig != null) {
+                world.addObject(new Banner(GameConfig.ACTIVE_CHARACTER.bossConfig), GameConfig.s(1120), GameConfig.s(200));
+            }
+            
+            // STRIKE THE POSE!
+            if (p instanceof GenericPlayer) {
+                ((GenericPlayer) p).setAnimation("Wry");
+            }
+        } else {
+            // --- RESUME TIME ---
+            if (p instanceof GenericPlayer) {
+                ((GenericPlayer) p).setAnimation("Dash");
+            }
+        }
+    }
+
+    @Override
+    public void update(Player p, MyWorld world) {
+        // Reset the key lock when the player releases W
+        if (!Greenfoot.isKeyDown(getKeybind())) {
+            keyWasDown = false;
+        }
+    }
+
+    @Override public void cancel() { TIME_STOPPED = false; }
+    @Override public boolean isActive() { return TIME_STOPPED; }
+    @Override public boolean isCooldownActive() { return false; }
+    
+    // Shows solid orange when stopped, empty when running
+    @Override public double getActivePercent() { return TIME_STOPPED ? 1.0 : 0.0; }
+    @Override public double getCooldownPercent() { return 0.0; }
+    
+    @Override public String getKeybind() { return "w"; }
+    @Override public String getDisplayLabel() { return "W"; }
+    @Override public boolean shouldShowIcon() { return true; }
+
+    @Override
+    public Object captureState() {
+        return new int[]{ TIME_STOPPED ? 1 : 0, keyWasDown ? 1 : 0 };
+    }
+
+    @Override
+    public void restoreState(Object state) {
+        int[] d = (int[]) state;
+        TIME_STOPPED = (d[0] == 1);
+        keyWasDown = (d[1] == 1);
+    }
+}
+
+--- END OF CODE BUNDLE (Total Files: 72) ---

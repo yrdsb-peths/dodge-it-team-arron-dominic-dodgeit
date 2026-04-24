@@ -61,7 +61,7 @@ public class Ability_KingCrimson implements Ability {
         }
 
         if (ERASING && durationTimer.isActive()) {
-            durationTimer.update(world);
+            durationTimer.forceTick();
             erasurePercent = durationTimer.getPercentComplete();
             p.getImage().setTransparency(180);
 
@@ -108,11 +108,6 @@ public class Ability_KingCrimson implements Ability {
     }
 
     private void startErasure(MyWorld world) {
-        ERASING = true;
-        erasurePercent = 0.0;
-        durationTimer.reset();
-        durationTimer.start();
-        SaveManager.addInt("use_Ability_KingCrimson", 1);
         
         GameState state = world.getGSM().peekState();
         if (state instanceof IActiveGameState) {
@@ -120,44 +115,67 @@ public class Ability_KingCrimson implements Ability {
             activeState.getRewindManager().record(world, activeState.getSpawnManager());
             savedReality = activeState.getRewindManager().getLastSnapshot();
         }
-
+        
+        ERASING = true;
+        erasurePercent = 0.0;
+        durationTimer.reset();
+        durationTimer.start();
+        SaveManager.addInt("use_Ability_KingCrimson", 1);
+        
         overlay = new FX_KingCrimsonOverlay();
         world.addObject(overlay, world.getWidth() / 2, world.getHeight() / 2);
         AudioManager.playLoop("kingCrimsonDuration");
     }
 
     private void endErasure(MyWorld world, Player p, boolean commit) {
-        AudioManager.stop("kingCrimsonDuration");
-        ERASING = false;
-        erasurePercent = 0.0;
-        durationTimer.stop();
-        if (overlay != null && overlay.getWorld() != null) world.removeObject(overlay);
-        overlay = null; 
-        p.getImage().setTransparency(255);
+    AudioManager.stop("kingCrimsonDuration");
+    ERASING = false;
+    erasurePercent = 0.0;
+    durationTimer.stop();
+    if (overlay != null && overlay.getWorld() != null) world.removeObject(overlay);
+    overlay = null; 
+    p.getImage().setTransparency(255);
 
-        if (commit) {
-            AudioManager.playPool("skipTime"); 
-            world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
-        } else {
-            if (savedReality != null) {
-                int currentX = p.getX();
-                int currentY = p.getY();
-                GameState state = world.getGSM().peekState();
-                if (state instanceof IActiveGameState) {
-                    IActiveGameState activeState = (IActiveGameState) state;
-                    activeState.getRewindManager().forceRestore(savedReality, world, activeState.getSpawnManager());
-                }
-                p.setLocation(currentX, currentY);
-                world.addObject(new FX_EpitaphRevert(), world.getWidth() / 2, world.getHeight() / 2);
+    if (commit) {
+        AudioManager.playPool("skipTime"); 
+        world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
+    } else {
+        if (savedReality != null) {
+            int currentX = p.getX();
+            int currentY = p.getY();
+            GameState state = world.getGSM().peekState();
+            if (state instanceof IActiveGameState) {
+                IActiveGameState activeState = (IActiveGameState) state;
+                
+                // 1. Restore the world to the past
+                activeState.getRewindManager().forceRestore(savedReality, world, activeState.getSpawnManager());
+                
+                // 2. IMPORTANT: The restore just reset this ability's variables.
+                // We MUST manually re-set the cooldown and ERASING state here
+                // AFTER the restoration so they persist in the "new" reality.
+                this.cooldownTimer.reset();
+                this.cooldownTimer.start();
+                this.ERASING = false; 
+                this.holdFrames = -15; // Optional: add extra delay before it can charge again
             }
+            p.setLocation(currentX, currentY);
+            world.addObject(new FX_EpitaphRevert(), world.getWidth() / 2, world.getHeight() / 2);
         }
+    }
 
-        Greenfoot.setSpeed(35);
-        slowMoTimer = 5; 
+    Greenfoot.setSpeed(35);
+    slowMoTimer = 5; 
+    
+    // Move these inside the 'if (commit)' or handle carefully
+    // If you keep them here, they only apply to the 'commit' branch 
+    // because the 'else' branch does its own restore.
+    if (commit) {
         cooldownTimer.reset();
         cooldownTimer.start();
-        savedReality = null;
     }
+    
+    savedReality = null;
+}
 
     @Override public void cancel() { 
         AudioManager.stop("kingCrimsonDuration");

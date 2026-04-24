@@ -169,7 +169,7 @@ public class GameConfig {
     public static final double PORTAL_COOLDOWN_DURATION = 4;
     //---KING CRIMSON (SKIPS TIME)
     public static final String KC_BUTTON = "Q";
-    public static final double KC_DURATION = 2.0; // How long time is frozen
+    public static final double KC_DURATION = 3.0; // How long time is frozen
     public static final double KC_COOLDOWN = 0.0;
     
 
