@@ -48,7 +48,7 @@ public enum CharacterConfig {
         1.2 * GameConfig.SCALE,
         "gothic_bgm",
         "nightLostVoice",
-        "nightEntryVoice", //Select sound key (new, for character select)
+        "nightEntryVoice2", //Select sound key (new, for character select)
         BossConfig.DIO,
         new String[]{"Ability_DarkSpell01", // V - destroys all obstacles
                     "Ability_DarkSpell02",   // C - roots/freezes all obstacles
