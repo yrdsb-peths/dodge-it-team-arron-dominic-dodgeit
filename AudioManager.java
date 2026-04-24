@@ -93,8 +93,8 @@ public class AudioManager {
         loadSound("muda_barrage",  "muda_barrage.mp3",             90);
         loadSound("menu_bgm",  "soul_knight_menu.mp3",             80);
         loadSound("gothic_bgm",  "gothicbgm.mp3",             90);
-        loadSound("night_spell1", "nightspell1.mp3",          80);
-        loadSound("night_spell2", "nightspell2.mp3",           80);
+        loadSound("night_spell1", "nightspell1.mp3",          120);
+        loadSound("night_spell2", "nightspell2.mp3",           120);
         loadSound("kingCrimsonDuration",  "KingCrimson_Duration.mp3",             180);
 
 
@@ -115,8 +115,8 @@ public class AudioManager {
         loadVoicePool("skipTime",  new String[]{"skip_time1.mp3","skip_time2.mp3"}, 140);
         loadVoicePool("diavoloLines", new String[]{ "diavolo_voiceline/diavolo1.mp3","diavolo_voiceline/diavolo2.mp3","diavolo_voiceline/kono_diavolo.mp3" }, 70);
         loadVoicePool("diavoloLoseLines",        new String[]{"diavolo_voiceline/diavolo_lose.mp3"}, 50);
-        loadVoicePool("nightEntryVoice2",        new String[]{"night_voiceline/nightEntryVoice2.wav"}, 200);
-        loadVoicePool("nightAbilityVoice2",      new String[]{"night_voiceline/nightAbilityVoice2.wav"}, 200);
+        loadVoicePool("nightEntryVoice2",        new String[]{"night_voiceline/nightEntryVoice2.wav"},200);
+        loadVoicePool("nightAbilityVoice2",      new String[]{"night_voiceline/nightAbilityVoice2.wav"}, 100);
         loadVoicePool("nightLostVoice",         new String[]{"night_voiceline/nightLostVoice.wav"}, 200);
         
         updateAllVolumes(); // apply master volume to everything at startup
