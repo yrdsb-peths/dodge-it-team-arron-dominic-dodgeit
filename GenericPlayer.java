@@ -174,6 +174,11 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
      */
     @Override
     protected void movementLogic() {
+        if (isDead && kcEasterEggActive) {
+            runKCCinematic();
+            return; 
+        }
+
         iFrameTimer.update((MyWorld) getWorld());
 
         boolean playerIsHidden = isHidden(); 
@@ -213,54 +218,56 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         }
             // ── Death vs. normal movement ─────────────────────────────────────────
         if (isDead) {
-            // --- THE CINEMATIC SEQUENCE ---
+            // --- 1. THE AUTOMATIC CINEMATIC SEQUENCE ---
+            // Once this is active, it IGNORES the keyboard and the normal death timer.
             if (kcEasterEggActive) {
                 kcEasterEggTimer++;
                 
-                // Frame 60: Show the Fake Game Over
+                // Slow the game down for the cinematic feel
+                if (kcEasterEggTimer == 1) Greenfoot.setSpeed(40);
+
+                // ACT 1: 1 second in - Show the Fake Game Over
                 if (kcEasterEggTimer == 60) {
                     getWorld().addObject(new FX_FakeGameOver(), getWorld().getWidth()/2, getWorld().getHeight()/2);
-                    AudioManager.playLoop("kingCrimsonDuration"); 
                 }
                 
-                // Frame 160: Trigger the final shatter
-                if (kcEasterEggTimer == 160) {
+                // ACT 2: 3.5 seconds in - The final "Erase" and Leap
+                if (kcEasterEggTimer == 210) {
                     triggerKCEasterEgg();
                 }
-                return; // EXIT EARLY: Player has no control, timer is frozen, no death shake
+
+                // IMPORTANT: We return here. 
+                // This stops the player from moving AND stops the normal death timer from running.
+                return; 
             }
-        
-            deathTimer.update((MyWorld) getWorld());
-        
-            // --- THE TRIGGER ---
-            // If player has KC, is dead, and presses "right" (we give a small buffer so they don't press it accidentally on the exact frame of death)
-            if (hasAbility(Ability_KingCrimson.class) && Greenfoot.isKeyDown("right") && deathTimer.getRemainingFrames() < deathTimer.getTotalFrames() - 15) {
-                kcEasterEggActive = true;           // Lock the sequence
-                Greenfoot.setSpeed(40);             // SLOW DOWN TIME (Normal is usually 50)
+
+            // --- 2. THE IGNITION (The Trigger) ---
+            // This only runs until kcEasterEggActive becomes true.
+            if (hasAbility(Ability_KingCrimson.class) && Greenfoot.isKeyDown("right")) {
+                kcEasterEggActive = true; // LOCK THE SEQUENCE
                 
-                // Flash the prediction overlay immediately
+                // Start persistent effects immediately
+                AudioManager.playLoop("kingCrimsonDuration");
                 getWorld().addObject(new FX_KingCrimsonOverlay(), getWorld().getWidth()/2, getWorld().getHeight()/2);
-                return;
+                
+                return; // Start the cinematic on the next frame
             }
-        
-            // --- NORMAL DEATH LOGIC ---
+    
+        // --- 3. NORMAL DEATH (Only runs if player DOESN'T press 'Right') ---
+            deathTimer.update((MyWorld) getWorld());
             if (!deathTimer.isExpired()) {
                 shake(); 
             } else if (!((MyWorld) getWorld()).isRewinding()) {
-                GameState currentState = ((MyWorld) getWorld()).getGSM().peekState();
-                if (currentState instanceof AbilityDisplayState) {
-                    ((AbilityDisplayState) currentState).notifyPlayerDied();
-                } else {
-                    ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
+                // If they never pressed right, go to the real Game Over
+                ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
+            }
+        }
+            else {
+                // Only move if the player is NOT rewinding!
+                if (!((MyWorld) getWorld()).isRewinding()) {
+                    handleStandardMovement();
                 }
             }
-        }
-        else {
-            // Only move if the player is NOT rewinding!
-            if (!((MyWorld) getWorld()).isRewinding()) {
-                handleStandardMovement();
-            }
-        }
     }
 
     /**
@@ -623,27 +630,58 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     private void triggerKCEasterEgg() {
         MyWorld world = (MyWorld) getWorld();
         if (world == null) return;
-    
-        // 1. Audio swap
+
+        // Stop the looping sound started at ignition
         AudioManager.stop("kingCrimsonDuration");
-        AudioManager.playPool("skipTime"); 
-    
-        // 2. Remove the fake Game Over so the shatter happens over the actual game
-        world.removeObjects(world.getObjects(FX_FakeGameOver.class));
-    
-        // 3. Spawn the Shatter
-        world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
         
-        // 4. THE MAGIC TRICK: Freeze Greenfoot entirely for 20 frames to show the impact
-        Greenfoot.delay(20);
-    
-        // 5. Clean up & restore speed
-        Greenfoot.setSpeed(50); // Restore normal speed!
+        // Play the "Skip" Snap
+        AudioManager.playPool("skipTime"); 
+        world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
+
+        // Remove the Fake Screen and the Red Overlay
+        world.removeObjects(world.getObjects(FX_FakeGameOver.class));
+        world.removeObjects(world.getObjects(FX_KingCrimsonOverlay.class));
+
+        // Freeze for impact
+        Greenfoot.delay(30);
+
+        // Restore engine speed
+        Greenfoot.setSpeed(50);
+        
+        // Save the secret stat
         SaveManager.addInt("fate_erased", 1);
         SaveManager.save();
-    
-        // 6. LEAP PAST THE RESULT
+
+        // Leap to menu
         world.getGSM().changeState(new CharacterSelectState()); 
     }
-    
+    private void runKCCinematic() {
+        kcEasterEggTimer++;
+        
+        // FRAME 1: Ignition
+        if (kcEasterEggTimer == 1) {
+            Greenfoot.setSpeed(50); // Drama slow-mo
+            
+            // Force the sound to play loop
+            AudioManager.stop("kingCrimsonDuration"); // Clear any existing
+            AudioManager.playLoop("kingCrimsonDuration");
+            
+            // Add the red tint
+            if (getWorld().getObjects(FX_KingCrimsonOverlay.class).isEmpty()) {
+                getWorld().addObject(new FX_KingCrimsonOverlay(), getWorld().getWidth()/2, getWorld().getHeight()/2);
+            }
+        }
+
+        // FRAME 60: The Fake Result (1 second in)
+        if (kcEasterEggTimer == 60) {
+            if (getWorld().getObjects(FX_FakeGameOver.class).isEmpty()) {
+                getWorld().addObject(new FX_FakeGameOver(), getWorld().getWidth()/2, getWorld().getHeight()/2);
+            }
+        }
+        
+        // FRAME 220: The Erasure (approx 4 seconds in)
+        if (kcEasterEggTimer == 220) {
+            triggerKCEasterEgg();
+        }
+    }
 }
