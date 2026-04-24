@@ -1,0 +1,7 @@
+#DIO-DGE IT PERSISTENT STATS
+#Fri Apr 24 11:29:18 EDT 2026
+time_DIAVOLO=26
+time_MoonKnight=113
+time_omnipotent_DIO=68
+total_playtime=207
+use_Ability_TheWorld=6
