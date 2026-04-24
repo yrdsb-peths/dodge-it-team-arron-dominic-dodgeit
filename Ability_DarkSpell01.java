@@ -40,6 +40,7 @@ public class Ability_DarkSpell01 implements Ability {
         }
         
         AudioManager.play("night_spell1");
+        AudioManager.playPool("nightAbilityVoice2");
     }
     
     @Override

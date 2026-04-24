@@ -47,8 +47,8 @@ public enum CharacterConfig {
         GameConfig.MOON_KNIGHT_MOVE_SPEED,
         1.2 * GameConfig.SCALE,
         "gothic_bgm",
-        "dioLostVoices",
-        "dioBattleCry",                             //Select sound key (new, for character select)
+        "nightLostVoice",
+        "nightEntryVoice2", //Select sound key (new, for character select)
         BossConfig.DIO,
         new String[]{"Ability_DarkSpell01", // V - destroys all obstacles
                     "Ability_DarkSpell02",   // C - roots/freezes all obstacles

@@ -115,6 +115,10 @@ public class AudioManager {
         loadVoicePool("skipTime",  new String[]{"skip_time1.mp3","skip_time2.mp3"}, 140);
         loadVoicePool("diavoloLines", new String[]{ "diavolo_voiceline/diavolo1.mp3","diavolo_voiceline/diavolo2.mp3","diavolo_voiceline/kono_diavolo.mp3" }, 70);
         loadVoicePool("diavoloLoseLines",        new String[]{"diavolo_voiceline/diavolo_lose.mp3"}, 50);
+        loadVoicePool("nightEntryVoice2",        new String[]{"night_voiceline/nightEntryVoice2.wav"}, 200);
+        loadVoicePool("nightAbilityVoice2",      new String[]{"night_voiceline/nightAbilityVoice2.wav"}, 200);
+        loadVoicePool("nightLostVoice",         new String[]{"night_voiceline/nightLostVoice.wav"}, 200);
+        
         updateAllVolumes(); // apply master volume to everything at startup
     }
 
