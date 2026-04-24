@@ -5,6 +5,8 @@ import java.util.List;
 public class LegacyState implements GameState {
 
     private List<Actor> ui = new ArrayList<>();
+     private List<Actor> hiddenActors = new ArrayList<>();
+
 
     @Override
     public void enter(MyWorld world) {
@@ -12,6 +14,12 @@ public class LegacyState implements GameState {
         int midY = world.getHeight() / 2;
 
         // 1. DIM THE ENTIRE WORLD
+        for (Actor a : world.getObjects(Actor.class)) {
+            if (a.getImage() != null && a.getImage().getTransparency() > 0) {
+                a.getImage().setTransparency(0);
+                hiddenActors.add(a);
+            }
+        }
         addUI(world, new FX_DimOverlay(world.getWidth(), world.getHeight()), midX, midY);
 
         // 2. THE EVALUATION PANEL (Darker and sleek)
@@ -94,7 +102,21 @@ public class LegacyState implements GameState {
         }
     }
 
-    @Override public void exit(MyWorld world) { world.removeObjects(ui); }
+    @Override 
+    public void exit(MyWorld world) { 
+        // 1. Remove the Dossier UI
+        world.removeObjects(ui); 
+        ui.clear();
+        
+        // 2. --- NEW: RESTORE MENU UI ---
+        // Make the menu buttons visible again
+        for (Actor a : hiddenActors) {
+            if (a.getWorld() != null && a.getImage() != null) {
+                a.getImage().setTransparency(255);
+            }
+        }
+        hiddenActors.clear();
+    }
 
     private void addUI(MyWorld world, Actor a, int x, int y) {
         world.addObject(a, x, y);
