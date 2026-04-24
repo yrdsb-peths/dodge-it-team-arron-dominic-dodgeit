@@ -9,7 +9,7 @@ public class Ability_KingCrimson implements Ability {
     private boolean standingInDanger = false;
     private GameTimer durationTimer = new GameTimer(1.5, false);
     private GameTimer cooldownTimer = new GameTimer(GameConfig.KC_COOLDOWN, false);
-    
+        
     private int slowMoTimer = 0;
     private int holdFrames = 0;
     private static final int HOLD_THRESHOLD = 8; 
@@ -164,7 +164,7 @@ public class Ability_KingCrimson implements Ability {
     }
 
     Greenfoot.setSpeed(35);
-    slowMoTimer = 5; 
+    slowMoTimer = 1; 
     
     // Move these inside the 'if (commit)' or handle carefully
     // If you keep them here, they only apply to the 'commit' branch 

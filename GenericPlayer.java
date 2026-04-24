@@ -69,6 +69,9 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
      */
     private GameTimer iFrameTimer = new GameTimer(0.5, false);
 
+    private boolean kcEasterEggActive = false;
+    private int kcEasterEggTimer = 0;
+
     /** The X position where the player died, used as the centre of the death shake. */
     private int dieX;
     /** The Y position where the player died, used as the centre of the death shake. */
@@ -208,10 +211,39 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
                 }
             }
         }
-
-        // ── Death vs. normal movement ─────────────────────────────────────────
+            // ── Death vs. normal movement ─────────────────────────────────────────
         if (isDead) {
+            // --- THE CINEMATIC SEQUENCE ---
+            if (kcEasterEggActive) {
+                kcEasterEggTimer++;
+                
+                // Frame 60: Show the Fake Game Over
+                if (kcEasterEggTimer == 60) {
+                    getWorld().addObject(new FX_FakeGameOver(), getWorld().getWidth()/2, getWorld().getHeight()/2);
+                    AudioManager.playLoop("kingCrimsonDuration"); 
+                }
+                
+                // Frame 160: Trigger the final shatter
+                if (kcEasterEggTimer == 160) {
+                    triggerKCEasterEgg();
+                }
+                return; // EXIT EARLY: Player has no control, timer is frozen, no death shake
+            }
+        
             deathTimer.update((MyWorld) getWorld());
+        
+            // --- THE TRIGGER ---
+            // If player has KC, is dead, and presses "right" (we give a small buffer so they don't press it accidentally on the exact frame of death)
+            if (hasAbility(Ability_KingCrimson.class) && Greenfoot.isKeyDown("right") && deathTimer.getRemainingFrames() < deathTimer.getTotalFrames() - 15) {
+                kcEasterEggActive = true;           // Lock the sequence
+                Greenfoot.setSpeed(40);             // SLOW DOWN TIME (Normal is usually 50)
+                
+                // Flash the prediction overlay immediately
+                getWorld().addObject(new FX_KingCrimsonOverlay(), getWorld().getWidth()/2, getWorld().getHeight()/2);
+                return;
+            }
+        
+            // --- NORMAL DEATH LOGIC ---
             if (!deathTimer.isExpired()) {
                 shake(); 
             } else if (!((MyWorld) getWorld()).isRewinding()) {
@@ -222,7 +254,9 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
                     ((MyWorld) getWorld()).getGSM().changeState(new GameOverState());
                 }
             }
-        } else {
+        }
+        else {
+            // Only move if the player is NOT rewinding!
             if (!((MyWorld) getWorld()).isRewinding()) {
                 handleStandardMovement();
             }
@@ -585,4 +619,31 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             animations.get(name).scaleAllFrames(size, size);
         }
     }
+    
+    private void triggerKCEasterEgg() {
+        MyWorld world = (MyWorld) getWorld();
+        if (world == null) return;
+    
+        // 1. Audio swap
+        AudioManager.stop("kingCrimsonDuration");
+        AudioManager.playPool("skipTime"); 
+    
+        // 2. Remove the fake Game Over so the shatter happens over the actual game
+        world.removeObjects(world.getObjects(FX_FakeGameOver.class));
+    
+        // 3. Spawn the Shatter
+        world.addObject(new FX_ErasureSnap(), world.getWidth() / 2, world.getHeight() / 2);
+        
+        // 4. THE MAGIC TRICK: Freeze Greenfoot entirely for 20 frames to show the impact
+        Greenfoot.delay(20);
+    
+        // 5. Clean up & restore speed
+        Greenfoot.setSpeed(50); // Restore normal speed!
+        SaveManager.addInt("fate_erased", 1);
+        SaveManager.save();
+    
+        // 6. LEAP PAST THE RESULT
+        world.getGSM().changeState(new CharacterSelectState()); 
+    }
+    
 }

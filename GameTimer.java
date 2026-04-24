@@ -185,4 +185,10 @@ public class GameTimer {
         this.totalFrames = (int)(seconds * 60);
         reset();
     }
+    
+    public int getFramesElapsed() {
+        // totalFrames is the starting time, remainingFrames is what's left.
+        // The difference is how much time has passed!
+        return totalFrames - remainingFrames;
+    }
 }
