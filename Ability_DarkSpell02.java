@@ -22,8 +22,6 @@ public class Ability_DarkSpell02 implements Ability {
         }
         
         AudioManager.play("night_spell2");
-        AudioManager.playPool("nightAbilityVoice2");
-
         // Calculate Lane
         int targetLaneY = GameConfig.LANES[0];
         int minDiff = Integer.MAX_VALUE;
