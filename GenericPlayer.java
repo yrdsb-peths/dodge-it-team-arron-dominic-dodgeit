@@ -75,7 +75,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     private int dieY;
     
     //Special filter setting for demo
-    private Class<? extends Ability> demoAbilityFilter = null;
+    private Class<?>[] demoAbilityFilters = null;
     // ─────────────────────────────────────────────────────────────────────────
     // CONSTRUCTOR
     // ─────────────────────────────────────────────────────────────────────────
@@ -178,9 +178,16 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         // ── Ability update + activation ───────────────────────────────────────
         for (Ability a : abilities) {
             
-            //Do not use ability if in demo and not demo-ing current ability
-            if (demoAbilityFilter != null && !demoAbilityFilter.isInstance(a)) {
-                continue;
+            // Do not use ability if in demo and not demo-ing current ability
+            if (demoAbilityFilters != null) {
+                boolean allowed = false;
+                for (Class<?> c : demoAbilityFilters) {
+                    if (c.isInstance(a)) {
+                        allowed = true;
+                        break;
+                    }
+                }
+                if (!allowed) continue;
             }
             
              // Always update the ability so its timers run.
@@ -541,10 +548,10 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
     }
         
     //Special Setting for Demo
-    public void setDemoAbilityFilter(Class<? extends Ability> clazz) {
-        this.demoAbilityFilter = clazz;
+    public void setDemoAbilityFilter(Class<?>... clazzes) {
+        this.demoAbilityFilters = clazzes;
     }
-    
+
         
     private int getHitboxY() {
         int offset = 0;

@@ -27,9 +27,10 @@ public class AbilityGuideContent {
             "Unleashes a massive purple explosion.\n\n" +
             "Anything inside the radius is erased instantly.\n" +
             "You are INVINCIBLE while casting.\n\n" +
-            "Use this to clear massive waves of cars."+
+            "Use this to clear massive waves of cars.\n"+
             "RESONANCE: If a lane is FROZEN (Spell 02),\n" +
-            "this clears the ENTIRE LANE instead!"
+            "this clears the ENTIRE LANE instead!\n"+
+            "The cooldown is then massively reduced"
         );
 
         guides.put(Ability_DarkSpell02.class,
@@ -73,6 +74,15 @@ public class AbilityGuideContent {
             "Watch the 'TIME' bar in the corner to see\n" +
             "how much history you have stored."+
             "Can rewind even after you are dead"
+        );
+        
+        guides.put(Ability_TheWorld.class,
+            "--- THE WORLD (Time Stop) ---\n\n" +
+            "PRESS[W] to stop time completely.\n\n" +
+            "The world freezes, but you can move freely.\n" +
+            "Use this window to reposition yourself safely\n" +
+            "or escape impossible situations.\n\n" +
+            "Time resumes automatically after 4 seconds."
         );
     }
 

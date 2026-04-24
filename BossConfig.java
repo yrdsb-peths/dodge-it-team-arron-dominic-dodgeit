@@ -37,7 +37,19 @@ public enum BossConfig {
             new Banner.SpriteOverlay("dio_full.png",  150, 150, -200, 0), // full-body sprite, left of centre
             new Banner.SpriteOverlay("dio_label.png", 300, 100,    0, 0)  // name label, centred
         }
+    ),
+    
+    Ringo(
+        Color.BLACK,          // bgColor — classic black banner
+        "ringoLines",       // soundsKey — random voice from the "dioBattleCry" pool
+        new Banner.SpriteOverlay[] {
+            // Each SpriteOverlay: (filename, width, height, xOffset, yOffset)
+            // All values go through GameConfig.s() inside SpriteOverlay's constructor.
+            new Banner.SpriteOverlay("ringo_full.png",  300, 150, -200, 0), // full-body sprite, left of centre
+            new Banner.SpriteOverlay("ringo_label.png", 300, 100,    0, 0)  // name label, centred
+        }
     );
+
 
     // =========================================================================
     // FIELDS

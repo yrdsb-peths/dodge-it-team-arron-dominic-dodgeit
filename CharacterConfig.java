@@ -72,6 +72,7 @@ public enum CharacterConfig {
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,                             // bossConfig   (intro banner)
         new String[]{                               // abilityClassNames (loaded via Reflection)
+            "Ability_TheWorld",
             "Ability_StandPunch",   // E — summon TheWorldStand
             "Ability_MadeInHeaven", // S — speed boost
             "Ability_Mandom",       // R — time rewind (delegates to PlayingState)
@@ -103,22 +104,22 @@ public enum CharacterConfig {
         "dioLostVoices",
         "dioBattleCry",                             //Select sound key (new, for character select)
         BossConfig.DIO,
-        new String[]{"Ability_StandPunch", "Ability_MadeInHeaven"} // fewer abilities than DIO
+        new String[]{"Ability_TheWorld","Ability_StandPunch", "Ability_MadeInHeaven"} // fewer abilities than DIO
     ),
     Ringo(
         "Ringo Roadagain",
         "Ringo",
         "ringo_full.jpg",                             //Portrait Image (new, for character select)
         "standard_road.png",                             //CUstomised road(new, for character select)
-        new String[]{"Idle","Dash", "Lose"},
+        new String[]{"Idle","Dash", "Wry","Lose"},
         "Dash",
         GameConfig.DIO_MOVE_SPEED,
         1.5 * GameConfig.SCALE,
         "ringo_theme",
         "ringoLoseLines",
         "ringoLines",                             //Select sound key (new, for character select)
-        BossConfig.DIO,
-        new String[]{"Ability_Mandom"}
+        BossConfig.Ringo,
+        new String[]{"Ability_Mandom","Ability_TheWorld"}
     ),
     
     DIAVOLO(

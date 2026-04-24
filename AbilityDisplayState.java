@@ -32,7 +32,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
     private boolean playerDiedThisFrame = false;
 
     @Override
-    public boolean isGameFrozen() { return isFrozen; }
+    public boolean isGameFrozen() { return isFrozen || Ability_KingCrimson.ERASING || Ability_TheWorld.TIME_STOPPED;  }
 
     @Override
     public void enter(MyWorld world) {   
@@ -134,8 +134,12 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) activePlayer = new Dio();
         else activePlayer = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
         
-        //Get ability list
-        activePlayer.setDemoAbilityFilter(selectedAbility.getClass());
+        if (selectedAbility.getClass() == Ability_DarkSpell01.class) {
+            // IF we are learning Spell 01, we need Spell 02 active for the combo!
+            activePlayer.setDemoAbilityFilter(Ability_DarkSpell01.class, Ability_DarkSpell02.class);
+        } else {
+            activePlayer.setDemoAbilityFilter(selectedAbility.getClass());
+        }
         
         world.addObject(activePlayer, GameConfig.s(80), GameConfig.DEMO_BOTTOM_BOUND / 2);
         
@@ -248,6 +252,8 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         isFrozen = false;
         playerDiedThisFrame = false;
         AudioManager.stopAllAbilities();
+        Ability_DarkSpell02.CURRENT_FROZEN_LANE_Y = -1;
+
         world.removeObjects(world.getObjects(ScrollingRoad.class));
         world.removeObjects(world.getObjects(Obstacles.class));
         world.removeObjects(world.getObjects(Player.class));
