@@ -257,7 +257,7 @@ public class GameConfig {
     
     
     //Section 13: Progression
-    public static final int LEGACY_UNLOCK_SCORE = 100;
+    public static final int LEGACY_UNLOCK_SCORE = 10;
 
     // =========================================================================
     // THE SCALING HELPER — the most important method in this file
