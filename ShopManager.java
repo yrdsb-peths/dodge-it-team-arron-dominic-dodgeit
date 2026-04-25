@@ -14,16 +14,15 @@ public class ShopManager {
         addPrice("char_diavolo", 2000);
         addPrice("char_ringo", 1000);
         addPrice("char_omnipotent_dio", 2000);
-        addPrice("ability_ability_standpunch", 500); 
-        addPrice("ability_ability_stickyfingers", 800); 
+ 
         addPrice("char_custom", 100);
 
         // --- ABILITY PRICES ---
         addPrice("ability_ability_darkspell02", 0); // Free
-        addPrice("ability_ability_darkspell01", 300);
-        addPrice("ability_ability_theworld", 400); 
+        addPrice("ability_ability_darkspell01", 200);
         addPrice("ability_ability_madeinheaven", 1000);
-        
+        addPrice("ability_ability_standpunch", 500); 
+        addPrice("ability_ability_stickyfingers", 800); 
     }
 
     // Helper to make sure we don't get case-sensitivity bugs
