@@ -75,7 +75,7 @@ public class ShopState implements GameState {
             ShopItem selected = inventory[selectedIndex];
             if (!ShopManager.isUnlocked(selected.key)) {
                 if (ShopManager.buy(selected.key)) {
-                    AudioManager.playPool("buy_success_sound"); // Ca-ching!
+                    AudioManager.play("coin"); // Ca-ching!
                     updateUI(); // Refresh to show it as UNLOCKED
                 } else {
                     System.out.println("Not enough money!");

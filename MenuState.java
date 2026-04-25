@@ -25,10 +25,14 @@ public class MenuState implements GameState {
         }
         UIText customBtn = new UIText("[ C : CUSTOM MODE ]", GameConfig.s(20), Color.CYAN);
         addUI(world, customBtn, world.getWidth() / 2, world.getHeight() - GameConfig.s(40));
-        UIText warning = new UIText("[NOTE:CUSTOM MODE AND OMNI DIO DOESNT COUNT SCORE", GameConfig.s(20), Color.CYAN);
+        UIText warning = new UIText("[NOTE:CUSTOM MODE AND OMNI DIO DOESNT COUNT SCORE]", GameConfig.s(10), Color.CYAN);
         
-        addUI(world, warning, world.getWidth() / 2, world.getHeight() - GameConfig.s(20));
-        addUI(world, new UIText("[ S : OPEN SHOP ]", GameConfig.s(22), Color.ORANGE),   GameConfig.s(150), GameConfig.s(40));
+        addUI(world, warning, world.getWidth() / 2-250, world.getHeight() - GameConfig.s(20));
+        
+        UIText warning2 = new UIText("[WARNING: DO NOT CHANGE YOUR GAME FILES, PENALTIES APPLY]", GameConfig.s(10), Color.CYAN);
+
+        addUI(world, warning2, world.getWidth() / 2+240, world.getHeight() - GameConfig.s(20));
+        addUI(world, new UIText("[ S : OPEN SHOP ]", GameConfig.s(22), Color.RED),   GameConfig.s(150), GameConfig.s(40));
 
     }
 

@@ -11,17 +11,19 @@ public class ShopManager {
         // --- CHARACTER PRICES ---
         addPrice("char_moonknight", 0); // Free
         addPrice("char_dio", 500);
-        addPrice("char_diavolo", 1500);
+        addPrice("char_diavolo", 2000);
         addPrice("char_ringo", 1000);
-        addPrice("char_omnipotent_dio", 2500);
+        addPrice("char_omnipotent_dio", 2000);
         addPrice("ability_ability_standpunch", 500); 
         addPrice("ability_ability_stickyfingers", 800); 
+        addPrice("char_custom", 100);
 
         // --- ABILITY PRICES ---
         addPrice("ability_ability_darkspell02", 0); // Free
         addPrice("ability_ability_darkspell01", 300);
         addPrice("ability_ability_theworld", 400); 
         addPrice("ability_ability_madeinheaven", 1000);
+        
     }
 
     // Helper to make sure we don't get case-sensitivity bugs
@@ -57,8 +59,24 @@ public class ShopManager {
     }
 
     public static boolean isUnlocked(String key) {
-        if (getPrice(key) == 0) return true; 
-        return SaveManager.getInt("unlock_" + key.toLowerCase()) == 1; 
+        String k = key.toLowerCase();
+        
+        // 1. Free items are always unlocked (e.g., Moon Knight and Dark Spell 02)
+        if (getPrice(k) == 0) return true; 
+        
+        // 2. Did the player buy this specific item directly?
+        if (SaveManager.getInt("unlock_" + k) == 1) return true; 
+
+        // 3. --- BUNDLE DEALS (Character Defaults) ---
+        // If they own the Character, they automatically own their signature ability!
+        if (k.equals("ability_ability_theworld") && isUnlocked("char_dio")) return true;
+        if (k.equals("ability_ability_kingcrimson") && isUnlocked("char_diavolo")) return true;
+        if (k.equals("ability_ability_mandom") && isUnlocked("char_ringo")) return true;
+
+        // Note: Omnipotent Dio is basically a cheat character, so you can decide 
+        // later if buying him unlocks literally everything. For now, we stick to the basics.
+
+        return false; 
     }
 
     public static boolean buy(String key) {

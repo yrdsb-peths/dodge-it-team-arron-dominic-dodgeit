@@ -107,7 +107,7 @@ public class CharacterSelectState implements GameState {
                     // Try to Buy it
                     if (ShopManager.buy(charKey)) {
                         // Success!
-                        AudioManager.playPool("buy_success_sound"); // Put a cool coin sound here
+                        AudioManager.play("coin"); // Put a cool coin sound here
                         moneyDisplay.setText("MONEY: $" + SaveManager.getInt("money"));
                         spawnNewCharacter(world, false, false); // Refresh the UI to unlock them visually
                     } else {
