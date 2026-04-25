@@ -16,7 +16,7 @@ public class CharacterSelectState implements GameState {
     private int slideCooldown = 0;
     
     private String[] availableRoads = {"standard_road.png", "punk_road.png", "white_road.png", "red_road.png", "racetrack.png"};
-    private String[] availableBgms  = {"dio_bgm", "gothic_bgm", "ringo_theme", "diavolo_theme"};
+    private String[] availableBgms  = {"dio_bgm", "gothic_bgm", "ringo_theme", "diavolo_theme","sbr_theme"};
     private int roadIdx = 0;
     private int bgmIdx = 0;
     
