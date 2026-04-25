@@ -27,7 +27,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
     private Time_RewindManager rewindManager;
     private FX_RewindOverlay rewindOverlay;
     private FX_DimOverlay dimOverlay;
-    private UI_RewindBar activeRewindBar; // Tracked for cleanup
+    private UI_RewindBar activeRewindBar; 
     private boolean isFrozen = false;
     private boolean playerDiedThisFrame = false;
     private UIText moneyDisplay;
@@ -47,34 +47,43 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         int splitY = GameConfig.DEMO_BOTTOM_BOUND;
         int worldH = world.getHeight();
         int uiHeight = worldH - splitY;
-
         int midX = world.getWidth() / 2;
+        
         addUI(world, new UI_Panel(world.getWidth(), uiHeight, new Color(30, 30, 30)), world.getWidth() / 2, splitY + (uiHeight / 2));
 
         if (GameConfig.ACTIVE_CHARACTER == CharacterConfig.DIO) dummyPlayer = new Dio();
         else dummyPlayer = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
         
-        // FIX 1: Use getAllAbilities() so Mandom is included in the count
-        List<Ability> abilities = dummyPlayer.getAllAbilities();
-        int iconCount = abilities.size();
+        // --- FIX 1: Load EVERY ability directly from the character's config ---
+        String[] allAbilityNames = GameConfig.ACTIVE_CHARACTER.abilityClassNames;
+        int iconCount = allAbilityNames.length;
         
-        // FIX 2: Dynamic Layout. If > 4 abilities, make icons smaller and spacing tighter
         int baseSpacing = GameConfig.s(70);
         if (iconCount > 4) baseSpacing = GameConfig.s(55); 
         
         int startX = world.getWidth() / 2 - ((iconCount - 1) * baseSpacing) / 2;
         int startY = splitY + GameConfig.s(85); 
 
+        // Generate the icons
         for (int i = 0; i < iconCount; i++) {
-            UI_AbilityIcon icon = new UI_AbilityIcon(dummyPlayer, abilities.get(i));
-            icons.add(icon);
-            addUI(world, icon, startX + (i * baseSpacing), startY);
+            try {
+                // Create a temporary ability instance just so the icon knows what to draw
+                Ability tempAbility = (Ability) Class.forName(allAbilityNames[i]).getDeclaredConstructor().newInstance();
+                UI_AbilityIcon icon = new UI_AbilityIcon(dummyPlayer, tempAbility);
+                icons.add(icon);
+                addUI(world, icon, startX + (i * baseSpacing), startY);
+            } catch (Exception e) {
+                System.out.println("Could not load icon for: " + allAbilityNames[i]);
+            }
         }
         
         moneyDisplay = new UIText("MONEY: $" + SaveManager.getInt("money"), GameConfig.s(18), Color.YELLOW);
         addUI(world, moneyDisplay, world.getWidth() - GameConfig.s(100), splitY + GameConfig.s(18));
-        highlightBox = new UI_HighlightBox(GameConfig.s(56));
-        addUI(world, highlightBox, icons.get(0).getX(), icons.get(0).getY());
+        
+        if (!icons.isEmpty()) {
+            highlightBox = new UI_HighlightBox(GameConfig.s(56));
+            addUI(world, highlightBox, icons.get(0).getX(), icons.get(0).getY());
+        }
 
         titleText = new UIText("", GameConfig.s(22), Color.YELLOW);
         descText  = new UIText("", GameConfig.s(16), Color.WHITE);
@@ -99,30 +108,19 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
 
     private void handleSelectingMode(MyWorld world, String key) {
         if ("escape".equals(key)) { world.getGSM().popState(); return; }
+        if (icons.isEmpty()) return;
         
-        Ability selectedAbility = dummyPlayer.getAllAbilities().get(selectedIndex);
+        // Use the icon to get the ability, NOT the dummy player
+        Ability selectedAbility = icons.get(selectedIndex).getAbility();
         String shopKey = "ability_" + selectedAbility.getClass().getSimpleName();
     
-        // --- BUY LOGIC ---
-        if ("b".equals(key)) {
-            if (!ShopManager.isUnlocked(shopKey)) {
-                if (ShopManager.buy(shopKey)) {
-                    AudioManager.playPool("buy_success_sound"); // Ca-ching!
-                    moneyDisplay.setText("MONEY: $" + SaveManager.getInt("money"));
-                    updateMenuSelection(); // Refresh the UI
-                } else {
-                    System.out.println("Not enough money!");
-                    // Optional: AudioManager.playPool("error_buzzer");
-                }
-            }
-        }
-    
-        // --- TRY LOGIC (Only if unlocked) ---
+        // --- START DEMO LOGIC ---
         if ("enter".equals(key)) { 
             if (ShopManager.isUnlocked(shopKey)) {
                 startDemo(world); 
             } else {
-                System.out.println("Ability is locked!");
+                // Ability is locked! Tell the player or play an error sound
+                AudioManager.playPool("error_buzzer"); 
             }
             return; 
         }
@@ -138,16 +136,15 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
 
     private void updateMenuSelection() {
         if (icons.isEmpty()) return;
-        UI_AbilityIcon selectedIcon = icons.get(selectedIndex); 
         
+        UI_AbilityIcon selectedIcon = icons.get(selectedIndex); 
         highlightBox.setLocation(selectedIcon.getX(), selectedIcon.getY());
         
-        Ability ability = dummyPlayer.getAllAbilities().get(selectedIndex);
+        Ability ability = selectedIcon.getAbility(); // Read from the icon
         String abilityName = ability.getClass().getSimpleName();
         String shopKey = "ability_" + abilityName;
         
         boolean unlocked = ShopManager.isUnlocked(shopKey);
-        int price = ShopManager.getPrice(shopKey);
     
         // 1. Set Title and Description
         if (unlocked) {
@@ -157,18 +154,20 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
             btnEnter.setText("[ ENTER : Try Ability ]");
             btnEnter.setColor(Color.GREEN);
         } else {
-            titleText.setText("[LOCKED] " + abilityName.replace("Ability_", "") + " - $" + price);
-            titleText.setColor(Color.GRAY);
-            descText.setText("Purchase this ability to unlock the Sandbox Tutorial.");
-            btnEnter.setText("[ B : BUY ABILITY ]");
-            btnEnter.setColor(Color.YELLOW);
+            // BLACKED OUT TEXT
+            titleText.setText("[LOCKED] " + abilityName.replace("Ability_", ""));
+            titleText.setColor(Color.DARK_GRAY);
+            descText.setText("Visit the SHOP in the Main Menu to unlock this skill.");
+            btnEnter.setText("LOCKED");
+            btnEnter.setColor(Color.RED);
         }
     
-        // 2. Visual dimming of icons
+        // 2. Visual dimming of ALL icons on the screen based on ownership
         for (int i = 0; i < icons.size(); i++) {
-            Ability a = dummyPlayer.getAllAbilities().get(i);
-            boolean isOwned = ShopManager.isUnlocked("ability_" + a.getClass().getSimpleName());
-            icons.get(i).getImage().setTransparency(isOwned ? 255 : 75);
+            String currentKey = "ability_" + icons.get(i).getAbility().getClass().getSimpleName();
+            boolean isOwned = ShopManager.isUnlocked(currentKey);
+            // 255 = Normal, 50 = Very dark
+            icons.get(i).getImage().setTransparency(isOwned ? 255 : 50);
         }
     }
 
@@ -176,7 +175,8 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         mode = Mode.PLAYING;
         clearSandbox(world); 
         
-        Ability selectedAbility = dummyPlayer.getAllAbilities().get(selectedIndex);
+        // Read from icon, NOT dummyPlayer
+        Ability selectedAbility = icons.get(selectedIndex).getAbility();
         currentStage = DemoScripts.getDemoFor(selectedAbility.getClass());
         
         demoSpawnManager = new SpawnManager();
@@ -190,7 +190,6 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         else activePlayer = new GenericPlayer(GameConfig.ACTIVE_CHARACTER);
         
         if (selectedAbility.getClass() == Ability_DarkSpell01.class) {
-            // IF we are learning Spell 01, we need Spell 02 active for the combo!
             activePlayer.setDemoAbilityFilter(Ability_DarkSpell01.class, Ability_DarkSpell02.class);
         } else {
             activePlayer.setDemoAbilityFilter(selectedAbility.getClass());
@@ -198,7 +197,6 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         
         world.addObject(activePlayer, GameConfig.s(80), GameConfig.DEMO_BOTTOM_BOUND / 2);
         
-        // FIX 3: Ensure Rewind Bar appears during the Mandom demo
         if (activePlayer.hasAbility(Ability_Mandom.class)) {
             activeRewindBar = new UI_RewindBar(rewindManager);
             world.addObject(activeRewindBar, world.getWidth() - GameConfig.s(100), GameConfig.s(20));
@@ -211,18 +209,12 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         btnEsc.setText("[ ESC : Back to Menu ]");
     }
 
-    
     private void handlePlayingMode(MyWorld world, String key) {
         if ("escape".equals(key)) { stopDemo(world); return; }
         
-        // --- NEW: THE GUIDE TRIGGER ---
         if ("h".equals(key)) {
-            Ability selected = dummyPlayer.getAllAbilities().get(selectedIndex);
-            
-            // 1. Hide the current UI
+            Ability selected = icons.get(selectedIndex).getAbility(); // Read from icon
             setSandboxUIVisible(false);
-            
-            // 2. Push the Manual (Passing 'this' so the manual can call us back)
             world.getGSM().pushState(new AbilityGuideState(selected.getClass(), this));
             return; 
         }
@@ -230,10 +222,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         if ("r".equals(key) && !rewindManager.isRewinding()) { startDemo(world); return; }
         if (playerDiedThisFrame) { playerDiedThisFrame = false; startDemo(world); return; }
 
-        // --- REWIND LOGIC ---
        if (rewindManager.isRewinding()) {
-            
-            // ADD THESE LINES TO REMOVE THE DIM OVERLAY:
             if (dimOverlay != null) {
                 world.removeObject(dimOverlay);
                 dimOverlay = null;
@@ -247,16 +236,10 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
                 AudioManager.setAllSoundsPaused(false);
                 activePlayer.startIFrame(1.0);
             }
-            
         } else {
-            // CRUCIAL: Record history every frame, even when frozen, so Mandom works!
-            if (!isFrozen) {
-                rewindManager.record(world, demoSpawnManager);
-            }
+            if (!isFrozen) rewindManager.record(world, demoSpawnManager);
             
             int frame = demoSpawnManager.getSpawnTimer();
-            
-            // Check for Wait Points
             String blockedPrompt = currentStage.evaluateWait(frame, activePlayer, world);
             
             if (blockedPrompt != null) {
@@ -267,15 +250,11 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
                     world.addObject(dimOverlay, world.getWidth()/2, GameConfig.DEMO_BOTTOM_BOUND/2);
                 }
             } else {
-                if (isFrozen) {
-                    demoSpawnManager.setSpawnTimer(demoSpawnManager.getSpawnTimer() + 1);
-                }
-
+                if (isFrozen) demoSpawnManager.setSpawnTimer(demoSpawnManager.getSpawnTimer() + 1);
                 isFrozen = false;
-                // Not blocked by a wait point
+                
                 if (currentStage.isComplete(frame)) {
                     isFrozen = true;
-                    // Clear the road for the "Finish" screen
                     world.removeObjects(world.getObjects(Obstacles.class));
                     world.removeObjects(world.getObjects(PathWarning.class));
                     world.removeObjects(world.getObjects(Exclaimation.class));
@@ -289,7 +268,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
                         dimOverlay = null;
                     }
                     currentStage.fireSpawns(frame, world);
-                    demoSpawnManager.setSpawnTimer(frame + 1); // Advance timeline
+                    demoSpawnManager.setSpawnTimer(frame + 1);
                 }
             }
         }
@@ -299,7 +278,6 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         mode = Mode.SELECTING;
         clearSandbox(world);
         updateMenuSelection();
-        btnEnter.setText("[ ENTER : Try Ability ]");
         btnEsc.setText("[ ESC : Back ]");
     }
 
@@ -337,7 +315,6 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
             AudioManager.playPool("rewind");
             rewindManager.startRewind();
             rewindOverlay = new FX_RewindOverlay();
-            // COVER ONLY THE SANDBOX AREA
             world.addObject(rewindOverlay, world.getWidth() / 2, GameConfig.DEMO_BOTTOM_BOUND / 2);
         }
     }
@@ -357,22 +334,16 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
         uiElements.add(a);
     }
     
-     @Override
-    public SpawnManager getSpawnManager() { return demoSpawnManager; }
-
-    @Override
-    public Time_RewindManager getRewindManager() { return rewindManager; }
+    @Override public SpawnManager getSpawnManager() { return demoSpawnManager; }
+    @Override public Time_RewindManager getRewindManager() { return rewindManager; }
     
-    /** Hides or shows the Sandbox UI text elements so the manual doesn't overlap them */
     public void setSandboxUIVisible(boolean visible) {
         int alpha = visible ? 255 : 0;
         for (Actor a : uiElements) {
-            // Only hide the text and icons, keep the dark bottom panel visible if you like
             if (a instanceof UIText || a instanceof UI_AbilityIcon || a instanceof UI_HighlightBox) {
                 if (a.getImage() != null) a.getImage().setTransparency(alpha);
             }
         }
-        // Specifically hide the Rewind Bar if it exists
         if (activeRewindBar != null && activeRewindBar.getImage() != null) {
             activeRewindBar.getImage().setTransparency(alpha);
         }

@@ -24,6 +24,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import greenfoot.*;
+import javax.swing.JOptionPane;
 
 public class MyWorld extends World {
 
@@ -56,6 +57,10 @@ public class MyWorld extends World {
         // add/remove actors from this world.
         gsm = new GameStateManager(this);
         
+        if (!SaveManager.hasUsername()) {
+            requestUsername();
+        }
+
         /*
          * PAINT ORDER — controls which actors are drawn on top of which.
          * Earlier in the list = drawn LAST = appears on top.
@@ -156,5 +161,27 @@ public class MyWorld extends World {
             return GameConfig.DEMO_BOTTOM_BOUND;
         }
         return getHeight();
+    }
+    
+        
+    private void requestUsername() {
+        String name = JOptionPane.showInputDialog(null, 
+            "Enter your name for the Stand Dossier:", 
+            "REGISTRATION", 
+            JOptionPane.QUESTION_MESSAGE);
+    
+        // Handle cancel or empty
+        if (name == null || name.trim().isEmpty()) {
+            name = "Unknown User";
+        }
+    
+        // --- THE CHEAT CODE ---
+        if (name.equalsIgnoreCase("mrchan")) {
+            SaveManager.addInt("money", 50000); // Give enough to buy EVERYTHING
+            JOptionPane.showMessageDialog(null, "Cheat Activated: Access Granted, Mr. Chan.");
+        }
+    
+        SaveManager.setUsername(name);
+        SaveManager.save();
     }
 }

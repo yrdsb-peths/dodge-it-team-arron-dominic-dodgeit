@@ -11,16 +11,16 @@ public class ShopManager {
         // --- CHARACTER PRICES ---
         addPrice("char_moonknight", 0); // Free
         addPrice("char_dio", 500);
-        addPrice("char_diavolo", 800);
+        addPrice("char_diavolo", 1500);
         addPrice("char_ringo", 1000);
-        addPrice("char_omnipotent_dio", 5000);
+        addPrice("char_omnipotent_dio", 2500);
+        addPrice("ability_ability_standpunch", 500); 
+        addPrice("ability_ability_stickyfingers", 800); 
 
         // --- ABILITY PRICES ---
         addPrice("ability_ability_darkspell02", 0); // Free
         addPrice("ability_ability_darkspell01", 300);
         addPrice("ability_ability_theworld", 400); 
-        addPrice("ability_ability_kingcrimson", 600);
-        addPrice("ability_ability_mandom", 600);
         addPrice("ability_ability_madeinheaven", 1000);
     }
 
@@ -41,7 +41,7 @@ public class ShopManager {
         } catch (Exception e) { tampered = true; }
 
         if (tampered) {
-            System.out.println("Lol, nice try hacking the prices! Change them back! (I fixed them for you)");
+            System.out.println("Lol, nice try hacking the prices! Don't do that again (I fixed them for you)");
             filePrices.clear();
             for (String key : authenticPrices.keySet()) {
                 filePrices.setProperty(key, String.valueOf(authenticPrices.get(key)));
@@ -53,7 +53,7 @@ public class ShopManager {
     }
 
     public static int getPrice(String key) {
-        return authenticPrices.getOrDefault(key.toLowerCase(), 9999);
+        return authenticPrices.getOrDefault(key.toLowerCase(), 2500);
     }
 
     public static boolean isUnlocked(String key) {

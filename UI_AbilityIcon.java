@@ -144,4 +144,8 @@ public class UI_AbilityIcon extends Actor {
 
         setImage(img);
     }
+    
+    public Ability getAbility() {
+        return ability;
+    }
 }

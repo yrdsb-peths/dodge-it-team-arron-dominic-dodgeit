@@ -30,6 +30,8 @@ public class LegacyState implements GameState {
         int totalSeconds = SaveManager.getInt("total_playtime");
         String timeStr = String.format("%d mins, %d secs", totalSeconds / 60, totalSeconds % 60);
         
+        String username = SaveManager.getUsername();    
+        
         String favChar = SaveManager.getFavoriteCharacter();
 
         // 4. FIND THE MOST ABUSED POWER
@@ -68,7 +70,7 @@ public class LegacyState implements GameState {
         int spacing = GameConfig.s(22);
 
         addUI(world, new UIText("--- CLASSIFIED STAND DOSSIER ---", GameConfig.s(22), Color.YELLOW), midX, startY);
-        
+        addUI(world, new UIText("SUBJECT: " + username.toUpperCase(), GameConfig.s(18), Color.CYAN), midX, startY + spacing);
         addUI(world, new UIText("ULTIMATE RECORD: " + bestScore, GameConfig.s(18), Color.WHITE), midX, startY + spacing * 2);
         addUI(world, new UIText("LIFETIME SURVIVED: " + timeStr, GameConfig.s(16), Color.WHITE), midX, startY + spacing * 3);
         addUI(world, new UIText("FAVORITE USER: " + favChar, GameConfig.s(16), Color.WHITE), midX, startY + spacing * 4);

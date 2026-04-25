@@ -66,4 +66,17 @@ public class SaveManager {
         return fav;
     }
     
+    public static String getUsername() {
+        return stats.getProperty("username", "Unknown Subject");
+    }
+    
+    public static void setUsername(String name) {
+        stats.setProperty("username", name);
+        save();
+    }
+    
+    public static boolean hasUsername() {
+        return stats.containsKey("username");
+    }
+        
 }
