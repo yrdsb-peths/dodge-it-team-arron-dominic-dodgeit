@@ -121,11 +121,8 @@ public class CharacterSelectState implements GameState {
     private void spawnNewCharacter(MyWorld world, boolean fromRight, boolean isInitial) {
         CharacterConfig selected = roster[currentIndex];
 
-        // 1. Stop any lingering voices first so they don't stack
+        // 1. Audio
         AudioManager.stopAllPools(); 
-
-        // 2. Play the selection voice line immediately
-        // (Checking both pools and single sounds for safety)
         AudioManager.playPool(selected.selectSoundKey);
         AudioManager.play(selected.selectSoundKey); 
 
@@ -140,6 +137,40 @@ public class CharacterSelectState implements GameState {
             abilityText += s.replace("Ability_", "") + "  ";
         }
         abilitiesDisplay.setText(abilityText);
+
+        // ---------------------------------------------------------
+        // 4. THE FIX: RESET ROAD & MUSIC TO DEFAULT FOR THIS CHARACTER
+        // ---------------------------------------------------------
+        
+        // Set the Road to index 0 ("standard_road.png")
+        roadIdx = 0; 
+        
+        // Figure out the default BGM index based on the character's name
+        // (If they aren't on this list, it defaults to index 0: dio_bgm)
+        bgmIdx = 0;
+        if (selected.name().equals("Ringo")) bgmIdx = 2; // ringo_theme
+        if (selected.name().equals("Diavolo")) bgmIdx = 3; // diavolo_theme
+        // Add more here if you have SBR characters, etc.
+
+        // Set these to null so PlayingState knows there is NO custom choice for this run.
+        // It will automatically fall back to the character's true default!
+        // Use empty strings instead of null to prevent the NullPointerException!
+        GameConfig.SESSION_ROAD = ""; 
+        GameConfig.SESSION_BGM = "";
+
+        // Set indexes to -1 so that the very first time you press 'R' or 'M', 
+        // it cycles to index 0 ("standard_road.png" / "dio_bgm")
+        roadIdx = -1; 
+        bgmIdx = -1;
+
+        // Reset the visual text on the screen
+        if (roadDisplay != null && bgmDisplay != null) {
+            roadDisplay.setText("ROAD: Default");
+            roadDisplay.setColor(Color.LIGHT_GRAY);
+            
+            bgmDisplay.setText("MUSIC: Default");
+            bgmDisplay.setColor(Color.LIGHT_GRAY);
+        }
     }
 
     @Override

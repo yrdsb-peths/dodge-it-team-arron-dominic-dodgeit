@@ -328,8 +328,8 @@ public class GameConfig {
     // Inside GameConfig.java
     
     // These will be reset every time you return to the menu
-    public static String SESSION_ROAD = ""; 
-    public static String SESSION_BGM  = "";
+    public static String SESSION_ROAD = "default"; 
+    public static String SESSION_BGM  = "default";
     
     /** 
      * Helper to get the current active road, 

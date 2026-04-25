@@ -194,7 +194,7 @@ public class PlayingState implements GameState,IActiveGameState{
         // Now charKey is actually used, and matches getFavoriteCharacter()'s "time_" prefix
         String charKey = "time_" + GameConfig.ACTIVE_CHARACTER.name();
         SaveManager.addInt(charKey, (int)sessionTime);
-    
+        ScoreManager.updateHighScore(); 
         SaveManager.save();
     
         AudioManager.stop(GameConfig.ACTIVE_CHARACTER.bgmKey);

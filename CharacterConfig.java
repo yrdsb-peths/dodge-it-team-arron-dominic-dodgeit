@@ -24,14 +24,14 @@ public enum CharacterConfig {
         new String[]{"Ability_TheWorld", "Ability_StandPunch", "Ability_MadeInHeaven"}
     ),
     Ringo(
-        "Ringo Roadagain", "Ringo", "ringo_full.jpg", "standard_road.png",
+        "Ringo Roadagain", "Ringo", "ringo_full.jpg", "racetrack.png",
         new String[]{"Idle", "Dash", "Wry", "Lose"}, "Dash",
         GameConfig.DIO_MOVE_SPEED, 1.5 * GameConfig.SCALE,
         "ringo_theme", "ringoLoseLines", "ringoLines", BossConfig.Ringo,
         new String[]{"Ability_Mandom", "Ability_TheWorld"}
     ),
     DIAVOLO(
-        "Diavolo", "diavolo", "diavolo_full.jpg", "standard_road.png", 
+        "Diavolo", "diavolo", "diavolo_full.jpg", "red_road.png", 
         new String[]{"Idle", "Dash", "Lose"}, "Dash",
         GameConfig.DIO_MOVE_SPEED, 0.8 * GameConfig.SCALE,
         "diavolo_theme", "diavoloLoseLines", "diavoloLines", BossConfig.DIO, 

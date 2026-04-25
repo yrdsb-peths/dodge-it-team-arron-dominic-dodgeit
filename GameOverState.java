@@ -19,11 +19,18 @@ public class GameOverState implements GameState {
         AudioManager.stopAllAbilities();
         AudioManager.stop(GameConfig.ACTIVE_CHARACTER.bgmKey);
         AudioManager.playLoop("lost_bgm");
-
+    
         // 2. DATA GATHERING
+        
+        int finalScore = ScoreManager.getScore();
+        
+        // Use SaveManager to get the OLD record before we change it
+        int oldBest = SaveManager.getInt("all_time_high"); 
+        
+        // A record is only "New" if the current score is strictly GREATER than the old one
+        boolean isNewRecord = finalScore > oldBest;
         ScoreManager.updateHighScore();
-        int finalScore    = ScoreManager.getScore();
-        int allTimeBest   = DataManager.getInt("all_time_high");
+        int currentBest = Math.max(finalScore, oldBest);
         String obituary   = ObituaryManager.getRandomObituary(GameConfig.ACTIVE_CHARACTER);
         String fav        = SaveManager.getFavoriteCharacter();
         
@@ -46,12 +53,17 @@ public class GameOverState implements GameState {
         // ── SCORE & STATS BLOCK (Grouped higher up in the panel) ──
         int statsStartY = panelY - GameConfig.s(55);
         
-        Color scoreColor = (finalScore >= allTimeBest) ? Color.YELLOW : Color.WHITE;
+        // Check this BEFORE you call ScoreManager.updateHighScore()
+
+        
+        // Now set the color based on that boolean
+        Color scoreColor = isNewRecord ? Color.YELLOW : Color.WHITE;
+        
         addUI(world, new UIText("FINAL SCORE: " + finalScore, GameConfig.s(22), scoreColor), midX, statsStartY);
+        String bestText = isNewRecord ? "NEW ALL-TIME RECORD!" : "ALL-TIME BEST: " + currentBest;
+        Color bestColor = isNewRecord ? Color.YELLOW : Color.CYAN;
         
-        String bestText = (finalScore >= allTimeBest) ? "NEW ALL-TIME RECORD!" : "ALL-TIME BEST: " + allTimeBest;
-        addUI(world, new UIText(bestText, GameConfig.s(18), Color.CYAN), midX, statsStartY + GameConfig.s(25));
-        
+        addUI(world, new UIText(bestText, GameConfig.s(18), bestColor), midX, statsStartY + GameConfig.s(25));
         addUI(world, new UIText("Favorite: " + fav + "  |  Total Time: " + timeStr, GameConfig.s(15), Color.LIGHT_GRAY), midX, statsStartY + GameConfig.s(45));
         
         // ── THE OBITUARY (The Flavor) ──

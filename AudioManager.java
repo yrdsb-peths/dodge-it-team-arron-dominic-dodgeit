@@ -98,7 +98,7 @@ public class AudioManager {
         loadSound("kingCrimsonDuration",  "KingCrimson_Duration.mp3",             180);
         loadSound("ringo_theme",  "ringo_theme.mp3",             90);
         loadSound("diavolo_theme",  "diavolo_theme.mp3",             90);
-        loadSound("sbr_theme",  "sbr_theme.mp3",             90);
+        loadSound("sbr_theme",  "sbr_theme.mp3",             70);
         
         // ── Voice pools ───────────────────────────────────────────────────────
         loadVoicePool("rewind",        new String[]{ "rewind1.mp3" }, 80);
