@@ -110,17 +110,28 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
             }
         }
 
-        // ── STEP 2: Load abilities via Reflection ─────────────────────────────
-        // Class.forName(name) finds the class by its String name at runtime.
-        // .getDeclaredConstructor().newInstance() calls the no-arg constructor.
-        // If the name is wrong or the class has no no-arg constructor, the catch
-        // block prints a message — there is NO crash, so check the console output.
+        // ── STEP 2: Load abilities via Reflection & ShopManager ────────────
+        // Define what ability comes FREE with each character
+        String defaultAbility = "";
+        if (config.name().equals("MoonKnight")) defaultAbility = "Ability_DarkSpell02";
+        else if (config.name().equals("Dio")) defaultAbility = "Ability_TheWorld";
+        else if (config.name().equals("Diavolo")) defaultAbility = "Ability_KingCrimson";
+        else if (config.name().equals("Ringo")) defaultAbility = "Ability_Mandom";
+
+        boolean isOmnipotent = config.name().equals("OmnipotentDio");
+
         for (String className : config.abilityClassNames) {
-            try {
-                abilities.add((Ability) Class.forName(className)
-                    .getDeclaredConstructor().newInstance());
-            } catch (Exception e) {
-                System.out.println("Failed to load ability: " + className);
+            boolean isDefault = className.equals(defaultAbility);
+            boolean isUnlocked = ShopManager.isUnlocked("ability_" + className);
+
+            // Only load the ability if they bought it, if it's the character's default, 
+            // or if they are playing the Omnipotent cheat character!
+            if (isUnlocked || isDefault || isOmnipotent) {
+                try {
+                    abilities.add((Ability) Class.forName(className).getDeclaredConstructor().newInstance());
+                } catch (Exception e) {
+                    System.out.println("Failed to load ability: " + className);
+                }
             }
         }
     }

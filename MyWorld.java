@@ -55,7 +55,7 @@ public class MyWorld extends World {
         // Create the game state manager, passing ourselves so states can
         // add/remove actors from this world.
         gsm = new GameStateManager(this);
-
+        
         /*
          * PAINT ORDER — controls which actors are drawn on top of which.
          * Earlier in the list = drawn LAST = appears on top.
@@ -100,6 +100,7 @@ public class MyWorld extends World {
         // Pre-load every sound file into RAM now, so the first play of any
         // sound does not cause a noticeable lag spike.
         AudioManager.init();
+        ShopManager.init();
     }
 
     // ─────────────────────────────────────────────────────────────────────────

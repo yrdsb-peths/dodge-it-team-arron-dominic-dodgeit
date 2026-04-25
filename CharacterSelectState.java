@@ -22,6 +22,9 @@ public class CharacterSelectState implements GameState {
     
     private UIText roadDisplay;
     private UIText bgmDisplay;
+    
+    private UIText moneyDisplay;
+    private UIText enterButtonDisplay;
 
 
     @Override
@@ -57,7 +60,13 @@ public class CharacterSelectState implements GameState {
     
         // 6. Navigation Buttons
         addUI(world, new UIText("[ L : Learn Abilities ]", GameConfig.s(20), Color.GREEN), midX - GameConfig.s(130), GameConfig.s(385));
-        addUI(world, new UIText("[ ENTER : START GAME ]", GameConfig.s(20), Color.RED), midX + GameConfig.s(130), GameConfig.s(385));
+        // Top Right Money Display
+        moneyDisplay = new UIText("MONEY: $" + SaveManager.getInt("money"), GameConfig.s(22), Color.YELLOW);
+        addUI(world, moneyDisplay, world.getWidth() - GameConfig.s(100), GameConfig.s(30));
+        
+        // Dynamic Enter Button (Instead of creating a new UIText directly, we save it to the variable)
+        enterButtonDisplay = new UIText("[ ENTER : START GAME ]", GameConfig.s(20), Color.RED);
+        addUI(world, enterButtonDisplay, midX + GameConfig.s(130), GameConfig.s(385));
     
         // 7. Spawn the first character (Moved slightly up to stay out of the panel)
         spawnNewCharacter(world, true, true);
@@ -87,9 +96,26 @@ public class CharacterSelectState implements GameState {
                 world.getGSM().pushState(new AbilityDisplayState());
                 
             } else if (key.equals("enter")) {
-                GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
-                AudioManager.stopAll();
-                world.getGSM().changeState(new PlayingState());
+                String charKey = "char_" + roster[currentIndex].name();
+                
+                if (ShopManager.isUnlocked(charKey)) {
+                    // Start Game Normal
+                    GameConfig.ACTIVE_CHARACTER = roster[currentIndex];
+                    AudioManager.stopAll();
+                    world.getGSM().changeState(new PlayingState());
+                } else {
+                    // Try to Buy it
+                    if (ShopManager.buy(charKey)) {
+                        // Success!
+                        AudioManager.playPool("buy_success_sound"); // Put a cool coin sound here
+                        moneyDisplay.setText("MONEY: $" + SaveManager.getInt("money"));
+                        spawnNewCharacter(world, false, false); // Refresh the UI to unlock them visually
+                    } else {
+                        // Not enough money
+                        System.out.println("Not enough money!");
+                        // Optional: play an error buzzer sound
+                    }
+                }
             }
             if (key.equals("escape")) {
                 world.getGSM().changeState(new MenuState());
@@ -170,6 +196,31 @@ public class CharacterSelectState implements GameState {
             
             bgmDisplay.setText("MUSIC: Default");
             bgmDisplay.setColor(Color.LIGHT_GRAY);
+        }
+        
+        // --- SHOP & LOCK LOGIC ---
+        String charKey = "char_" + selected.name();
+        boolean isLocked = !ShopManager.isUnlocked(charKey);
+
+        if (isLocked) {
+            // Dim the sprite drastically
+            currentPreview.getImage().setTransparency(60); 
+            
+            nameDisplay.setText("[LOCKED] " + selected.displayName);
+            nameDisplay.setColor(Color.GRAY);
+            
+            int price = ShopManager.getPrice(charKey);
+            enterButtonDisplay.setText("[ ENTER : BUY ($" + price + ") ]");
+            enterButtonDisplay.setColor(Color.YELLOW);
+        } else {
+            // Restore normal visuals
+            currentPreview.getImage().setTransparency(255);
+            
+            nameDisplay.setText(selected.displayName);
+            nameDisplay.setColor(Color.WHITE);
+            
+            enterButtonDisplay.setText("[ ENTER : START GAME ]");
+            enterButtonDisplay.setColor(Color.RED);
         }
     }
 

@@ -30,6 +30,7 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
     private UI_RewindBar activeRewindBar; // Tracked for cleanup
     private boolean isFrozen = false;
     private boolean playerDiedThisFrame = false;
+    private UIText moneyDisplay;
 
     @Override
     public boolean isGameFrozen() { return isFrozen || Ability_KingCrimson.ERASING || Ability_TheWorld.TIME_STOPPED;  }
@@ -69,7 +70,9 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
             icons.add(icon);
             addUI(world, icon, startX + (i * baseSpacing), startY);
         }
-
+        
+        moneyDisplay = new UIText("MONEY: $" + SaveManager.getInt("money"), GameConfig.s(18), Color.YELLOW);
+        addUI(world, moneyDisplay, world.getWidth() - GameConfig.s(100), splitY + GameConfig.s(18));
         highlightBox = new UI_HighlightBox(GameConfig.s(56));
         addUI(world, highlightBox, icons.get(0).getX(), icons.get(0).getY());
 
@@ -96,8 +99,34 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
 
     private void handleSelectingMode(MyWorld world, String key) {
         if ("escape".equals(key)) { world.getGSM().popState(); return; }
-        if ("enter".equals(key)) { startDemo(world); return; }
-
+        
+        Ability selectedAbility = dummyPlayer.getAllAbilities().get(selectedIndex);
+        String shopKey = "ability_" + selectedAbility.getClass().getSimpleName();
+    
+        // --- BUY LOGIC ---
+        if ("b".equals(key)) {
+            if (!ShopManager.isUnlocked(shopKey)) {
+                if (ShopManager.buy(shopKey)) {
+                    AudioManager.playPool("buy_success_sound"); // Ca-ching!
+                    moneyDisplay.setText("MONEY: $" + SaveManager.getInt("money"));
+                    updateMenuSelection(); // Refresh the UI
+                } else {
+                    System.out.println("Not enough money!");
+                    // Optional: AudioManager.playPool("error_buzzer");
+                }
+            }
+        }
+    
+        // --- TRY LOGIC (Only if unlocked) ---
+        if ("enter".equals(key)) { 
+            if (ShopManager.isUnlocked(shopKey)) {
+                startDemo(world); 
+            } else {
+                System.out.println("Ability is locked!");
+            }
+            return; 
+        }
+    
         if ("left".equals(key)) {
             selectedIndex = (selectedIndex - 1 + icons.size()) % icons.size();
             updateMenuSelection();
@@ -109,12 +138,38 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
 
     private void updateMenuSelection() {
         if (icons.isEmpty()) return;
-        UI_AbilityIcon selectedIcon = icons.get(selectedIndex);
+        UI_AbilityIcon selectedIcon = icons.get(selectedIndex); 
+        
         highlightBox.setLocation(selectedIcon.getX(), selectedIcon.getY());
         
         Ability ability = dummyPlayer.getAllAbilities().get(selectedIndex);
-        titleText.setText("Ability: " + ability.getClass().getSimpleName().replace("Ability_", ""));
-        descText.setText(DemoScripts.getDemoFor(ability.getClass()).getDefaultText());
+        String abilityName = ability.getClass().getSimpleName();
+        String shopKey = "ability_" + abilityName;
+        
+        boolean unlocked = ShopManager.isUnlocked(shopKey);
+        int price = ShopManager.getPrice(shopKey);
+    
+        // 1. Set Title and Description
+        if (unlocked) {
+            titleText.setText("Ability: " + abilityName.replace("Ability_", ""));
+            titleText.setColor(Color.YELLOW);
+            descText.setText(DemoScripts.getDemoFor(ability.getClass()).getDefaultText());
+            btnEnter.setText("[ ENTER : Try Ability ]");
+            btnEnter.setColor(Color.GREEN);
+        } else {
+            titleText.setText("[LOCKED] " + abilityName.replace("Ability_", "") + " - $" + price);
+            titleText.setColor(Color.GRAY);
+            descText.setText("Purchase this ability to unlock the Sandbox Tutorial.");
+            btnEnter.setText("[ B : BUY ABILITY ]");
+            btnEnter.setColor(Color.YELLOW);
+        }
+    
+        // 2. Visual dimming of icons
+        for (int i = 0; i < icons.size(); i++) {
+            Ability a = dummyPlayer.getAllAbilities().get(i);
+            boolean isOwned = ShopManager.isUnlocked("ability_" + a.getClass().getSimpleName());
+            icons.get(i).getImage().setTransparency(isOwned ? 255 : 75);
+        }
     }
 
     private void startDemo(MyWorld world) {
