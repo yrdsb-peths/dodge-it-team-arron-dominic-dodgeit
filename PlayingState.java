@@ -61,6 +61,8 @@ public class PlayingState implements GameState,IActiveGameState{
     public void enter(MyWorld world) {
         sessionStartTime = System.currentTimeMillis();//COUNT PLAY TIME
         world.removeObjects(world.getObjects(null)); // clear ALL existing actors
+        Ability_TheWorld.TIME_STOPPED = false;
+        Ability_KingCrimson.ERASING   = false;
         AudioManager.stop("menu_bgm");//Stop original music
 
         GameRNG.randomize();   // generate a new random seed for this session

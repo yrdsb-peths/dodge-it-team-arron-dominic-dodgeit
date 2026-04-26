@@ -322,6 +322,8 @@ public class AbilityDisplayState implements GameState, IActiveGameState {
     @Override
     public void exit(MyWorld world) {
         world.removeObjects(uiElements);
+        Ability_TheWorld.TIME_STOPPED = false;
+        Ability_KingCrimson.ERASING   = false;
         clearSandbox(world);
         for (Actor a : hiddenActors) {
             if (a.getWorld() != null && a.getImage() != null) a.getImage().setTransparency(255);

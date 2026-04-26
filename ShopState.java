@@ -19,7 +19,7 @@ public class ShopState implements GameState {
         new ShopItem("char_dio", "Character: DIO"),
         new ShopItem("char_diavolo", "Character: Diavolo"),
         new ShopItem("char_ringo", "Character: Ringo Roadagain"),
-        new ShopItem("char_omnipotentdio", "Character: Omnipotent DIO"),
+        new ShopItem("char_omnipotent_dio", "Character: Omnipotent DIO"),
         new ShopItem("ability_ability_darkspell01", "Ability: Dark Spell 01"),
         new ShopItem("ability_ability_theworld", "Ability: The World"),
         new ShopItem("ability_ability_madeinheaven", "Ability: Made in Heaven"),

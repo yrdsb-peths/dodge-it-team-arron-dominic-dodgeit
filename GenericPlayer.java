@@ -118,7 +118,7 @@ public class GenericPlayer extends Player implements Time_Snapshottable {
         else if (config.name().equals("Diavolo")) defaultAbility = "Ability_KingCrimson";
         else if (config.name().equals("Ringo")) defaultAbility = "Ability_Mandom";
 
-        boolean isOmnipotent = config.name().equals("OmnipotentDio");
+        boolean isOmnipotent = config.name().equals("omnipotent_DIO");
 
         for (String className : config.abilityClassNames) {
             boolean isDefault = className.equals(defaultAbility);
